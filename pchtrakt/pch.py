@@ -21,7 +21,7 @@ from xml.etree import ElementTree
 from string import split
 from urllib2 import Request, urlopen, URLError, HTTPError
 from lib.utilities import Debug
-import math
+import math, glob
 
 class EnumStatus:
     NOPLAY='noplay'
@@ -49,28 +49,48 @@ class PchRequestor:
     def parseResponse(self, response):
         oPchStatus = PchStatus()
         try:
-            response = response.replace('&','')
+            response = unescape(response).decode( "latin-1", "replace" ).encode( "utf-8", "replace" )
             oXml = ElementTree.XML(response) 
             if oXml.tag == "theDavidBox": # theDavidBox should be the root
-                if oXml.find("returnValue").text == '0':
+                if oXml.find("returnValue").text == '0' and int(oXml.find("response/totalTime").text) > 90:#Added total time check to avoid scrobble while playing adverts/trailers
+                    oPchStatus.totalTime = int(oXml.find("response/totalTime").text)
                     oPchStatus.status = oXml.find("response/currentStatus").text
                     oPchStatus.fullPath = unicode(oXml.find("response/fullPath").text)
                     oPchStatus.currentTime = int(oXml.find("response/currentTime").text)
-                    oPchStatus.totalTime = int(oXml.find("response/totalTime").text)
-                    if oXml.find("response/mediatype")!= None:
-                        self.mediaType = oXml.find("response/mediatype").text
-                    if(self.mediaType == "BD"): # Blu-ray Disc are not handle like .mkv or .avi files
-                        oPchStatus.fileName = unicode(oPchStatus.fullPath.split('/')[::-1][1]) # add a / on last position when ISO
+                    if oXml.find("response/totalchapter")!= None:
                         oPchStatus.currentChapter = int(oXml.find("response/currentchapter").text)
                         oPchStatus.totalChapter = int(oXml.find("response/totalchapter").text)
-                        if oPchStatus.totalChapter!= 0:
-                            oPchStatus.percent = int(math.ceil(float(oPchStatus.currentChapter) / float(oPchStatus.totalChapter) * 100.0)) # approximation because chapters are differents
+                    if oXml.find("response/mediatype")!= None:
+                        self.mediaType = oXml.find("response/mediatype").text
+                        if (oPchStatus.fullPath == "/iso"):#Change path if iso file
+							newpath = glob.glob("/isolink/*.iso")
+							newpath = unicode(newpath)[2:-2]
+							oPchStatus.fullPath = newpath
+                        if(self.mediaType == "BD"): # Blu-ray Disc are not handle like .mkv or .avi files
+							oPchStatus.fileName = unicode(oPchStatus.fullPath.split('/')[::-1][1]) # add a / on last position when ISO
+							if oPchStatus.totalTime!=0:
+								oPchStatus.percent = int(math.ceil(float(oPchStatus.currentChapter) / float(oPchStatus.totalChapter) * 100.0)) # approximation because chapters are differents
+                        elif (self.mediaType == "DVD") and (oPchStatus.fullPath.split(".")[-1] == "iso"):
+							oPchStatus.fileName = unicode(oPchStatus.fullPath.split('/')[::-1][0])
+							if oPchStatus.totalTime!=0:
+								oPchStatus.percent = int(math.ceil(float(oPchStatus.currentTime) / float(oPchStatus.totalTime) * 100.0))
+							if oPchStatus.totalChapter!= 0:
+								oPchStatus.percent = int(math.ceil(float(oPchStatus.currentChapter) / float(oPchStatus.totalChapter) * 100.0)) # approximation because chapters are differents
+                        elif (self.mediaType == "DVD") and (oPchStatus.fullPath.split(".")[-1] <> "iso"):
+							if oPchStatus.fullPath[-1:] == "/":
+								oPchStatus.fullPath = oPchStatus.fullPath[:-1]+".DVD"#Add .DVD extension for later use or will just make .watched file
+								oPchStatus.fileName = unicode(oPchStatus.fullPath.split('/')[::-1][0])
+							else:
+								oPchStatus.fullPath += ".DVD"
+								oPchStatus.fileName = unicode(oPchStatus.fullPath.split('/')[::-1][0])
+							if oPchStatus.totalTime!=0:
+								oPchStatus.percent = int(math.ceil(float(oPchStatus.currentTime) / float(oPchStatus.totalTime) * 100.0))
+                        else:
+							oPchStatus.fileName = oPchStatus.fullPath.split('/')[::-1][0]#.encode('utf8')
+							if oPchStatus.totalTime!=0:
+								oPchStatus.percent = int(math.ceil(float(oPchStatus.currentTime) / float(oPchStatus.totalTime) * 100.0))
                     else:
-                        oPchStatus.fileName = oPchStatus.fullPath.split('/')[::-1][0]
-                        if oPchStatus.totalTime!=0:
-                            oPchStatus.percent = int(math.ceil(float(oPchStatus.currentTime) / float(oPchStatus.totalTime) * 100.0))
-                else:
-                    oPchStatus.status=EnumStatus.NOPLAY
+						oPchStatus.status=EnumStatus.NOPLAY
             else:
                 oPchStatus.status = EnumStatus.UNKNOWN    
         except ElementTree.ParseError, e:
@@ -78,7 +98,7 @@ class PchRequestor:
             oPchStatus.status = EnumStatus.UNKNOWN        
         return oPchStatus
         
-    def getStatus(self,ip,timeout=5.0):
+    def getStatus(self,ip,timeout=10.0):
         oPchStatus = PchStatus()
         try:
             oResponse = urlopen("http://" + ip + ":8008/playback?arg0=get_current_vod_info",None,timeout)

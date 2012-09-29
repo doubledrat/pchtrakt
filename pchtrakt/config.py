@@ -44,7 +44,7 @@ sleepTime = float(config.get('PCHtrakt', 'sleep_time'))
 ignored_repertory = [x.strip() for x in config.get('PCHtrakt', 'ignored_repertory').split(',')]
 ignored_keywords = [x.strip() for x in config.get('PCHtrakt', 'ignored_keywords').split(',')]
 OnPCH = (ipPch in ['127.0.0.1',myIp])
-
+use_debug = config.getboolean('PCHtrakt', 'use_debug')
 #Trakt
 TraktUsername = config.get('Trakt', 'login') 
 TraktPwd = config.get('Trakt', 'password') 
@@ -68,3 +68,8 @@ if not YamjPath.endswith('/'):
 YamJWatchedVithVideo = config.getboolean('YAMJ', 'watched_with_video')
 YamjWatched = config.getboolean('YAMJ', 'watched')
 YamjIgnoredCategory = [x.strip().lower() for x in config.get('YAMJ', 'ignored_category').split(',')]
+updatexmlwatched = config.get('YAMJ', 'update_xml_watched')
+if not updatexmlwatched.endswith('/'):
+    updatexmlwatched += '/'
+tvxmlfind = [x.strip() for x in config.get('YAMJ', 'tvxml_find').split(',')]
+moviexmlfind = [x.strip() for x in config.get('YAMJ', 'moviexml_find').split(',')]

@@ -1,10 +1,11 @@
 from os.path import isfile
 from os import listdir
 from xml.etree import ElementTree
+from xml.dom.minidom import parse
 
 from lib import utilities
 from lib.utilities import Debug
-import pchtrakt
+import pchtrakt, glob, os, re
 from pchtrakt.exception import BetaSerieAuthenticationException
 from pchtrakt import mediaparser as mp
 from pchtrakt import betaseries as bs
@@ -35,14 +36,12 @@ def showStarted(myMedia):
                                     str(myMedia.parsedInfo.episode_numbers[myMedia.idxEpisode]),
                                     str(myMedia.oStatus.totalTime),
                                     str(myMedia.oStatus.percent))
-        Debug(msg)
         pchtrakt.logger.info(msg)
         if response != None:
             msg = 'Video playing: %s - %s' %(response['status'],response['message'])
             
         else:
             msg = 'No response from Trakt.tv'
-        Debug(msg)
         pchtrakt.logger.info(msg)
     
 def movieStarted(myMedia):
@@ -55,7 +54,6 @@ def movieStarted(myMedia):
         msg = 'Video playing: %s - %s' %(response['status'],response['message'])
     else:
         msg = 'No response from Trakt.tv'    
-    Debug(msg)
     pchtrakt.logger.info(msg)
     
     
@@ -65,7 +63,6 @@ def showStopped():
         msg = 'Video stopped: %s - %s' %(response['status'],response['message'])
     else:
         msg = 'No response from Trakt.tv' 
-    Debug(msg)
     pchtrakt.logger.info(msg)
     
     
@@ -75,7 +72,6 @@ def movieStopped():
         msg = 'Video stopped: %s - %s' %(response['status'],response['message'])
     else:
         msg = 'No response from Trakt.tv' 
-    Debug(msg)
     pchtrakt.logger.info(msg)
     
     
@@ -126,10 +122,8 @@ def showIsEnding(myMedia):
             myMedia.ScrobResult |= EnumScrobbleResult.BETASERIESOK
     except BetaSerieAuthenticationException as e:
         Debug(e)
-        pchtrakt.logger.info(e)
     except Exception as e:
         Debug(e)
-        pchtrakt.logger.exception(e)
     if TraktScrobbleTvShow:
         result = 0
         response = utilities.scrobbleEpisodeOnTrakt(myMedia.parsedInfo.id,
@@ -141,7 +135,6 @@ def showIsEnding(myMedia):
                                                     str(myMedia.oStatus.percent))
         if response:
             msg = '(Trakt) Video is ending: %s - %s ' %(response['status'],response['message'])
-            Debug(msg)
             pchtrakt.logger.info(msg)
             result = 1
         
@@ -160,7 +153,6 @@ def movieIsEnding(myMedia):
                                                str(myMedia.oStatus.percent))
     if response != None:
         msg = 'Video is ending: %s - %s ' %(response['status'],response['message'])
-        Debug(msg)
         pchtrakt.logger.info(msg)
         return 1
     return 0
@@ -174,7 +166,7 @@ def videoStatusHandleMovie(myMedia):
         if pchtrakt.lastPath != '':
             if myMedia.oStatus.percent > 90:
                 pchtrakt.watched  = 1
-                Debug('Started at more than 90%! I''m not doing anything!')
+                pchtrakt.logger.info('Started at more than 90%! I''m not doing anything!')
             else:
                 movieStarted(myMedia)
     if not pchtrakt.watched:
@@ -184,7 +176,7 @@ def videoStatusHandleMovie(myMedia):
             pchtrakt.currentTime = myMedia.oStatus.currentTime
             movieStillRunning(myMedia)
     elif myMedia.oStatus.percent < 10 and myMedia.oStatus.status != EnumStatus.STOP:
-        Debug('It seems you came back at the begining of the video... so I say to trakt it\'s playing')
+        pchtrakt.logger.info('It seems you came back at the begining of the video... so I say to trakt it\'s playing')
         pchtrakt.watched = 0
         pchtrakt.currentTime = myMedia.oStatus.currentTime
         movieStarted(myMedia)
@@ -202,7 +194,7 @@ def videoStatusHandleTVSeries(myMedia):
         if pchtrakt.lastPath != '':
             if myMedia.oStatus.percent > 90:
                 pchtrakt.watched  = 1
-                Debug('Started at more than 90%! I''m not doing anything!')
+                pchtrakt.logger.info('Started at more than 90%! I''m not doing anything!')
             elif doubleEpisode:
                 while myMedia.oStatus.percent > (myMedia.idxEpisode + 1) * 90.0/len(myMedia.parsedInfo.episode_numbers):
                     myMedia.idxEpisode += 1
@@ -222,23 +214,20 @@ def videoStatusHandleTVSeries(myMedia):
             showStarted(myMedia)
                 
     elif myMedia.oStatus.percent < 10 and myMedia.oStatus.status != EnumStatus.STOP:
-        Debug('It seems you came back at the begining of the video... so I say to trakt it\'s playing')
+        pchtrakt.logger.info('It seems you came back at the begining of the video... so I say to trakt it\'s playing')
         pchtrakt.watched = 0
         pchtrakt.currentTime = myMedia.oStatus.currentTime
         showStarted(myMedia)
 
 def videoStatusHandle(myMedia):
-    if pchtrakt.lastPath != myMedia.oStatus.fullPath:
-        pchtrakt.Ignored = isIgnored(myMedia)
-    if not pchtrakt.Ignored:
-        if isinstance(myMedia.parsedInfo,mp.MediaParserResultTVShow):
-            if TraktScrobbleTvShow or BetaSeriesScrobbleTvShow:
-                videoStatusHandleTVSeries(myMedia)
-            pchtrakt.isTvShow = 1
-        elif isinstance(myMedia.parsedInfo,mp.MediaParserResultMovie):
-            if TraktScrobbleMovie:
-                videoStatusHandleMovie(myMedia)
-            pchtrakt.isMovie = 1
+    if isinstance(myMedia.parsedInfo,mp.MediaParserResultTVShow):
+        if TraktScrobbleTvShow or BetaSeriesScrobbleTvShow:
+            videoStatusHandleTVSeries(myMedia)
+        pchtrakt.isTvShow = 1
+    elif isinstance(myMedia.parsedInfo,mp.MediaParserResultMovie):
+        if TraktScrobbleMovie:
+           videoStatusHandleMovie(myMedia)
+        pchtrakt.isMovie = 1
     else:
         pchtrakt.StopTrying = 1
     pchtrakt.lastPath = myMedia.oStatus.fullPath
@@ -256,7 +245,8 @@ def isIgnored(myMedia):
     if not ignored and ignored_repertory[0] != '':
         for el in myMedia.oStatus.fullPath.split('/'):
             if el <> '' and el in ignored_repertory:
-                msg = 'This video is in a ignored repertory: {0}'.format(el)
+                msg = 'This video is in a ignored repertory: {0}'.format(el) + ' Waiting for next file to start.'
+                pchtrakt.logger.info(msg)
                 ignored = True
                 break
 
@@ -282,22 +272,19 @@ def isIgnored(myMedia):
 def isKeywordIgnored(title):
     if ignored_keywords[0] != '':
         for keyword in ignored_keywords:
-            if keyword in title:
-                msg = u'This file contains a ignored keyword'
-                Debug(msg)
+            if keyword.lower() in title.lower():
+                msg = u'This file contains an ignored keyword. Waiting for next file to start.'
                 pchtrakt.logger.info(msg)
                 return True
     return False
     
 def isGenreIgnored(genres):
     txt = 'The ignored genres are :{0}'.format(YamjIgnoredCategory)
-    Debug(txt)
     pchtrakt.logger.info(txt)
     for genre in genres:
         genre = genre.text.strip().lower()
         txt = 'This genre is {0}'.format(genre)
         txt += ' --- Should it be ignored? {0}'.format(genre in YamjIgnoredCategory)
-        Debug(txt)
         pchtrakt.logger.info(txt)
         if genre in YamjIgnoredCategory:
             txt = 'This video is in the ignored genre {0}'.format(genre)
@@ -311,16 +298,79 @@ def watchedFileCreation(myMedia):
         path = myMedia.oStatus.fileName
         if YamJWatchedVithVideo:
             path = myMedia.oStatus.fullPath
+			#Remember that .DVD extension
+            if (path.split(".")[-1] == "DVD"):
+                path = path[:-4]
             if not OnPCH:
                 path = path.replace('/opt/sybhttpd/localhost.drives/','')
                 path = path.split('/', 2)[2]
                 path = '{0}{1}'.format(YamjWatchedPath, path)
         else:
+            if (path.split(".")[-1] == "DVD"):
+                path = path[:-4]
             path = '{0}{1}'.format(YamjWatchedPath, path)
         path = '{0}.watched'.format(path)
         if not isfile(path):
             f = open(path, 'w')
             f.close()
             msg = 'I have created the file {0}'.format(path)
-            Debug(msg)
             pchtrakt.logger.info(msg)
+            if  updatexmlwatched !="":
+				msg = 'Starting xml update in '+updatexmlwatched
+				pchtrakt.logger.info(msg)
+				if pchtrakt.isMovie:
+					previous = None
+					for xmlword in moviexmlfind:
+						fileinfo = updatexmlwatched + xmlword + "*.xml"
+						for name in glob.glob(fileinfo):
+							if myMedia.oStatus.fileName[:-4] in open(name).read():#gets xml file name as name
+								tree = ElementTree.parse(name)
+								for movie in tree.findall('movies/movie'):
+									if movie.find('baseFilenameBase').text == myMedia.oStatus.fileName[:-4]:#for  content in penContents:
+										movie.find('watched').text = 'true'
+										for mfile in movie.findall('files/file'):
+											mfile.set('watched', 'true')
+											bak_name = name[:-4]+'.bak'
+											tree.write(bak_name)
+											os.rename(bak_name, name)
+											txt = name.replace(updatexmlwatched, '') + ' has been modified as watched for ' + myMedia.oStatus.fileName
+											pchtrakt.logger.info(txt)
+											previous = xmlword
+										break
+								break
+				elif pchtrakt.isTvShow:
+					epno = str(myMedia.parsedInfo.episode_numbers).replace('[', '').replace(']', '')
+					a = re.split("([-|.]*[Ss]\\d\\d[Ee]\\d\\d.)", myMedia.oStatus.fileName)
+					ep_name = a[2][:-4].replace(".", " ").replace("- ", "")
+					season_xml = a[0][:-3].replace(".", " ").replace(" - ", "")
+					f_size = str(os.path.getsize(myMedia.oStatus.fullPath))
+					ep_no = '01'
+					fileinfo = updatexmlwatched + "Set_" + season_xml + "*.xml"
+					for name in glob.glob(fileinfo):
+						if myMedia.oStatus.fileName in open(name).read():
+							tree = ElementTree.parse(name)
+							for movie in tree.findall('*/movie/files/file'):
+								if movie.get('firstPart') == epno and movie.get('season') == str(myMedia.parsedInfo.season_number):
+									movie.set('watched', 'true')
+									bak_name = name[:-4]+'.bak'
+									tree.write(bak_name)
+									os.rename(bak_name, name)
+									txt = name.replace(updatexmlwatched, '') + ' has been modified as watched for ' + myMedia.oStatus.fileName
+									pchtrakt.logger.info(txt)
+									break
+					previous = None
+					for xmlword in tvxmlfind:
+						fileinfo = updatexmlwatched + xmlword + "*.xml"
+						for name in glob.glob(fileinfo):
+							if myMedia.oStatus.fileName in open(name).read():
+								tree = ElementTree.parse(name)
+								for movie in tree.findall('*/movie/files/file'):
+									if movie.get('size') == f_size and movie.get('firstPart') == epno and movie.get('season') == str(myMedia.parsedInfo.season_number):
+										movie.set('watched', 'true')
+										bak_name = name[:-4]+'.bak'
+										tree.write(bak_name)
+										os.rename(bak_name, name)
+										txt = name.replace(updatexmlwatched, '') + ' has been modified as watched for ' + myMedia.oStatus.fileName
+										pchtrakt.logger.info(txt)
+										previous = xmlword#break
+								break

@@ -18,7 +18,7 @@
 # along with pchtrakt.  If not, see <http://www.gnu.org/licenses/>.
 
 from os.path import basename, isfile
-from urllib import quote
+from urllib import quote_plus
 from urllib2 import urlopen, HTTPError, URLError
 import json
 from lib import parser
@@ -61,25 +61,24 @@ class MediaParserResultMovie(MediaParserResult):
         self.name = name
         self.year = year
         
-        ImdbAPIurl = ('http://www.imdbapi.com/?t={0}&y={1}'.format(
-                                        quote(self.name),
-                                        self.year))
+        ImdbAPIurl = ('http://www.imdbapi.com/' \
+		              '?t={0}&y={1}&type=plain'.format(quote_plus(self.name), self.year))
 
         try:
             oResponse = urlopen(ImdbAPIurl,None,5)
             myMovieJson = json.loads(oResponse.read())
             self.id = myMovieJson['imdbID']
         except URLError, HTTPError:
+			pass
+        except KeyError:
             ImdbAPIurl = ('http://www.deanclatworthy.com/' \
-                          'imdb/?q={0}&year={1}'.format(
-                                quote(self.name),
-                                self.year))
+                          'imdb/?q={0}&year={1}'.format(quote_plus(self.name), self.year))
 
             try:
                 oResponse = urlopen(ImdbAPIurl,None,5)
                 myMovieJson = json.loads(oResponse.read())
                 self.id = myMovieJson['imdbid']
-            except HTTPError, HTTPError:
+            except URLError, HTTPError:
                 self.id = None
                 pass
             except Exception as e:

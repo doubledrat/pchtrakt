@@ -8,7 +8,6 @@ import pchtrakt
 try: import simplejson as json
 except ImportError: import json
 
-from nbhttpconnection import *
 from hashlib import sha1
 import urllib, re
 
@@ -41,13 +40,13 @@ class MaxScrobbleError(TraktError):
 	def __init__(self):
 		Exception.__init__(self, 'Trakt.tv - Shows per hour limit reached')
 
-def Debug(msg, force=False):
+def Debug(msg, force=use_debug):
     myMsg = unicode(msg)
     if (pchtrakt.debug or force):
         try:
-            print myMsg
+            pchtrakt.logger.info(myMsg)
         except UnicodeEncodeError:
-            print myMsg.encode( "utf-8", "replace" )
+            pchtrakt.logger.info(myMsg.encode( "utf-8", "replace" ))
 
 def checkSettings(daemon=False):
     if username != 'your_trakt_login':
@@ -113,8 +112,8 @@ def traktJsonRequest(method, req, args={}, returnStatus=False, anon=False, conn=
             conn.request('GET', req)
         else:
             return None
-        # print "trakt json url: "+req
-        # print "json: " + jdata
+        Debug("trakt json url: "+req)
+        Debug("json: " + jdata)
     except socket.error:
         Debug("traktQuery: can't connect to trakt")
         # if not silent: notification("Trakt Utilities", __language__(1108).encode( "utf-8", "ignore" )) # can't connect to trakt
@@ -145,7 +144,7 @@ def traktJsonRequest(method, req, args={}, returnStatus=False, anon=False, conn=
         
     if 'status' in data:
         if data['status'] == 'failure':
-            print "traktQuery: Error: " + str(data['error'])
+            Debug("traktQuery: Error: " + str(data['error']))
             if data['error'] == 'failed authentication':
                 raise AuthenticationTraktError()
             if data['error'] == 'shows per hour limit reached':
@@ -486,7 +485,7 @@ def getWatchingFromTraktForUser(name):
 #tell trakt that the user is watching a movie
 def watchingMovieOnTrakt(imdb_id, title, year, duration, percent):
     responce = traktJsonRequest('POST', '/movie/watching/%%API_KEY%%', {'imdb_id': imdb_id, 'title': title, 'year': year, 'duration': duration, 'progress': percent}, passVersions=True)
-    print responce
+    Debug(responce)
     if responce == None:
         Debug("Error in request from 'watchingMovieOnTrakt()'")
     return responce
@@ -494,13 +493,15 @@ def watchingMovieOnTrakt(imdb_id, title, year, duration, percent):
 #tell trakt that the user is watching an episode
 def watchingEpisodeOnTrakt(tvdb_id, title, year, season, episode, duration, percent):
     responce = traktJsonRequest('POST', '/show/watching/%%API_KEY%%', {'tvdb_id': tvdb_id, 'title': title, 'year': year, 'season': season, 'episode': episode, 'duration': duration, 'progress': percent}, passVersions=True)
+    Debug(responce)
     if responce == None:
-        print "Error in request from 'watchingEpisodeOnTrakt()'"
+        Debug("Error in request from 'watchingEpisodeOnTrakt()'")
     return responce
 
 #tell trakt that the user has stopped watching a movie
 def cancelWatchingMovieOnTrakt():
     responce = traktJsonRequest('POST', '/movie/cancelwatching/%%API_KEY%%')
+    Debug(responce)
     if responce == None:
         Debug("Error in request from 'cancelWatchingMovieOnTrakt()'")
     return responce
@@ -508,6 +509,7 @@ def cancelWatchingMovieOnTrakt():
 #tell trakt that the user has stopped an episode
 def cancelWatchingEpisodeOnTrakt():
     responce = traktJsonRequest('POST', '/show/cancelwatching/%%API_KEY%%')
+    Debug(responce)
     if responce == None:
         Debug("Error in request from 'cancelWatchingEpisodeOnTrakt()'")
     return responce
@@ -515,6 +517,7 @@ def cancelWatchingEpisodeOnTrakt():
 #tell trakt that the user has finished watching an movie
 def scrobbleMovieOnTrakt(imdb_id, title, year, duration, percent):
     responce = traktJsonRequest('POST', '/movie/scrobble/%%API_KEY%%', {'imdb_id': imdb_id, 'title': title, 'year': year, 'duration': duration, 'progress': percent}, passVersions=True)
+    Debug(responce)
     if responce == None:
         Debug("Error in request from 'scrobbleMovieOnTrakt()'")
     return responce
@@ -522,6 +525,7 @@ def scrobbleMovieOnTrakt(imdb_id, title, year, duration, percent):
 #tell trakt that the user has finished watching an episode
 def scrobbleEpisodeOnTrakt(tvdb_id, title, year, season, episode, duration, percent):
     responce = traktJsonRequest('POST', '/show/scrobble/%%API_KEY%%', {'tvdb_id': tvdb_id, 'title': title, 'year': year, 'season': season, 'episode': episode, 'duration': duration, 'progress': percent}, passVersions=True)
+    Debug(responce)
     if responce == None:
         Debug("Error in request from 'scrobbleEpisodeOnTrakt()'")
     return responce
