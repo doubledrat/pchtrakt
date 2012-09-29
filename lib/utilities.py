@@ -8,6 +8,7 @@ import pchtrakt
 try: import simplejson as json
 except ImportError: import json
 
+#from nbhttpconnection import *
 from hashlib import sha1
 import urllib, re
 

@@ -23,7 +23,6 @@ import regexes
 
 class NameParser(object):
     def __init__(self, file_name=True):
-
         self.file_name = file_name
         self.compiled_regexes = []
         self._compile_regexes()
@@ -31,18 +30,18 @@ class NameParser(object):
     def clean_series_name(self, series_name):
         """Cleans up series name by removing any . and _
         characters, along with any trailing hyphens.
-    
+
         Is basically equivalent to replacing all _ and . with a
         space, but handles decimal numbers in string, for example:
-    
+
         >>> cleanRegexedSeriesName("an.example.1.0.test")
         'an example 1.0 test'
         >>> cleanRegexedSeriesName("an_example_1.0_test")
         'an example 1.0 test'
-        
+
         Stolen from dbr's tvnamer
         """
-        
+
         series_name = re.sub("(\D)\.(?!\s)(\D)", "\\1 \\2", series_name)
         series_name = re.sub("(\d)\.(\d{4})", "\\1 \\2", series_name) # if it ends in a year then don't keep the dot
         series_name = re.sub("(\D)\.(?!\s)", "\\1 ", series_name)
@@ -56,37 +55,37 @@ class NameParser(object):
             try:
                 cur_regex = re.compile(cur_pattern, re.VERBOSE | re.IGNORECASE)
             except re.error, errormsg:
-                Debug(u"WARNING: Invalid episode_pattern, %s. %s" % (errormsg, cur_regex.pattern))
+                Debug(u"WARNING: Invalid episode_pattern, %s. %s" % (errormsg, cur_pattern))
             else:
                 self.compiled_regexes.append((cur_pattern_name, cur_regex))
 
     def _parse_string(self, name):
-        
+
         if not name:
             return None
-        
+
         for (cur_regex_name, cur_regex) in self.compiled_regexes:
             match = cur_regex.match(name)
 
             if not match:
                 continue
-            
+
             result = ParseResult(name)
             result.which_regex = [cur_regex_name]
-            
+
             named_groups = match.groupdict().keys()
 
             if 'series_name' in named_groups:
                 result.series_name = match.group('series_name')
                 if result.series_name:
                     result.series_name = self.clean_series_name(result.series_name)
-            
+
             if 'season_num' in named_groups:
                 tmp_season = int(match.group('season_num'))
                 if cur_regex_name == 'bare' and tmp_season in (19,20):
                     continue
                 result.season_number = tmp_season
-            
+
             if 'ep_num' in named_groups:
                 ep_num = self._convert_number(match.group('ep_num'))
                 if 'extra_ep_num' in named_groups and match.group('extra_ep_num'):
@@ -98,7 +97,7 @@ class NameParser(object):
                 year = int(match.group('air_year'))
                 month = int(match.group('air_month'))
                 day = int(match.group('air_day'))
-                
+
                 # make an attempt to detect YYYY-DD-MM formats
                 if month > 12:
                     tmp_month = month
@@ -112,17 +111,17 @@ class NameParser(object):
 
             if 'extra_info' in named_groups:
                 tmp_extra_info = match.group('extra_info')
-                
+
                 # Show.S04.Special is almost certainly not every episode in the season
                 if tmp_extra_info and cur_regex_name == 'season_only' and re.match(r'([. _-]|^)(special|extra)\w*([. _-]|$)', tmp_extra_info, re.I):
                     continue
                 result.extra_info = tmp_extra_info
-            
+
             if 'release_group' in named_groups:
                 result.release_group = match.group('release_group')
 
             return result
-        
+
         return None
 
     def _combine_results(self, first, second, attr):
@@ -136,10 +135,10 @@ class NameParser(object):
         # if the second doesn't exist then return the first
         if not second:
             return getattr(first, attr)
-        
+
         a = getattr(first, attr)
         b = getattr(second, attr)
-        
+
         # if a is good use it
         if a != None or (type(a) == list and len(a)):
             return a
@@ -177,7 +176,7 @@ class NameParser(object):
         return int(number)
 
     def parse(self, name):
-        
+
         name = self._unicodify(name)
 
         # break it into parts if there are any (dirname, file name, extension)
@@ -187,16 +186,16 @@ class NameParser(object):
             base_file_name = ext_match.group(1)
         else:
             base_file_name = file_name
-        
+
         # use only the direct parent dir
         dir_name = os.path.basename(dir_name)
-        
+
         # set up a result to use
         final_result = ParseResult(name)
-        
+
         # try parsing the file name
         file_name_result = self._parse_string(base_file_name)
-        
+
         # parse the dirname for extra info if needed
         dir_name_result = self._parse_string(dir_name)
 
@@ -206,7 +205,7 @@ class NameParser(object):
         if not final_result.air_date:
             final_result.season_number = self._combine_results(file_name_result, dir_name_result, 'season_number')
             final_result.episode_numbers = self._combine_results(file_name_result, dir_name_result, 'episode_numbers')
-        
+
         # if the dirname has a release group/show name I believe it over the filename
         final_result.series_name = self._combine_results(dir_name_result, file_name_result, 'series_name')
         final_result.extra_info = self._combine_results(dir_name_result, file_name_result, 'extra_info')
@@ -242,7 +241,7 @@ class ParseResult(object):
                  ):
 
         self.original_name = original_name
-        
+
         self.series_name = series_name
         self.season_number = season_number
         if not episode_numbers:
@@ -252,15 +251,15 @@ class ParseResult(object):
 
         self.extra_info = extra_info
         self.release_group = release_group
-        
+
         self.air_date = air_date
-        
+
         self.which_regex = None
-        
+
     def __eq__(self, other):
         if not other:
             return False
-        
+
         if self.series_name != other.series_name:
             return False
         if self.season_number != other.season_number:
@@ -273,7 +272,7 @@ class ParseResult(object):
             return False
         if self.air_date != other.air_date:
             return False
-        
+
         return True
 
     def __str__(self):

@@ -38,11 +38,11 @@ def getSerieUrl(SerieName):
                 myKey = key
                 break
         myUrl = myJson['root']['shows'][myKey]['url']
-        cacheSerie.dictSerie[SerieName]['Betaseries'] = myUrl
+        pchtrakt.dictSerie[SerieName]['Betaseries'] = myUrl
         with open('cache.json','w') as f:
             json.dump(cacheSerie.dictSerie, f, separators=(',',':'), indent=4)
     else:
-        myUrl = cacheSerie.dictSerie[SerieName]['Betaseries']
+        myUrl = pchtrakt.dictSerie[SerieName]['Betaseries']
     return quote('{0}.xml'.format(myUrl))
 
 def getToken():

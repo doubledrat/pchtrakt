@@ -32,7 +32,7 @@ ep_regexes = [
                ((?<![. _-])(?<!WEB)                        # Make sure this is really the release group
                -(?P<release_group>[^- ]+))?)?$              # Group
                '''),
-              
+
               ('fov_repeat',
                # Show.Name.1x02.1x03.Source.Quality.Etc-Group
                # Show Name - 1x02 - 1x03 - 1x04 - Ep Name
@@ -46,7 +46,7 @@ ep_regexes = [
                ((?<![. _-])(?<!WEB)                        # Make sure this is really the release group
                -(?P<release_group>[^- ]+))?)?$              # Group
                '''),
-              
+
               ('standard',
                # Show.Name.S01E02.Source.Quality.Etc-Group
                # Show Name - S01E02 - My Ep Name
@@ -82,7 +82,7 @@ ep_regexes = [
                ((?<![. _-])(?<!WEB)                        # Make sure this is really the release group
                -(?P<release_group>[^- ]+))?)?$              # Group
                '''),
-        
+
               ('scene_date_format',
                # Show.Name.2010.11.23.Source.Quality.Etc-Group
                # Show Name - 2010-11-23 - Ep Name
@@ -95,7 +95,7 @@ ep_regexes = [
                ((?<![. _-])(?<!WEB)                        # Make sure this is really the release group
                -(?P<release_group>[^- ]+))?)?$              # Group
                '''),
-              
+
               ('stupid',
                # tpz-abc102
                '''
@@ -104,7 +104,7 @@ ep_regexes = [
                (?P<season_num>\d{1,2})                     # 1
                (?P<ep_num>\d{2})$                          # 02
                '''),
-              
+
               ('verbose',
                # Show Name Season 1 Episode 2 Ep Name
                '''
@@ -159,3 +159,4 @@ ep_regexes = [
                (-(?P<release_group>.+))?)?$                # Group
                '''),
               ]
+

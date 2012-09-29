@@ -79,6 +79,7 @@ class ConsoleUI(BaseUI):
             toshow = allSeries[:limit]
         else:
             toshow = allSeries
+
         print "TVDB Search Results:"
         for i, cshow in enumerate(toshow):
             i_show = i + 1 # Start at more human readable number 1 (not 0)
@@ -87,6 +88,7 @@ class ConsoleUI(BaseUI):
                 extra = " (default)"
             else:
                 extra = ""
+
             print "%s -> %s [%s] # http://thetvdb.com/?tab=series&id=%s&lid=%s%s" % (
                 i_show,
                 cshow['seriesname'].encode("UTF-8", "ignore"),

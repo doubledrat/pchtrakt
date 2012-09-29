@@ -35,28 +35,28 @@ if isfile('cache.json'):
     with open('cache.json','r+') as f:
         cacheSerie.dictSerie = json.load(f)
 else:
-    cacheSerie.dictSerie = {}    
+    cacheSerie.dictSerie = {}
 
 #PchTrakt
 config.read(pchtrakt.config_file)
-ipPch = config.get('PCHtrakt', 'pch_ip') 
+ipPch = config.get('PCHtrakt', 'pch_ip')
 sleepTime = float(config.get('PCHtrakt', 'sleep_time'))
 ignored_repertory = [x.strip() for x in config.get('PCHtrakt', 'ignored_repertory').split(',')]
 ignored_keywords = [x.strip() for x in config.get('PCHtrakt', 'ignored_keywords').split(',')]
 OnPCH = (ipPch in ['127.0.0.1',myIp])
 use_debug = config.getboolean('PCHtrakt', 'use_debug')
 #Trakt
-TraktUsername = config.get('Trakt', 'login') 
-TraktPwd = config.get('Trakt', 'password') 
-TraktScrobbleTvShow = config.getboolean('Trakt', 'enable_tvshow_scrobbling') 
-TraktScrobbleMovie = config.getboolean('Trakt', 'enable_movie_scrobbling') 
+TraktUsername = config.get('Trakt', 'login')
+TraktPwd = config.get('Trakt', 'password')
+TraktScrobbleTvShow = config.getboolean('Trakt', 'enable_tvshow_scrobbling')
+TraktScrobbleMovie = config.getboolean('Trakt', 'enable_movie_scrobbling')
 TraktRefreshTime = config.get('Trakt', 'refresh_time')
 TraktMaxPauseTime = 60*15
 
 # Betaseries
-BetaSeriesUsername = config.get('BetaSeries', 'login') 
-BetaSeriesPwd = config.get('BetaSeries', 'password') 
-BetaSeriesScrobbleTvShow = config.getboolean('BetaSeries', 'enable_tvshow_scrobbling') 
+BetaSeriesUsername = config.get('BetaSeries', 'login')
+BetaSeriesPwd = config.get('BetaSeries', 'password')
+BetaSeriesScrobbleTvShow = config.getboolean('BetaSeries', 'enable_tvshow_scrobbling')
 
 #YAMJ
 YamjWatchedPath = config.get('YAMJ', 'watched_path')

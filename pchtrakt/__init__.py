@@ -10,7 +10,7 @@ watched = 0
 DAEMON = 0
 nbr = 0
 config_file = 'pchtrakt.ini'
-debug = True
+debug = False
 isTvShow = 0
 isMovie = 0
 idOK = 0
@@ -20,7 +20,7 @@ logger = logging.getLogger('pchtrakt')
 hdlr = logging.FileHandler('pchtrakt.log')
 formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s\r')
 hdlr.setFormatter(formatter)
-logger.addHandler(hdlr) 
+logger.addHandler(hdlr)
 logger.setLevel(logging.INFO)
 config = ConfigParser.RawConfigParser()
 
@@ -48,23 +48,23 @@ def newConfig():
     if not config.has_option('Trakt','enable_movie_scrobbling'):
         config.set('Trakt', 'enable_movie_scrobbling', True)
     if not config.has_option('Trakt','enable_tvshow_scrobbling'):
-        config.set('Trakt', 'enable_tvshow_scrobbling', True)      
+        config.set('Trakt', 'enable_tvshow_scrobbling', True)
     if not config.has_option('Trakt','login'):
         config.set('Trakt', 'login', 'your_trakt_login')
     if not config.has_option('Trakt','password'):
         config.set('Trakt', 'password', 'your_password')
     if not config.has_option('Trakt','refresh_time'):
         config.set('Trakt', 'refresh_time', '15')
-        
+
     if not config.has_section('BetaSeries'):
         config.add_section('BetaSeries')
     if not config.has_option('BetaSeries','enable_tvshow_scrobbling'):
-        config.set('BetaSeries', 'enable_tvshow_scrobbling', False)   
+        config.set('BetaSeries', 'enable_tvshow_scrobbling', False)
     if not config.has_option('BetaSeries','login'):
         config.set('BetaSeries', 'login', 'your_login')
     if not config.has_option('BetaSeries','password'):
         config.set('BetaSeries', 'password', 'your_password')
-        
+
     if not config.has_section('YAMJ'):
         config.add_section('YAMJ')
     if not config.has_option('YAMJ','watched'):
@@ -83,6 +83,7 @@ def newConfig():
         config.set('YAMJ', 'tvxml_find', 'Other_All,Other_HD,Other_New,Other_Rating,Other_TV,Other_Unwatched,Other_Sets')
     if not config.has_option('YAMJ','moviexml_find'):
         config.set('YAMJ', 'moviexml_find', 'Other_All,Other_HD,Other_New,Other_Rating,Other_Movies,Other_Unwatched,Other_Sets')
+
     with open(config_file, 'w') as configfile:
         config.write(configfile)
 

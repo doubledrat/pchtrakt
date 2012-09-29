@@ -33,7 +33,7 @@ tvdb = tvdb_api.Tvdb()
 class MediaParserResult():
     def __init__(self,file_name):
         self.file_name = file_name
-        
+
 class MediaParserResultTVShow(MediaParserResult):
     def __init__(self,file_name,name,season_number,episode_numbers):
         self.file_name = file_name
@@ -50,60 +50,51 @@ class MediaParserResultTVShow(MediaParserResult):
             else:
                 self.year = None
             cacheSerie.dictSerie[self.name]={'Year':self.year,
-                                            'TvDbId':self.id}
+                                                        'TvDbId':self.id}
 
             with open('cache.json','w') as f:
                 json.dump(cacheSerie.dictSerie, f, separators=(',',':'), indent=4)
-        
+
 class MediaParserResultMovie(MediaParserResult):
     def __init__(self,file_name,name,year,imdbid):
         self.file_name = file_name
         self.name = name
         self.year = year
-        
+
         ImdbAPIurl = ('http://www.imdbapi.com/' \
 		              '?t={0}&y={1}&type=plain'.format(quote_plus(self.name), self.year))
-
         try:
             oResponse = urlopen(ImdbAPIurl,None,5)
             myMovieJson = json.loads(oResponse.read())
             self.id = myMovieJson['imdbID']
+            Debug("Found Movie match using: "+ImdbAPIurl)
         except URLError, HTTPError:
 			pass
         except KeyError:
             ImdbAPIurl = ('http://www.deanclatworthy.com/' \
                           'imdb/?q={0}&year={1}'.format(quote_plus(self.name), self.year))
-
             try:
                 oResponse = urlopen(ImdbAPIurl,None,5)
                 myMovieJson = json.loads(oResponse.read())
                 self.id = myMovieJson['imdbid']
+                Debug("Found Movie match using: "+ImdbAPIurl)
             except URLError, HTTPError:
-                self.id = None
                 pass
-            except Exception as e:
-                Debug(myMovieJson)
-                Debug(e)
-                self.id = None
-        
 class MediaParserUnableToParse(Exception):
     def __init__(self, file_name):
         self.file_name = file_name
-    
+
 class MediaParser():
     def __init__(self):
         self.TVShowParser = parser.NameParser()
         self.MovieParser = MovieParser()
-        
+
     def parse(self, file_name):
         try:
-            parsedResult = self.TVShowParser.parse(file_name)
-            oResultTVShow = MediaParserResultTVShow(file_name,parsedResult.series_name,parsedResult.season_number,parsedResult.episode_numbers)
-            return oResultTVShow
+			parsedResult = self.TVShowParser.parse(file_name)
+			oResultTVShow = MediaParserResultTVShow(file_name,parsedResult.series_name,parsedResult.season_number,parsedResult.episode_numbers)
+			return oResultTVShow
         except parser.InvalidNameException as e:
-            oMovie = self.MovieParser.parse(file_name)
-            return oMovie
-        raise MediaParserUnableToParse("Unable to parse the filename and detecte an movie or a tv show")
-        
-    
-        
+			oMovie = self.MovieParser.parse(file_name)
+			return oMovie
+			raise MediaParserUnableToParse("Unable to parse the filename and detecte an movie or a tv show")
