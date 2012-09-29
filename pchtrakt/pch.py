@@ -21,6 +21,7 @@ from xml.etree import ElementTree
 from string import split
 from urllib2 import Request, urlopen, URLError, HTTPError
 from lib.utilities import Debug
+from xml.sax.saxutils import unescape
 import math, glob
 
 class EnumStatus:
