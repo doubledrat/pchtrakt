@@ -19,8 +19,8 @@
 
 from os.path import basename, isfile
 from urllib import quote_plus
-from urllib2 import urlopen, HTTPError, URLError
-import json
+from urllib2 import urlopen, HTTPError, URLError, Request
+import json, re
 from lib import parser
 from movieparser import *
 from lib.tvdb_api import tvdb_exceptions
@@ -63,6 +63,7 @@ class MediaParserResultMovie(MediaParserResult):
 
         ImdbAPIurl = ('http://www.imdbapi.com/' \
 		              '?t={0}&y={1}&type=plain'.format(quote_plus(self.name), self.year))
+        Debug("Trying search 1: "+ImdbAPIurl)
         try:
             oResponse = urlopen(ImdbAPIurl,None,5)
             myMovieJson = json.loads(oResponse.read())
@@ -73,13 +74,25 @@ class MediaParserResultMovie(MediaParserResult):
         except KeyError:
             ImdbAPIurl = ('http://www.deanclatworthy.com/' \
                           'imdb/?q={0}&year={1}'.format(quote_plus(self.name), self.year))
+            Debug("Trying search 2: "+ImdbAPIurl)
             try:
                 oResponse = urlopen(ImdbAPIurl,None,5)
                 myMovieJson = json.loads(oResponse.read())
                 self.id = myMovieJson['imdbid']
                 Debug("Found Movie match using: "+ImdbAPIurl)
-            except URLError, HTTPError:
-                pass
+            except:
+				try: 
+					address = ('http://www.google.com/search?q=www.imdb.com:site+{0}&num=1&start=0'.format(quote_plus(self.name)))
+					Debug("Trying search 3: "+address)
+					request = Request(address, None, {'User-Agent':'Mosilla/5.0 (Macintosh; Intel Mac OS X 10_7_4) AppleWebKit/536.11 (KHTML, like Gecko) Chrome/20.0.1132.57 Safari/536.11'})
+					urlfile = urlopen(request)
+					page = urlfile.read()
+					entries = re.findall("/title/tt(\d{7})/", page)
+					self.id = "tt"+str(entries[0])
+					Debug('Search address = '+ address + ' ID = ' + self.id)
+				except URLError, HTTPError:
+					pass
+
 class MediaParserUnableToParse(Exception):
     def __init__(self, file_name):
         self.file_name = file_name
