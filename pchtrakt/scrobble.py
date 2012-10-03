@@ -162,13 +162,13 @@ def videoStatusHandleMovie(myMedia):
         pchtrakt.lastPath = myMedia.oStatus.fullPath
         pchtrakt.currentTime = myMedia.oStatus.currentTime
         if pchtrakt.lastPath != '':
-            if myMedia.oStatus.percent > 90:
+            if myMedia.oStatus.percent > watched_percent:
                 pchtrakt.watched  = 1
-                pchtrakt.logger.info('Started at more than 90%! I''m not doing anything!')
+                pchtrakt.logger.info('Started at more than '+ str(watched_percent) + '%! I''m not doing anything!')
             else:
                 movieStarted(myMedia)
     if not pchtrakt.watched:
-        if myMedia.oStatus.percent > 90:
+        if myMedia.oStatus.percent > watched_percent:
             pchtrakt.watched = movieIsEnding(myMedia)
         elif myMedia.oStatus.currentTime > pchtrakt.currentTime + int(TraktRefreshTime)*60:
             pchtrakt.currentTime = myMedia.oStatus.currentTime
@@ -190,23 +190,23 @@ def videoStatusHandleTVSeries(myMedia):
         pchtrakt.currentTime = myMedia.oStatus.currentTime
         myMedia.idxEpisode = 0
         if pchtrakt.lastPath != '':
-            if myMedia.oStatus.percent > 90:
+            if myMedia.oStatus.percent > watched_percent:
                 pchtrakt.watched  = 1
-                pchtrakt.logger.info('Started at more than 90%! I''m not doing anything!')
+                pchtrakt.logger.info('Started at more than '+ str(watched_percent) + '%! I''m not doing anything!')
             elif doubleEpisode:
-                while myMedia.oStatus.percent > (myMedia.idxEpisode + 1) * 90.0/len(myMedia.parsedInfo.episode_numbers):
+                while myMedia.oStatus.percent > (myMedia.idxEpisode + 1) * watched_percent/len(myMedia.parsedInfo.episode_numbers):
                     myMedia.idxEpisode += 1
                 showStarted(myMedia)
                 pchtrakt.currentTime = myMedia.oStatus.currentTime
             else:
                 showStarted(myMedia)
     if not pchtrakt.watched:
-        if myMedia.oStatus.percent > 90:
+        if myMedia.oStatus.percent > watched_percent:
             pchtrakt.watched = showIsEnding(myMedia)
         elif myMedia.oStatus.currentTime > pchtrakt.currentTime + int(TraktRefreshTime)*60:
             pchtrakt.currentTime = myMedia.oStatus.currentTime
             showStillRunning(myMedia)
-        elif doubleEpisode and myMedia.oStatus.percent > (myMedia.idxEpisode+1) * 90.0/len(myMedia.parsedInfo.episode_numbers) and myMedia.idxEpisode+1 < len(myMedia.parsedInfo.episode_numbers):
+        elif doubleEpisode and myMedia.oStatus.percent > (myMedia.idxEpisode+1) * watched_percent/len(myMedia.parsedInfo.episode_numbers) and myMedia.idxEpisode+1 < len(myMedia.parsedInfo.episode_numbers):
             showIsEnding(myMedia)
             myMedia.idxEpisode += 1
             showStarted(myMedia)
@@ -290,7 +290,7 @@ def isGenreIgnored(genres):
     return False
 
 def watchedFileCreation(myMedia):
-    if myMedia.oStatus.percent > 90:
+    if myMedia.oStatus.percent > watched_percent:
         path = myMedia.oStatus.fileName
         if YamJWatchedVithVideo:
             path = myMedia.oStatus.fullPath

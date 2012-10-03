@@ -34,6 +34,8 @@ def newConfig():
         config.set('PCHtrakt', 'pch_ip', '127.0.0.1        ; do not change if installed directly on the popcorn')
     if not config.has_option('PCHtrakt','sleep_time'):
         config.set('PCHtrakt', 'sleep_time', '5')
+    if not config.has_option('PCHtrakt','watched_percent'):
+        config.set('PCHtrakt', 'watched_percent', '90')
     if not config.has_option('PCHtrakt','log_file'):
         config.set('PCHtrakt', 'log_file', 'pchtrakt.log')
     if not config.has_option('PCHtrakt','ignored_repertory'):

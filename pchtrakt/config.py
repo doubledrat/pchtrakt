@@ -41,6 +41,9 @@ else:
 config.read(pchtrakt.config_file)
 ipPch = config.get('PCHtrakt', 'pch_ip')
 sleepTime = float(config.get('PCHtrakt', 'sleep_time'))
+watched_percent = float(config.get('PCHtrakt', 'watched_percent'))
+if watched_percent > 100 or watched_percent < 0:
+	watched_percent = 90
 ignored_repertory = [x.strip() for x in config.get('PCHtrakt', 'ignored_repertory').split(',')]
 ignored_keywords = [x.strip() for x in config.get('PCHtrakt', 'ignored_keywords').split(',')]
 OnPCH = (ipPch in ['127.0.0.1',myIp])
