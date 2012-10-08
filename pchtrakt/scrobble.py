@@ -337,6 +337,8 @@ def watchedFileCreation(myMedia):
 				elif pchtrakt.isTvShow:
 					epno = str(myMedia.parsedInfo.episode_numbers).replace('[', '').replace(']', '')
 					a = re.split("([-|.]*[Ss]\\d\\d[Ee]\\d\\d.)", myMedia.oStatus.fileName)
+					if len(a) == 1:
+						a = re.split("(?P<season_num>\d+)[. _-]*", myMedia.oStatus.fileName)
 					ep_name = a[2][:-4].replace(".", " ").replace("- ", "")
 					season_xml = a[0][:-3].replace(".", " ").replace(" - ", "")
 					f_size = str(os.path.getsize(myMedia.oStatus.fullPath))
