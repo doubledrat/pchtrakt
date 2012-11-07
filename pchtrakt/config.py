@@ -31,9 +31,20 @@ config = ConfigParser.RawConfigParser()
 class cacheSerie: #Errkk... need to change this
     pass
 
+cacheSerie.dictSerie = {}
+if isfile('appinfo.json'):
+    PchTraktVersion = getoutput('cat appinfo.json |grep version')
+else:
+    PchTraktVersion = getoutput('cat scripts_install/appinfo.json |grep version')
+
+PchTraktVersion = PchTraktVersion.strip().replace(',','') 
+ 
 if isfile('cache.json'):
     with open('cache.json','r+') as f:
-        cacheSerie.dictSerie = json.load(f)
+	try:
+		cacheSerie.dictSerie = json.load(f)
+	except:
+            pass
 else:
     cacheSerie.dictSerie = {}
 
@@ -71,8 +82,12 @@ if not YamjPath.endswith('/'):
 YamJWatchedVithVideo = config.getboolean('YAMJ', 'watched_with_video')
 YamjWatched = config.getboolean('YAMJ', 'watched')
 YamjIgnoredCategory = [x.strip().lower() for x in config.get('YAMJ', 'ignored_category').split(',')]
-updatexmlwatched = config.get('YAMJ', 'update_xml_watched')
-if not updatexmlwatched.endswith('/'):
-    updatexmlwatched += '/'
-tvxmlfind = [x.strip() for x in config.get('YAMJ', 'tvxml_find').split(',')]
-moviexmlfind = [x.strip() for x in config.get('YAMJ', 'moviexml_find').split(',')]
+
+#Auto Watched
+jukeboxpath = config.get('Auto Watched', 'jukebox_path')
+if not jukeboxpath.endswith('/'):
+    jukeboxpath += '/'
+RutabagaModwatched = config.getboolean('Auto Watched', 'rutabaga_mod_watched')
+updatexmlwatched = config.getboolean('Auto Watched', 'update_xml_watched')
+tvxmlfind = [x.strip() for x in config.get('Auto Watched', 'tvxml_find').split(',')]
+moviexmlfind = [x.strip() for x in config.get('Auto Watched', 'moviexml_find').split(',')]

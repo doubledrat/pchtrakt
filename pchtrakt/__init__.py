@@ -79,13 +79,20 @@ def newConfig():
         config.set('YAMJ', 'ignored_category', '')
     if not config.has_option('YAMJ','path'):
         config.set('YAMJ', 'path', '')
-    if not config.has_option('YAMJ','update_xml_watched'):
-        config.set('YAMJ', 'update_xml_watched', '')
-    if not config.has_option('YAMJ','tvxml_find'):
-        config.set('YAMJ', 'tvxml_find', 'Other_All,Other_HD,Other_New,Other_Rating,Other_TV,Other_Unwatched,Other_Sets')
-    if not config.has_option('YAMJ','moviexml_find'):
-        config.set('YAMJ', 'moviexml_find', 'Other_All,Other_HD,Other_New,Other_Rating,Other_Movies,Other_Unwatched,Other_Sets')
 
+    if not config.has_section('Auto Watched'):
+        config.add_section('Auto Watched')
+    if not config.has_option('Auto Watched','jukebox_path'):
+        config.set('Auto Watched', 'jukebox_path', '')
+    if not config.has_option('Auto Watched','rutabaga_mod_watched'):
+        config.set('Auto Watched', 'rutabaga_mod_watched', 'False')
+    if not config.has_option('Auto Watched','update_xml_watched'):
+        config.set('Auto Watched', 'update_xml_watched', 'False')
+    if not config.has_option('Auto Watched','tvxml_find'):
+        config.set('Auto Watched', 'tvxml_find', 'Other_All,Other_HD,Other_New,Other_Rating,Other_TV,Other_Unwatched,Other_Sets')
+    if not config.has_option('Auto Watched','moviexml_find'):
+        config.set('Auto Watched', 'moviexml_find', 'Other_All,Other_HD,Other_New,Other_Rating,Other_Movies,Other_Unwatched,Other_Sets')
+		
     with open(config_file, 'w') as configfile:
         config.write(configfile)
 

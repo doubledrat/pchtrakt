@@ -25,9 +25,9 @@
 #     - some classes from Sick Beard (http://sickbeard.com/)
 
 import sys
+import getopt
 reload(sys)
 sys.setdefaultencoding("utf8")
-import getopt
 import pchtrakt
 import os
 import json
@@ -217,7 +217,7 @@ if __name__ == '__main__':
             pchtrakt.dictSerie = json.load(f)
     else:
         pchtrakt.dictSerie = {}
-    pchtrakt.logger.info('Pchtrakt START')
+    pchtrakt.logger.info('Pchtrakt START ' + PchTraktVersion)
     while not pchtrakt.stop:
 		try:
 			try:

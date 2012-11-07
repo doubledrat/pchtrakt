@@ -1,8 +1,8 @@
+from sys import version_info
 from os.path import isfile
 from os import listdir
 from xml.etree import ElementTree
-from xml.dom.minidom import parse
-
+import fileinput
 from lib import utilities
 from lib.utilities import Debug
 import pchtrakt, glob, os, re
@@ -311,14 +311,16 @@ def watchedFileCreation(myMedia):
             f.close()
             msg = 'I have created the file {0}'.format(path)
             pchtrakt.logger.info(msg)
-            if  updatexmlwatched !="":
-				msg = 'Starting xml update in '+updatexmlwatched
+            if  updatexmlwatched:
+				msg = 'Starting xml update in '+jukeboxpath
 				pchtrakt.logger.info(msg)
 				if pchtrakt.isMovie:
 					previous = None
 					for xmlword in moviexmlfind:
-						fileinfo = updatexmlwatched + xmlword + "*.xml"
+						fileinfo = jukeboxpath + xmlword + "*.xml"
+						Debug(fileinfo)
 						for name in glob.glob(fileinfo):
+							Debug(name)
 							if myMedia.oStatus.fileName[:-4] in open(name).read():#gets xml file name as name
 								tree = ElementTree.parse(name)
 								for movie in tree.findall('movies/movie'):
@@ -329,46 +331,67 @@ def watchedFileCreation(myMedia):
 											bak_name = name[:-4]+'.bak'
 											tree.write(bak_name)
 											os.rename(bak_name, name)
-											txt = name.replace(updatexmlwatched, '') + ' has been modified as watched for ' + myMedia.oStatus.fileName
+											txt = name.replace(jukeboxpath, '') + ' has been modified as watched for ' + myMedia.oStatus.fileName
 											pchtrakt.logger.info(txt)
 											previous = xmlword
 										break
-								break
+									break
 				elif pchtrakt.isTvShow:
 					epno = str(myMedia.parsedInfo.episode_numbers).replace('[', '').replace(']', '')
+					if version_info >= (2,7): #[@...=...] only available with python >= 2.7 
+						xpath = "*/movie/files/file[@firstPart='{0}'][@season='{1}']".format(
+                                                    epno,str(myMedia.parsedInfo.season_number))
+					else:
+						xpath = "*/movie/files/file"
 					a = re.split("([-|.]*[Ss]\\d\\d[Ee]\\d\\d.)", myMedia.oStatus.fileName)
 					if len(a) == 1:
 						a = re.split("(?P<season_num>\d+)[. _-]*", myMedia.oStatus.fileName)
 					ep_name = a[2][:-4].replace(".", " ").replace("- ", "")
 					season_xml = a[0][:-3].replace(".", " ").replace(" - ", "")
-					f_size = str(os.path.getsize(myMedia.oStatus.fullPath))
+					#f_size = str(os.path.getsize(myMedia.oStatus.fullPath))
 					ep_no = '01'
-					fileinfo = updatexmlwatched + "Set_" + season_xml + "*.xml"
+					fileinfo = jukeboxpath + "Set_" + season_xml + "*.xml"
+					Debug(fileinfo)
 					for name in glob.glob(fileinfo):
+						Debug(name)
 						if myMedia.oStatus.fileName in open(name).read():
 							tree = ElementTree.parse(name)
-							for movie in tree.findall('*/movie/files/file'):
+							for movie in tree.findall(xpath):
+								Debug(movie.get('firstPart'))
 								if movie.get('firstPart') == epno and movie.get('season') == str(myMedia.parsedInfo.season_number):
 									movie.set('watched', 'true')
 									bak_name = name[:-4]+'.bak'
 									tree.write(bak_name)
 									os.rename(bak_name, name)
-									txt = name.replace(updatexmlwatched, '') + ' has been modified as watched for ' + myMedia.oStatus.fileName
+									txt = name.replace(jukeboxpath, '') + ' has been modified as watched for ' + myMedia.oStatus.fileName
 									pchtrakt.logger.info(txt)
-									break
+								break
+							break
 					previous = None
 					for xmlword in tvxmlfind:
-						fileinfo = updatexmlwatched + xmlword + "*.xml"
+						Debug(xmlword)
+						fileinfo = jukeboxpath + xmlword + "*.xml"
 						for name in glob.glob(fileinfo):
+							Debug(name)
 							if myMedia.oStatus.fileName in open(name).read():
 								tree = ElementTree.parse(name)
-								for movie in tree.findall('*/movie/files/file'):
-									if movie.get('size') == f_size and movie.get('firstPart') == epno and movie.get('season') == str(myMedia.parsedInfo.season_number):
+								for movie in tree.findall(xpath):
+									if movie.get('firstPart') == epno and movie.get('season') == str(myMedia.parsedInfo.season_number):
 										movie.set('watched', 'true')
 										bak_name = name[:-4]+'.bak'
 										tree.write(bak_name)
 										os.rename(bak_name, name)
-										txt = name.replace(updatexmlwatched, '') + ' has been modified as watched for ' + myMedia.oStatus.fileName
+										txt = name.replace(jukeboxpath, '') + ' has been modified as watched for ' + myMedia.oStatus.fileName
 										pchtrakt.logger.info(txt)
-										previous = xmlword#break
+										previous = xmlword
+									break
 								break
+            if RutabagaModwatched:
+				msg = 'Starting html update in '+jukeboxpath
+				pchtrakt.logger.info(msg)
+				if pchtrakt.isMovie:
+					fileinfo = Rutabaga_Mod_Jlb_Watched + myMedia.oStatus.fileName[:-3] + "html"
+					for line in fileinput.FileInput(fileinfo, inplace=1):
+						line=line.replace("Empty_watched","watched")
+						print line
+				#elif pchtrakt.isTvShow:

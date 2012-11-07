@@ -27,6 +27,7 @@ from lib.tvdb_api import tvdb_exceptions
 from pchtrakt.config import *
 from lib.tvdb_api import tvdb_api,tvdb_exceptions
 from lib.utilities import Debug
+from xml.etree import ElementTree
 
 tvdb = tvdb_api.Tvdb()
 
@@ -38,6 +39,23 @@ class MediaParserResultTVShow(MediaParserResult):
     def __init__(self,file_name,name,season_number,episode_numbers):
         self.file_name = file_name
         self.name = name
+        np = parser.NameParser()
+        parse_result = np.parse(self.file_name)
+        if parse_result.air_by_date:
+			if self.name in cacheSerie.dictSerie:
+				self.id = cacheSerie.dictSerie[self.name]['TvDbId']
+			else:
+				self.id = tvdb[self.name]['id']
+			season_number = -1
+			episode_numbers = [parse_result.air_date]
+			url = ('http://www.thetvdb.com/api/GetEpisodeByAirDate.php?apikey=0629B785CE550C8D&seriesid={0}&airdate={1}'.format(quote_plus(self.id), parse_result.air_date))
+			Debug("GET EPISODE USING: "+url)
+			oResponse = ElementTree.parse(urlopen(url,None,5))
+			#feed = RSSWrapper(tree.getroot())
+			for movie in oResponse.findall('./'):
+				#Debug("movie", repr(movie.title), movie.link)
+				season_number = movie.find('SeasonNumber').text
+				episode_numbers = movie.find('EpisodeNumber').text
         self.season_number = season_number
         self.episode_numbers = episode_numbers
         if self.name in cacheSerie.dictSerie:
@@ -61,8 +79,9 @@ class MediaParserResultMovie(MediaParserResult):
         self.name = name
         self.year = year
 
-        ImdbAPIurl = ('http://www.imdbapi.com/' \
-		              '?t={0}&y={1}&type=plain'.format(quote_plus(self.name), self.year))
+        ImdbAPIurl = ('http://www.omdbapi.com/?t={0}&y={1}'.format(
+                                        quote_plus(self.name),
+                                        self.year))
         Debug("Trying search 1: "+ImdbAPIurl)
         try:
             oResponse = urlopen(ImdbAPIurl,None,5)
@@ -73,7 +92,9 @@ class MediaParserResultMovie(MediaParserResult):
 			pass
         except KeyError:
             ImdbAPIurl = ('http://www.deanclatworthy.com/' \
-                          'imdb/?q={0}&year={1}'.format(quote_plus(self.name), self.year))
+                          'imdb/?q={0}&year={1}'.format(
+                                quote_plus(self.name),
+                                self.year))
             Debug("Trying search 2: "+ImdbAPIurl)
             try:
                 oResponse = urlopen(ImdbAPIurl,None,5)
