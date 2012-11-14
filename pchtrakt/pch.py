@@ -67,28 +67,28 @@ class PchRequestor:
                         if (oPchStatus.fullPath == "/iso"):#Change path if iso file
 							newpath = glob.glob("/isolink/*.iso")
 							newpath = unicode(newpath)[2:-2]
-							oPchStatus.fullPath = newpath
+							oPchStatus.fullPath = newpath.encode('utf8', 'replace')
                         if(self.mediaType == "BD"): # Blu-ray Disc are not handle like .mkv or .avi files
-							oPchStatus.fileName = unicode(oPchStatus.fullPath.split('/')[::-1][1]) # add a / on last position when ISO
+							oPchStatus.fileName = oPchStatus.fullPath.split('/')[::-1][1].encode('utf8', 'replace') # add a / on last position when ISO
 							if oPchStatus.totalTime!=0:
 								oPchStatus.percent = int(math.ceil(float(oPchStatus.currentChapter) / float(oPchStatus.totalChapter) * 100.0)) # approximation because chapters are differents
                         elif (self.mediaType == "DVD") and (oPchStatus.fullPath.split(".")[-1] == "iso"):
-							oPchStatus.fileName = unicode(oPchStatus.fullPath.split('/')[::-1][0])
+							oPchStatus.fileName = oPchStatus.fullPath.split('/')[::-1][0].encode('utf8', 'replace')
 							if oPchStatus.totalTime!=0:
 								oPchStatus.percent = int(math.ceil(float(oPchStatus.currentTime) / float(oPchStatus.totalTime) * 100.0))
 							if oPchStatus.totalChapter!=0:
 								oPchStatus.percent = int(math.ceil(float(oPchStatus.currentChapter) / float(oPchStatus.totalChapter) * 100.0)) # approximation because chapters are differents
-                        elif (self.mediaType == "DVD") and (oPchStatus.fullPath.split(".")[-1] <> "iso"):
+                        elif (self.mediaType == "DVD") and (oPchStatus.fullPath.split(".")[-1] != "iso"):
 							if oPchStatus.fullPath[-1:] == "/":
 								oPchStatus.fullPath = oPchStatus.fullPath[:-1]+".DVD"#Add .DVD extension for later use or will just make .watched file
-								oPchStatus.fileName = unicode(oPchStatus.fullPath.split('/')[::-1][0])
-							else:
-								oPchStatus.fullPath += ".DVD"
-								oPchStatus.fileName = unicode(oPchStatus.fullPath.split('/')[::-1][0])
+								oPchStatus.fileName = oPchStatus.fullPath.split('/')[::-1][0].encode('utf8', 'replace')
+							elif oPchStatus.fullPath[-1:] != "/":
+								oPchStatus.fullPath = oPchStatus.fullPath[:-9] + ".DVD"
+								oPchStatus.fileName = oPchStatus.fullPath.split('/')[::-1][0].encode('utf8', 'replace')
 							if oPchStatus.totalTime!=0:
 								oPchStatus.percent = int(math.ceil(float(oPchStatus.currentTime) / float(oPchStatus.totalTime) * 100.0))
                         else:
-							oPchStatus.fileName = oPchStatus.fullPath.split('/')[::-1][0]#.encode('utf8')
+							oPchStatus.fileName = oPchStatus.fullPath.split('/')[::-1][0].encode('utf8', 'replace')
 							if oPchStatus.totalTime!=0:
 								oPchStatus.percent = int(math.ceil(float(oPchStatus.currentTime) / float(oPchStatus.totalTime) * 100.0))
                     else:
