@@ -26,11 +26,12 @@
 
 import sys
 import getopt
-reload(sys)
-sys.setdefaultencoding("utf8")
+#reload(sys)
+#sys.setdefaultencoding("utf8")
 import pchtrakt
 import os
 import json
+import locale
 
 from pchtrakt.pch import *
 from pchtrakt.scrobble import *
@@ -210,6 +211,19 @@ def stopTrying():
 
 if __name__ == '__main__':
     getParams()
+    pchtrakt.SYS_ENCODING = None
+    try:
+        locale.setlocale(locale.LC_ALL, "")
+        pchtrakt.SYS_ENCODING = locale.getpreferredencoding()
+    except (locale.Error, IOError):
+        pass
+
+    # For OSes that are poorly configured I'll just randomly force UTF-8
+    if not pchtrakt.SYS_ENCODING or pchtrakt.SYS_ENCODING in ('ANSI_X3.4-1968', 'US-ASCII', 'ASCII'):
+        pchtrakt.SYS_ENCODING = 'UTF-8'
+
+    if not hasattr(sys, "setdefaultencoding"):
+        reload(sys)
     if pchtrakt.DAEMON:
         daemonize()
     if os.path.isfile('cache.json'):

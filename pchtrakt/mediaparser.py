@@ -16,7 +16,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with pchtrakt.  If not, see <http://www.gnu.org/licenses/>.
-
+from lib.transliteration import short_encode
 from os.path import basename, isfile
 from urllib import quote_plus
 from urllib2 import urlopen, HTTPError, URLError, Request
@@ -38,7 +38,7 @@ class MediaParserResult():
 class MediaParserResultTVShow(MediaParserResult):
     def __init__(self,file_name,name,season_number,episode_numbers):
         self.file_name = file_name
-        self.name = name
+        self.name = short_encode(name)
         np = parser.NameParser()
         parse_result = np.parse(self.file_name)
         if parse_result.air_by_date:
@@ -76,7 +76,7 @@ class MediaParserResultTVShow(MediaParserResult):
 class MediaParserResultMovie(MediaParserResult):
     def __init__(self,file_name,name,year,imdbid):
         self.file_name = file_name
-        self.name = name
+        self.name = short_encode(name)
         self.year = year
 
         ImdbAPIurl = ('http://www.imdbapi.com/?t={0}&y={1}'.format(

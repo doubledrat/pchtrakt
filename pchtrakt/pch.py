@@ -23,6 +23,7 @@ from urllib2 import Request, urlopen, URLError, HTTPError
 from lib.utilities import Debug
 from xml.sax.saxutils import unescape
 import math, glob
+import pchtrakt
 
 
 class EnumStatus:
@@ -51,14 +52,14 @@ class PchRequestor:
     def parseResponse(self, response):
         oPchStatus = PchStatus()
         try:
-            response = unescape(response).decode('Latin-1', 'replace').encode('utf-8', 'replace')
+            response = unescape(response).decode('Latin-1', 'replace').encode(pchtrakt.SYS_ENCODING, 'replace')
             oXml = ElementTree.XML(response)
             if oXml.tag == "theDavidBox": # theDavidBox should be the root
                 if oXml.find("returnValue").text == '0' and int(oXml.find("response/totalTime").text) > 90:#Added total time check to avoid scrobble while playing adverts/trailers
                     oPchStatus.totalTime = int(oXml.find("response/totalTime").text)
                     oPchStatus.status = oXml.find("response/currentStatus").text
                     oPchStatus.fullPath = unicode(oXml.find("response/fullPath").text)
-                    oPchStatus.fullPath = oPchStatus.fullPath.encode('utf-8', 'replace' )
+                    #oPchStatus.fullPath = oPchStatus.fullPath.encode('utf-8', 'replace' )
                     oPchStatus.currentTime = int(oXml.find("response/currentTime").text)
                     if oXml.find("response/totalchapter")!= None:
                         oPchStatus.currentChapter = int(oXml.find("response/currentchapter").text)
