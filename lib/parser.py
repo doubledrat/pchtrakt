@@ -41,6 +41,11 @@ class NameParser(object):
 
         Stolen from dbr's tvnamer
         """
+        reps = {'HDgrp':'', '2bg':'2 Broke Girls', 'tbbt':'The Big Bang Theory', '-':' '}#series_name = series_name.replace("HDgrp-","")
+        for i, j in reps.iteritems():
+			series_name = series_name.replace(i, j)
+  
+
 
         series_name = re.sub("(\D)\.(?!\s)(\D)", "\\1 \\2", series_name)
         series_name = re.sub("(\d)\.(\d{4})", "\\1 \\2", series_name) # if it ends in a year then don't keep the dot
@@ -48,6 +53,7 @@ class NameParser(object):
         series_name = re.sub("\.(?!\s)(\D)", " \\1", series_name)
         series_name = series_name.replace("_", " ")
         series_name = re.sub("-$", "", series_name)
+  
         return series_name.strip()
 
     def _compile_regexes(self):
@@ -55,7 +61,7 @@ class NameParser(object):
             try:
                 cur_regex = re.compile(cur_pattern, re.VERBOSE | re.IGNORECASE)
             except re.error, errormsg:
-                Debug(u"WARNING: Invalid episode_pattern, %s. %s" % (errormsg, cur_pattern))
+                Debug(u"WARNING: Invalid episode_pattern, %s. %s" % (errormsg, cur_regex.pattern))
             else:
                 self.compiled_regexes.append((cur_pattern_name, cur_regex))
 
