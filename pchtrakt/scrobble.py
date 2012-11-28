@@ -178,6 +178,15 @@ def videoStatusHandleMovie(myMedia):
         pchtrakt.watched = 0
         pchtrakt.currentTime = myMedia.oStatus.currentTime
         movieStarted(myMedia)
+    #Debug('checking path 1')
+    #path = myMedia.oStatus.fullPath
+    #Debug('checking path 2')
+    #path = '{0}.watched'.format(path.encode('Latin-1', 'replace'))#.encode('utf-8', 'replace'))
+    #Debug('checking path 3')
+    #if not isfile(path):
+		#f = open(path, 'w')
+		#f.close()
+		#msg = 'I have created the file {0}'.format(path)
 
 def videoStatusHandleTVSeries(myMedia):
     if len(myMedia.parsedInfo.episode_numbers)>1:
@@ -301,12 +310,13 @@ def watchedFileCreation(myMedia):
             if not OnPCH:
                 path = path.replace('/opt/sybhttpd/localhost.drives/','')
                 path = path.split('/', 2)[2]
-                path = '{0}{1}'.format(YamjWatchedPath, path)
+                path = '{0}{1}'.format(YamjWatchedPath, path.encode('Latin-1', 'replace'))
         else:
             if (path.split(".")[-1] == "DVD"):
                 path = path[:-4]
-            path = '{0}{1}'.format(YamjWatchedPath, path)
-        path = '{0}.watched'.format(path)
+            path = '{0}{1}'.format(YamjWatchedPath, path.encode('Latin-1', 'replace'))
+        path = '{0}.watched'.format(path.encode('Latin-1', 'replace'))
+        #Debug('checking path')
         if not isfile(path):
             f = open(path, 'w')
             f.close()

@@ -25,50 +25,50 @@ from xml.etree import ElementTree
 from lib.tvdb_api import tvdb_api 
 from lib import parser
 from lib import regexes
-import re
+import re, locale, sys
 import ConfigParser
+from os.path import isfile
+from lib.transliteration import short_encode
+reload(sys)
+sys.setdefaultencoding("ANSI_X3.4-1968")
 
 TVShows = [ 
             # Filename , Serie, #Season, #Episode(s) 
-             ("Dexter - 6x09.mkv","Dexter",6,[9])
-            ,("Terra Nova - 1x11x12 - Occupation & Resistance.mkv","Terra Nova",1,[11,12])
-            ,("Dexter - S06E09.mkv","Dexter",6,[9])
-            ,("Terra Nova - S01E11-12 - Occupation & Resistance.mkv","Terra Nova",1,[11,12])
-            ,("Dexter.6x09.mkv","Dexter",6,[9])
-            ,("Terra.Nova.1x11x12.Occupation.&.Resistance.mkv","Terra Nova",1,[11,12])
-            ,("Breaking.Bad.S02E03.Bit.by.a.Dead.Bee.mkv","Breaking Bad",2,[3])
-            ,("Dexter.S06E09.mkv","Dexter",6,[9])
-            ,("Terra.Nova.S01E11-12.Occupation.&.Resistance.mkv","Terra Nova",1,[11,12])
-            ,("Terra.Nova.S1E11-12.Occupation.&.Resistance.mkv","Terra Nova",1,[11,12])
-            ,("Dexter.S6E9.mkv","Dexter",6,[9])
-            ,("The Cleveland Show - S03E01 - BFFs.HDTV.mkv","The Cleveland Show",3,[1])
+             #("Dexter - 6x09.mkv","Dexter",6,[9])
+            #,("The.Colbert.Report.2012.11.15.Chris.Stringer.720p.HDTV.x264-LMAO.mkv","Terra Nova",1,[11,12])
+            #,("Dexter - S06E09.mkv","Dexter",6,[9])
+            #,("Terra Nova - S01E11-12 - Occupation & Resistance.mkv","Terra Nova",1,[11,12])
+            #,("Dexter.6x09.mkv","Dexter",6,[9])
+            #,("Terra.Nova.1x11x12.Occupation.&.Resistance.mkv","Terra Nova",1,[11,12])
+            #,("Breaking.Bad.S02E03.Bit.by.a.Dead.Bee.mkv","Breaking Bad",2,[3])
+            #,("Dexter.S06E09.mkv","Dexter",6,[9])
+            #,("Terra.Nova.S01E11-12.Occupation.&.Resistance.mkv","Terra Nova",1,[11,12])
+            #("The Big Bang Theory - S02E07 - The Panty Piñata Polarization.avi")
+            #,("The.Colbert.Report.2012.11.15.Chris.Stringer.720p.HDTV.x264-LMAO.mkv")
+            #,("The.Daily.Show.2012.11.15.Andrew.Napolitano.720p.HDTV.x264-LMAO.mkv")
         ]
 
 Movies = [
             # Filename [I should inform the majors that theses files are some examples taken from the net ! ;-)]
-             ("Home.(2009).1080p.mkv") 
-            ,("Home (2009) 1080p.mkv")
-            ,("Home_(2009)_1080p.mkv")    
-            ,("Inception.BDRip.1080p.mkv")
-            ,("indiana jones and the last crusade 1989 1080p x264 dd5.1-m794.mkv")
-            ,("Indiana.Jones.and.the.Temple.of.Doom.[1984].HDTV.1080p.mkv")
-            ,("Inglourious.Basterds.(2009).BDRip.1080p.mkv")        
-            ,("James.Bond.04.Thunderball.1965.Bluray.1080p.DTSMA.x264.dxva-FraMeSToR.mkv")
-            ,("James.Bond.08.Live.and.Let.Die.1973.Bluray.1080p.DTSMA.x264.dxva-FraMeSToR.mkv")
-            ,("The.Godfather.Part.III.(1990).BDRip.1080p.[SET Godfather].mkv")
-            ,("Underworld.Rise.Of.The.Lycans.(2008).BDRip.1080p.[SET Underworld].mkv")
-            ,("unstoppable.2010.bluray.1080p.dts.x264-chd.mkv")
-            ,("UP.(2009).BDRip.720p.mkv") # epic !
-            ,("127.Hours.2010.1080p.BluRay.x264-SECTOR7.mkv")
-            ,("13.Assassins.2010.LIMITED.1080p.BluRay.x264-WEST.mkv")
-            ,("2012.(2009).BDRip.1080p.mkv")
-            ,("300.(2006).BDRip.1080p.mkv")
-            ,("Big.Fish.2003.1080p.BluRay.DTS.x264-DON")
-            ,("inf-fast5-1080p[ID tt1596343].mkv") # Who are looking this shit ?
+             #("Watchmen - Die Wächter.avi") 
+            ("L'age de glace La dérive des continents - Bluray - DTS-HD - X264 (2012) [SET L'age de glace-4].avi")
+            #,("Indiana.Jones.and.the.Temple.of.Doom.[1984].HDTV.1080p.mkv")
+            #,("Inglourious.Basterds.(2009).BDRip.1080p.mkv")        
+            #,("James.Bond.04.Thunderball.1965.Bluray.1080p.DTSMA.x264.dxva-FraMeSToR.mkv")
+            #,("James.Bond.08.Live.and.Let.Die.1973.Bluray.1080p.DTSMA.x264.dxva-FraMeSToR.mkv")
+            #,("Underworld.Rise.Of.The.Lycans.(2008).BDRip.1080p.[SET Underworld].mkv")
+            #,("unstoppable.2010.bluray.1080p.dts.x264-chd.mkv")
+            #,("UP.(2009).BDRip.720p.mkv") # epic !
+            #,("127.Hours.2010.1080p.BluRay.x264-SECTOR7.mkv")
+            #,("13.Assassins.2010.LIMITED.1080p.BluRay.x264-WEST.mkv")
+            #,("2012.(2009).BDRip.1080p.mkv")
+            #,("300.(2006).BDRip.1080p.mkv")
+            #,("Big.Fish.2003.1080p.BluRay.DTS.x264-DON")
+            #,("inf-fast5-1080p[ID tt1596343].mkv") # Who are looking this shit ?
             ,("Le.Fabuleux.Destin.d'Amélie.Poulain.2001.1080p.BluRay.DTS.x264-CtrlHD.mkv")
-            ,("avchd-paul.2011.extended.1080p.x264.mkv")
-            ,("twiz-unknown-1080p.mkv")
-	    ,("Hostel.Part.III.2011.Dvdrip.avi")
+            #,("avchd-paul.2011.extended.1080p.x264.mkv")
+            #,("twiz-unknown-1080p.mkv")
+	    #,("Hostel.Part.III.2011.Dvdrip.avi")
         ]                
                 
 class TestPchRequestor(unittest.TestCase):
@@ -82,31 +82,17 @@ class TestPchRequestor(unittest.TestCase):
         self.fakeResponsePLAYING = u"<theDavidBox><request><arg0>get_current_vod_info</arg0><module>playback</module></request><response><bufferStatus>0</bufferStatus><currentStatus>play</currentStatus><currentTime>2341</currentTime><downloadSpeed>0</downloadSpeed><fullPath>/opt/sybhttpd/localhost.drives/NETWORK_SHARE/download/Home.(2009).1080p.mkv</fullPath><lastPacketTime>0</lastPacketTime><mediatype>OTHERS</mediatype><seekEnable>true</seekEnable><title>/opt/sybhttpd/localhost.drives/NETWORK_SHARE/download/Home.(2009).1080p.mkv</title><totalTime>5620</totalTime></response><returnValue>0</returnValue></theDavidBox>"
         self.fakeResponsePLAYING_BD = u"<theDavidBox><request><arg0>get_current_vod_info</arg0><module>playback</module></request><response><currentStatus>play</currentStatus><currentTime>82</currentTime><currentchapter>135</currentchapter><downloadSpeed>0</downloadSpeed><fullPath>/opt/sybhttpd/localhost.drives/SATA_DISK_B4/Video/Films/Home/</fullPath><lastPacketTime>0</lastPacketTime><mediatype>BD</mediatype><seekEnable>true</seekEnable><title>/opt/sybhttpd/localhost.drives/SATA_DISK_B4/Video/Films/Home/</title><totalTime>99</totalTime><totalchapter>909</totalchapter></response><returnValue>0</returnValue></theDavidBox>"
             
-    def test_parseResponse(self):
-        self.assertEqual(self.oPchRequestor.parseResponse(self.fakeResponseOTHER).status, EnumStatus.UNKNOWN, "Should be UNKNOWN")
-        self.assertEqual(self.oPchRequestor.parseResponse(self.fakeResponseNOPLAY).status, EnumStatus.NOPLAY, "Should be NOPLAY")
-        self.assertEqual(self.oPchRequestor.parseResponse(self.fakeResponseBUFFERING).status, EnumStatus.LOAD, "Should be LOAD")            
-        self.assertEqual(self.oPchRequestor.parseResponse(self.fakeResponsePAUSE).status, EnumStatus.PAUSE, "Should be PAUSE")    
-        self.assertEqual(self.oPchRequestor.parseResponse(self.fakeResponsePLAYING).status, EnumStatus.PLAY,"Should be PLAY")
-        self.assertEqual(self.oPchRequestor.parseResponse(self.fakeResponsePLAYING).status, EnumStatus.PLAY,"Should be PLAY")
-        self.assertEqual(self.oPchRequestor.parseResponse(self.fakeResponsePLAYING).totalTime, 5620,"Should be 5620 seconds")
-        self.assertEqual(self.oPchRequestor.parseResponse(self.fakeResponsePLAYING).currentTime, 2341,"Should be 2341 seconds")
-        self.assertEqual(self.oPchRequestor.parseResponse(self.fakeResponsePLAYING).percent, 42,"Should be 42%")
-        self.assertEqual(self.oPchRequestor.parseResponse(self.fakeResponsePLAYING).fileName, "Home.(2009).1080p.mkv","Should be [Home.(2009).1080p.mkv]")
-        self.assertEqual(self.oPchRequestor.parseResponse(self.fakeResponsePLAYING_BD).fileName, "Home","Should be [Home]")
-        self.assertEqual(self.oPchRequestor.parseResponse(self.fakeResponsePLAYING_BD).percent, 15,"Should be 15%")
-                                    
     def test_getStatus(self):
         self.assertEqual(self.oPchRequestor.getStatus("1.1.1.1",0.1).status, EnumStatus.UNKNOWN, "Should be UNKNOWN (cannot connect to pch)")
         
     def test_getStatusRemote(self):
         oStatus = self.oPchRequestor.getStatus("83.134.24.223",0.1)
         if(oStatus.status != EnumStatus.UNKNOWN):
-            Debug(u"Remote PCH is [" + oStatus.status + "]")
-            Debug(u"    FileName=" + oStatus.fileName)
-            Debug(u"    CurrentTime=" + str(oStatus.currentTime) + "s")
-            Debug(u"    TotalTime=" + str(oStatus.totalTime) + "s")
-            Debug(u"    PercentTime=" + str(oStatus.percent) + "%")
+            print (u"Remote PCH is [" + oStatus.status + "]")
+            print (u"    FileName=" + oStatus.fileName)
+            print (u"    CurrentTime=" + str(oStatus.currentTime) + "s")
+            print (u"    TotalTime=" + str(oStatus.totalTime) + "s")
+            print (u"    PercentTime=" + str(oStatus.percent) + "%")
 
 class TestMediaParser(unittest.TestCase):
 
@@ -114,28 +100,39 @@ class TestMediaParser(unittest.TestCase):
         self.mediaparser = MediaParser()
 
     def test_TVShows(self):
-        for (fileName,serie_name,season,episode_numbers) in TVShows:
+        for (fileName) in TVShows:#,season,episode_numbers) in TVShows:
+            fileName = unescape(fileName).decode('Latin-1', 'replace')#.encode(pchtrakt.SYS_ENCODING, 'replace')
             self.assertEqual(isinstance(self.mediaparser.parse(fileName),MediaParserResultTVShow),True)
-            self.assertEqual(self.mediaparser.parse(fileName).name,serie_name)
-            self.assertEqual(self.mediaparser.parse(fileName).season_number,season)
-            self.assertEqual(self.mediaparser.parse(fileName).episode_numbers,episode_numbers)
-            
+            #self.assertEqual(self.mediaparser.parse(fileName).name,serie_name)
+            #self.assertEqual(self.mediaparser.parse(fileName).season_number,season)
+            #self.assertEqual(self.mediaparser.parse(fileName).episode_numbers,episode_numbers)
+            print ("Title=" + str(self.mediaparser.parse(fileName).name) + " Season=" + str(self.mediaparser.parse(fileName).season_number) + " Episode=" + str(self.mediaparser.parse(fileName).episode_numbers))
+            path = '/share/Apps/pchtrakt/'
+            path = path + '{0}.watched'.format(short_encode(fileName))
+            if not isfile(path):
+				f = open(path, 'w')
+				f.close()
+				print 'I have created the file {0}'.format(path)
+			
     def test_Movies(self):
         for (fileName) in Movies:
-            self.assertEqual(isinstance(self.mediaparser.parse(fileName),MediaParserResultMovie),True)
-            Debug("Title=" + str(self.mediaparser.parse(fileName).name) +" (" + str(self.mediaparser.parse(fileName).year) + ") - IMDB=" + str(self.mediaparser.parse(fileName).id))
+            fileName1 = unescape(fileName).decode('Latin-1', 'replace')#.encode('ANSI_X3.4-1968', 'replace')
+            print short_encode(fileName1)
+            self.assertEqual(isinstance(self.mediaparser.parse(fileName1),MediaParserResultMovie),True)
+            print ("Title=" + str(self.mediaparser.parse(fileName1).name) +" (" + str(self.mediaparser.parse(fileName1).year) + ") - IMDB=" + str(self.mediaparser.parse(fileName1).id))
+            path = '/share/Apps/pchtrakt/'
+            path = path + '{0}.watched'.format(fileName1.encode('UTF-8', 'replace'))
+            if not isfile(path):
+				f = open(path, 'w')
+				f.close()
+				print 'I have created the file {0}'.format(path)
 
-class TestTVDBAPIUsage(unittest.TestCase):
-    
-    def test_tvdb_api(self):
-        tvdb = tvdb_api.Tvdb()
-        for (fileName,serie_name,season,episode_numbers) in TVShows:
-            serie_info = tvdb[serie_name]
-            season_info = tvdb[serie_name][season]
-            episode_info = tvdb[serie_name][season][episode_numbers[0]]
-            #Debug("TvShow ID on tvdb = " + str(serie_info['id']))
-            #Debug("FirstAired= " + str(serie_info['firstaired']))
-            #Debug("Episode ID on tvdb = " + str(episode_info['id']))
-        
 if __name__ == '__main__':
-    unittest.main()
+	pchtrakt.SYS_ENCODING = None
+	try:
+		locale.setlocale(locale.LC_ALL, "")
+		pchtrakt.SYS_ENCODING = locale.getpreferredencoding()
+		print "system encoding is: " + pchtrakt.SYS_ENCODING
+	except (locale.Error, IOError):
+		pass
+	unittest.main()

@@ -52,14 +52,13 @@ class PchRequestor:
     def parseResponse(self, response):
         oPchStatus = PchStatus()
         try:
-            response = unescape(response).decode('Latin-1', 'replace').encode(pchtrakt.SYS_ENCODING, 'replace')
+            response = unescape(response).decode('Latin-1', 'replace').encode('utf-8', 'replace')
             oXml = ElementTree.XML(response)
             if oXml.tag == "theDavidBox": # theDavidBox should be the root
                 if oXml.find("returnValue").text == '0' and int(oXml.find("response/totalTime").text) > 90:#Added total time check to avoid scrobble while playing adverts/trailers
                     oPchStatus.totalTime = int(oXml.find("response/totalTime").text)
                     oPchStatus.status = oXml.find("response/currentStatus").text
                     oPchStatus.fullPath = unicode(oXml.find("response/fullPath").text)
-                    #oPchStatus.fullPath = oPchStatus.fullPath.encode('utf-8', 'replace' )
                     oPchStatus.currentTime = int(oXml.find("response/currentTime").text)
                     if oXml.find("response/totalchapter")!= None:
                         oPchStatus.currentChapter = int(oXml.find("response/currentchapter").text)
@@ -70,7 +69,7 @@ class PchRequestor:
                         if (oPchStatus.fullPath == "/iso"):#Change path if iso file
 							newpath = glob.glob("/isolink/*.iso")
 							newpath = unicode(newpath)[2:-2]
-							oPchStatus.fullPath = newpath.encode('utf8', 'replace')
+							#oPchStatus.fullPath = newpath.encode('utf8', 'replace')
                         if(self.mediaType == "BD"): # Blu-ray Disc are not handle like .mkv or .avi files
 							oPchStatus.fileName = oPchStatus.fullPath.split('/')[::-1][1]# add a / on last position when ISO
 							if oPchStatus.totalTime!=0:
