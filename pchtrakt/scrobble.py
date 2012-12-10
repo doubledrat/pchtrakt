@@ -110,7 +110,7 @@ def showIsEnding(myMedia):
                 msg += 'already watched: '
             if result or isWatched:
                 myMedia.ScrobResult |=  EnumScrobbleResult.BETASERIESOK
-                msg += '{0} {1}x{2}'.format(myMedia.parsedInfo.name,
+                msg += u'{0} {1}x{2}'.format(myMedia.parsedInfo.name,
                                            myMedia.parsedInfo.season_number,
                                            myMedia.parsedInfo.episode_numbers[myMedia.idxEpisode]
                                            )
@@ -243,7 +243,7 @@ def videoStatusHandle(myMedia):
 def isIgnored(myMedia):
     ignored = False
 
-    msg = u'File: {0}'.format(myMedia.oStatus.fileName)
+    msg = u'File: {0}'.format(myMedia.oStatus.fileName).encode('Latin-1', 'replace')
     pchtrakt.logger.info(msg)
 
     ignored = isKeywordIgnored(myMedia.oStatus.fileName)
@@ -269,7 +269,7 @@ def isIgnored(myMedia):
                         if ignored:
                             break
         else:
-            file = unicode(myMedia.oStatus.fileName.rsplit('.',1)[0] + '.xml', errors='replace')
+            file = unicode(myMedia.oStatus.fileName.rsplit('.',1)[0] + '.xml', errors='replace').encode('Latin-1', 'replace')
             oXml = ElementTree.parse(YamjPath + file)
             genres = oXml.findall('.//genre')
 
@@ -310,12 +310,12 @@ def watchedFileCreation(myMedia):
             if not OnPCH:
                 path = path.replace('/opt/sybhttpd/localhost.drives/','')
                 path = path.split('/', 2)[2]
-                path = '{0}{1}'.format(YamjWatchedPath, path.encode('Latin-1', 'replace'))
+                path = u'{0}{1}'.format(YamjWatchedPath, path)
         else:
             if (path.split(".")[-1] == "DVD"):
                 path = path[:-4]
-            path = '{0}{1}'.format(YamjWatchedPath, path.encode('Latin-1', 'replace'))
-        path = '{0}.watched'.format(path.encode('Latin-1', 'replace'))
+            path = u'{0}{1}'.format(YamjWatchedPath, path)
+        path = u'{0}.watched'.format(path).encode('Latin-1', 'replace')
         #Debug('checking path')
         if not isfile(path):
             f = open(path, 'w')
@@ -332,7 +332,7 @@ def watchedFileCreation(myMedia):
 						Debug(fileinfo)
 						for name in glob.glob(fileinfo):
 							Debug(name)
-							if myMedia.oStatus.fileName[:-4] in open(name).read():#gets xml file name as name
+							if unicode(myMedia.oStatus.fileName).encode('Latin-1', 'replace')[:-4] in open(name).read():#gets xml file name as name
 								tree = ElementTree.parse(name)
 								for movie in tree.findall('movies/movie'):
 									if movie.find('baseFilenameBase').text == myMedia.oStatus.fileName[:-4]:#for  content in penContents:
@@ -365,7 +365,7 @@ def watchedFileCreation(myMedia):
 					Debug(fileinfo)
 					for name in glob.glob(fileinfo):
 						Debug(name)
-						if myMedia.oStatus.fileName in open(name).read():
+						if unicode(myMedia.oStatus.fileName).encode('Latin-1', 'replace') in open(name).read():
 							tree = ElementTree.parse(name)
 							for movie in tree.findall(xpath):
 								Debug(movie.get('firstPart'))
@@ -384,10 +384,12 @@ def watchedFileCreation(myMedia):
 						fileinfo = jukeboxpath + xmlword + "*.xml"
 						for name in glob.glob(fileinfo):
 							Debug(name)
-							if myMedia.oStatus.fileName in open(name).read():
+							if unicode(myMedia.oStatus.fileName).encode('Latin-1', 'replace') in open(name).read():
+								Debug("after name")
 								tree = ElementTree.parse(name)
 								for movie in tree.findall(xpath):
 									if movie.get('firstPart') == epno and movie.get('season') == str(myMedia.parsedInfo.season_number):
+										Debug("match")
 										movie.set('watched', 'true')
 										bak_name = name[:-4]+'.bak'
 										tree.write(bak_name)
