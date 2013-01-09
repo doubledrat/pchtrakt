@@ -243,7 +243,7 @@ def videoStatusHandle(myMedia):
 def isIgnored(myMedia):
     ignored = False
 
-    msg = u'File: {0}'.format(myMedia.oStatus.fileName).encode('Latin-1', 'replace')
+    msg = u'File: {0}'.format(myMedia.oStatus.fileName)#.encode('Latin-1', 'replace')
     pchtrakt.logger.info(msg)
 
     ignored = isKeywordIgnored(myMedia.oStatus.fileName)
@@ -365,7 +365,7 @@ def watchedFileCreation(myMedia):
 					Debug(fileinfo)
 					for name in glob.glob(fileinfo):
 						Debug(name)
-						if unicode(myMedia.oStatus.fileName).encode('Latin-1', 'replace') in open(name).read():
+						if myMedia.oStatus.fileName.encode('utf-8', 'replace') in open(name).read():
 							tree = ElementTree.parse(name)
 							for movie in tree.findall(xpath):
 								Debug(movie.get('firstPart'))
@@ -383,8 +383,8 @@ def watchedFileCreation(myMedia):
 						Debug(xmlword)
 						fileinfo = jukeboxpath + xmlword + "*.xml"
 						for name in glob.glob(fileinfo):
-							Debug(name)
-							if unicode(myMedia.oStatus.fileName).encode('Latin-1', 'replace') in open(name).read():
+							Debug("before name")#(name)
+							if myMedia.oStatus.fileName.encode('utf-8', 'replace') in open(name).read():
 								Debug("after name")
 								tree = ElementTree.parse(name)
 								for movie in tree.findall(xpath):
