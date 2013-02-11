@@ -21,7 +21,7 @@ from xml.etree import ElementTree
 from string import split
 from urllib2 import Request, urlopen, URLError, HTTPError
 from lib.utilities import Debug
-from lib.encoding import toUnicode
+from lib.encoding import toUnicode, toSafeString
 from xml.sax.saxutils import unescape
 import math, glob
 import pchtrakt
@@ -53,7 +53,7 @@ class PchRequestor:
     def parseResponse(self, response):
         oPchStatus = PchStatus()
         try:
-            response = unescape(response).decode('Latin-1', 'replace').encode('utf-8', 'replace')
+            response = unescape(toUnicode(response))#.decode('Latin-1', 'replace').encode('utf-8', 'replace')
             Debug(response)
             oXml = ElementTree.XML(response)
             if oXml.tag == "theDavidBox": # theDavidBox should be the root

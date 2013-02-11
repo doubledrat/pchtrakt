@@ -269,7 +269,7 @@ def isIgnored(myMedia):
                         if ignored:
                             break
         else:
-            file = unicode(myMedia.oStatus.fileName.rsplit('.',1)[0] + '.xml', errors='replace').encode('Latin-1', 'replace')
+            file = unicode(myMedia.oStatus.fileName.rsplit('.',1)[0] + '.xml', errors='replace')#.encode('Latin-1', 'replace')
             oXml = ElementTree.parse(YamjPath + file)
             genres = oXml.findall('.//genre')
 
@@ -315,7 +315,7 @@ def watchedFileCreation(myMedia):
             if (path.split(".")[-1] == "DVD"):
                 path = path[:-4]
             path = u'{0}{1}'.format(YamjWatchedPath, path)
-        path = u'{0}.watched'.format(path).encode('Latin-1', 'replace')
+        path = u'{0}.watched'.format(path)#.encode('UTF-8', 'replace')
         #Debug('checking path')
         if not isfile(path):
             f = open(path, 'w')
@@ -323,6 +323,7 @@ def watchedFileCreation(myMedia):
             msg = 'I have created the file {0}'.format(path)
             pchtrakt.logger.info(msg)
             if  updatexmlwatched:
+				lookfor = myMedia.oStatus.fileName.encode( "utf-8", "replace" )[:-4]
 				msg = 'Starting xml update in '+jukeboxpath
 				pchtrakt.logger.info(msg)
 				if pchtrakt.isMovie:
@@ -332,10 +333,11 @@ def watchedFileCreation(myMedia):
 						Debug(fileinfo)
 						for name in glob.glob(fileinfo):
 							Debug(name)
-							if unicode(myMedia.oStatus.fileName).encode('Latin-1', 'replace')[:-4] in open(name).read():#gets xml file name as name
+							if lookfor in open(name).read():#gets xml file name as name
+								Debug("MATCH FOUND")
 								tree = ElementTree.parse(name)
 								for movie in tree.findall('movies/movie'):
-									if movie.find('baseFilenameBase').text == myMedia.oStatus.fileName[:-4]:#for  content in penContents:
+									if movie.find('baseFilenameBase').text == lookfor:#for  content in penContents:
 										movie.find('watched').text = 'true'
 										for mfile in movie.findall('files/file'):
 											mfile.set('watched', 'true')
@@ -346,7 +348,7 @@ def watchedFileCreation(myMedia):
 											pchtrakt.logger.info(txt)
 											previous = xmlword
 										break
-									break
+								break
 				elif pchtrakt.isTvShow:
 					epno = str(myMedia.parsedInfo.episode_numbers).replace('[', '').replace(']', '')
 					if version_info >= (2,7): #[@...=...] only available with python >= 2.7 
@@ -365,7 +367,7 @@ def watchedFileCreation(myMedia):
 					Debug(fileinfo)
 					for name in glob.glob(fileinfo):
 						Debug(name)
-						if myMedia.oStatus.fileName.encode('utf-8', 'replace') in open(name).read():
+						if lookfor in open(name).read():
 							tree = ElementTree.parse(name)
 							for movie in tree.findall(xpath):
 								Debug(movie.get('firstPart'))
@@ -384,7 +386,7 @@ def watchedFileCreation(myMedia):
 						fileinfo = jukeboxpath + xmlword + "*.xml"
 						for name in glob.glob(fileinfo):
 							Debug("before name")#(name)
-							if myMedia.oStatus.fileName.encode('utf-8', 'replace') in open(name).read():
+							if lookfor in open(name).read():
 								Debug("after name")
 								tree = ElementTree.parse(name)
 								for movie in tree.findall(xpath):
