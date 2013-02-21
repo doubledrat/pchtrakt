@@ -56,7 +56,7 @@ from datetime import date
 from xml.etree import ElementTree
 from urllib2 import Request, urlopen, URLError, HTTPError
 from urllib import quote
-
+from lib.utilities import Debug, decode_string
 class PchTraktException(Exception):
     pass
 tvdb = tvdb_api.Tvdb()
@@ -173,8 +173,8 @@ def doWork():
         try:
             watchedFileCreation(myMedia)
         except BaseException as e:
-            Debug('::: {0} :::'.format(pchtrakt.lastPath))
-            Debug('::: {0} :::'.format(e))
+            #Debug('::: {0} :::'.format(pchtrakt.lastPath))
+            #Debug('::: {0} :::'.format(e))
             pchtrakt.logger.error(e)
     if not pchtrakt.StopTrying:
         if myMedia.oStatus.status not in   [EnumStatus.NOPLAY,
@@ -260,8 +260,8 @@ if __name__ == '__main__':
 				sleep(sleepTime)
 		except Exception as e:
 			stopTrying()
-			Debug(u'::: {0} :::'.format(pchtrakt.lastPath))
-			Debug(u'::: {0} :::'.format(e))
+			#Debug(u'::: {0} :::'.format(pchtrakt.lastPath))
+			#Debug(u'::: {0} :::'.format(e))
 			pchtrakt.logger.exception('This should never happend! Please contact me with the error if you read this')
 			pchtrakt.logger.exception(pchtrakt.lastPath)
 			pchtrakt.logger.exception(e)
