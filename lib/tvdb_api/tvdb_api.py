@@ -15,11 +15,13 @@ Example usage:
 u'Cabin Fever'
 """
 __author__ = "dbr/Ben"
-__version__ = "1.7.2"
+__version__ = "1.8.2"
 
-import os, time
+import os
+import time
 import urllib
 import urllib2
+import getpass
 import StringIO
 import tempfile
 import warnings
@@ -72,7 +74,7 @@ class ShowContainer(dict):
 
             _lastgc = time.time()
             del tbd
-
+                    
         super(ShowContainer, self).__setitem__(key, value)
 
 
@@ -128,9 +130,9 @@ class Show(dict):
         Search terms are converted to lower case (unicode) strings.
 
         # Examples
-
+        
         These examples assume t is an instance of Tvdb():
-
+        
         >>> t = Tvdb()
         >>>
 
@@ -236,7 +238,7 @@ class Episode(dict):
         """Search episode data for term, if it matches, return the Episode (self).
         The key parameter can be used to limit the search to a specific element,
         for example, episodename.
-
+        
         This primarily for use use by Show.search and Season.search. See
         Show.search for further information on search
 
@@ -360,7 +362,7 @@ class Tvdb:
             By default, Tvdb will only search in the language specified using
             the language option. When this is True, it will search for the
             show in and language
-
+        
         apikey (str/unicode):
             Override the default thetvdb.com API key. By default it will use
             tvdb_api's own key (fine for small scripts), but you can use your
@@ -379,13 +381,13 @@ class Tvdb:
             This is only used when all episodes are pulled.
             And only the main language xml is used, the actor and banner xml are lost.
         """
-
+        
         global lastTimeout
-
+        
         # if we're given a lastTimeout that is less than 1 min just give up
         if not forceConnect and lastTimeout != None and datetime.datetime.now() - lastTimeout < datetime.timedelta(minutes=1):
             raise tvdb_error("We recently timed out, so giving up early this time")
-
+        
         self.shows = ShowContainer() # Holds all Show classes
         self.corrections = {} # Holds show-name to show_id mapping
 
@@ -494,9 +496,19 @@ class Tvdb:
     #end __init__
 
     def _getTempDir(self):
-        """Returns the [system temp dir]/tvdb_api
+        """Returns the [system temp dir]/tvdb_api-u501 (or
+        tvdb_api-myuser)
         """
-        return os.path.join(tempfile.gettempdir(), "tvdb_api")
+        if hasattr(os, 'getuid'):
+            uid = "u%d" % (os.getuid())
+        else:
+            # For Windows
+            try:
+                uid = getpass.getuser()
+            except ImportError:
+                return os.path.join(tempfile.gettempdir(), "tvdb_api")
+
+        return os.path.join(tempfile.gettempdir(), "tvdb_api-%s" % (uid))
 
     def _loadUrl(self, url, recache = False, language=None):
         global lastTimeout
@@ -516,7 +528,7 @@ class Tvdb:
                 lastTimeout = datetime.datetime.now()
             raise tvdb_error("Could not connect to server: %s" % (errormsg))
         #end try
-
+        
         # handle gzipped content,
         # http://dbr.lighthouseapp.com/projects/13342/tickets/72-gzipped-data-patch
         if 'gzip' in resp.headers.get("Content-Encoding", ''):
@@ -845,7 +857,7 @@ class Tvdb:
             if key not in self.shows:
                 self._getShowData(key, self.config['language'])
             return self.shows[key]
-
+        
         key = key.lower() # make key lower case
         sid = self._nameToSid(key)
         log().debug('Got series id %s' % (sid))
@@ -870,3 +882,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
