@@ -27,7 +27,7 @@
 import sys
 import getopt
 import pchtrakt
-
+#This needed?
 pchtrakt.SYS_ENCODING = None
 reload(sys)
 sys.setdefaultencoding("ANSI_X3.4-1968")
@@ -37,7 +37,7 @@ if not hasattr(sys, "setdefaultencoding"):
     
 import os
 import json
-import locale
+#import locale #needed?
 
 from pchtrakt.pch import *
 from pchtrakt.scrobble import *
@@ -56,7 +56,7 @@ from datetime import date
 from xml.etree import ElementTree
 from urllib2 import Request, urlopen, URLError, HTTPError
 from urllib import quote
-from lib.utilities import Debug, decode_string
+from lib.utilities import Debug#, decode_string
 class PchTraktException(Exception):
     pass
 tvdb = tvdb_api.Tvdb()
@@ -91,6 +91,7 @@ def printHelp():
     print('    -d,--daemon  :    launches pchtrakt in the background')
 
 
+
 def getParams():
     try:
         opts, args = getopt.getopt(sys.argv[1:],
@@ -123,6 +124,7 @@ def getParams():
                 sys.exit()
 
 
+
 def daemonize():
     """
     Fork off as a daemon
@@ -153,6 +155,9 @@ def daemonize():
 
     dev_null = file('/dev/null', 'r')
     os.dup2(dev_null.fileno(), sys.stdin.fileno())
+
+
+
 
 
 def doWork():
@@ -207,12 +212,18 @@ def doWork():
             Debug("PCH status = {0}".format(myMedia.oStatus.status))
 
 
+
+
+
 def stopTrying():
     try:
         pchtrakt.StopTrying = 1
         pchtrakt.lastPath = myMedia.oStatus.fullPath
     except Exception as e:
         pass
+
+
+
 
 
 if __name__ == '__main__':
@@ -267,3 +278,6 @@ if __name__ == '__main__':
 			pchtrakt.logger.exception(e)
 			sleep(sleepTime)
     pchtrakt.logger.info('Pchtrakt STOP')
+
+
+
