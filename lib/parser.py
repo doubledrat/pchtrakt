@@ -41,17 +41,18 @@ class NameParser(object):
 
         Stolen from dbr's tvnamer
         """
-        reps = {'HDgrp':'', '2bg':'2 Broke Girls', 'tbbt':'The Big Bang Theory', '-':' '}#series_name = series_name.replace("HDgrp-","")
+        reps = {'HDgrp':'', '2bg':'2 Broke Girls', 'tbbt':'The Big Bang Theory'}
         for i, j in reps.iteritems():
 			series_name = series_name.replace(i, j)
   
 
 
-        series_name = re.sub("(\D)\.(?!\s)(\D)", "\\1 \\2", series_name)
-        series_name = re.sub("(\d)\.(\d{4})", "\\1 \\2", series_name) # if it ends in a year then don't keep the dot
-        series_name = re.sub("(\D)\.(?!\s)", "\\1 ", series_name)
-        series_name = re.sub("\.(?!\s)(\D)", " \\1", series_name)
+        series_name = re.sub("(\D)[.](\D)", "\\1 \\2", series_name)
+        series_name = re.sub("(\D)[.]", "\\1 ", series_name) # if it ends in a year then don't keep the dot
+        series_name = re.sub("[.](\D)", " \\1", series_name)
+        series_name = re.sub("\[.*?\]", "", series_name)
         series_name = series_name.replace("_", " ")
+        series_name = series_name.replace(" - ", " ")
         series_name = re.sub("-$", "", series_name)
   
         return series_name.strip()
@@ -178,6 +179,20 @@ class NameParser(object):
         if number.lower() == 'xiii': return 13
         if number.lower() == 'xiv': return 14
         if number.lower() == 'xv': return 15
+        if number.lower() == 'xvi': return 16
+        if number.lower() == 'xvii': return 17
+        if number.lower() == 'xviii': return 18
+        if number.lower() == 'xix': return 19
+        if number.lower() == 'xx': return 20
+        if number.lower() == 'xxi': return 21
+        if number.lower() == 'xxii': return 22
+        if number.lower() == 'xxiii': return 23
+        if number.lower() == 'xxiv': return 24
+        if number.lower() == 'xxv': return 25
+        if number.lower() == 'xxvi': return 26
+        if number.lower() == 'xxvii': return 27
+        if number.lower() == 'xxviii': return 28
+        if number.lower() == 'xxix': return 29
 
         return int(number)
 

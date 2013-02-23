@@ -7,7 +7,6 @@ from pchtrakt.config import *
 import pchtrakt
 try: import simplejson as json
 except ImportError: import json
-
 #from nbhttpconnection import *
 from hashlib import sha1
 import urllib, re
@@ -42,12 +41,14 @@ class MaxScrobbleError(TraktError):
 		Exception.__init__(self, 'Trakt.tv - Shows per hour limit reached')
 
 def Debug(msg, force=use_debug):
-    myMsg = unicode(msg)
+    myMsg = msg
     if (pchtrakt.debug or force):
         try:
             pchtrakt.logger.info(myMsg)
         except UnicodeEncodeError:
-            pchtrakt.logger.info(myMsg.encode( "utf-8", "replace" ))
+            Debug("debuging debug msg")
+            myMsg = myMsg.encode( "utf-8", "replace" )
+            pchtrakt.logger.info(myMsg)
 
 def checkSettings(daemon=False):
     if username != 'your_trakt_login':
@@ -125,6 +126,7 @@ def traktJsonRequest(method, req, args={}, returnStatus=False, anon=False, conn=
             return data;
         return None
    
+    conn.set_debuglevel(1)
     response = conn.getresponse()
     
     try:
@@ -425,7 +427,7 @@ def rateShowOnTrakt(tvdbid, title, year, rating):
         # notification("Trakt Utilities", __language__(1167).encode( "utf-8", "ignore" )) # Rating submitted successfully
     
     return data
-
+		
 #Get the rating for a tv show from trakt
 def getShowRatingFromTrakt(tvdbid, title, year):
     if tvdbid == "" or tvdbid == None:
