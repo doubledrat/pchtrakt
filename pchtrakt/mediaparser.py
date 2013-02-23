@@ -16,7 +16,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with pchtrakt.  If not, see <http://www.gnu.org/licenses/>.
-from lib.transliteration import short_encode
+
 from os.path import basename, isfile
 from urllib import quote_plus
 from urllib2 import urlopen, HTTPError, URLError, Request
@@ -38,7 +38,7 @@ class MediaParserResult():
 class MediaParserResultTVShow(MediaParserResult):
     def __init__(self,file_name,name,season_number,episode_numbers):
         self.file_name = file_name
-        self.name = short_encode(name)
+        self.name = name
         np = parser.NameParser()
         parse_result = np.parse(self.file_name)
         if parse_result.air_by_date:
@@ -76,11 +76,11 @@ class MediaParserResultTVShow(MediaParserResult):
 class MediaParserResultMovie(MediaParserResult):
     def __init__(self,file_name,name,year,imdbid):
         self.file_name = file_name
-        self.name = short_encode(name)
+        self.name = name
         self.year = year
 
         ImdbAPIurl = ('http://www.imdbapi.com/?t={0}&y={1}'.format(
-                                        quote_plus(self.name),
+                                        quote_plus(self.name.encode('utf-8', 'replace')),
                                         self.year))
         Debug("Trying search 1: "+ImdbAPIurl)
         try:
@@ -93,7 +93,7 @@ class MediaParserResultMovie(MediaParserResult):
         except KeyError:
             ImdbAPIurl = ('http://www.deanclatworthy.com/' \
                           'imdb/?q={0}&year={1}'.format(
-                                quote_plus(self.name),
+                                quote_plus(self.name.encode('utf-8', 'replace')),
                                 self.year))
             Debug("Trying search 2: "+ImdbAPIurl)
             try:
@@ -103,7 +103,7 @@ class MediaParserResultMovie(MediaParserResult):
                 Debug("Found Movie match using: "+ImdbAPIurl)
             except:
 				try: 
-					address = ('http://www.google.com/search?q=www.imdb.com:site+{0}&num=1&start=0'.format(quote_plus(self.name)))
+					address = ('http://www.google.com/search?q=www.imdb.com:site+{0}&num=1&start=0'.format(quote_plus(self.name.encode('utf-8', 'replace'))))
 					Debug("Trying search 3: "+address)
 					request = Request(address, None, {'User-Agent':'Mosilla/5.0 (Macintosh; Intel Mac OS X 10_7_4) AppleWebKit/536.11 (KHTML, like Gecko) Chrome/20.0.1132.57 Safari/536.11'})
 					urlfile = urlopen(request)

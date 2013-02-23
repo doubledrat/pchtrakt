@@ -80,18 +80,20 @@ class MovieParser():
         Is basically equivalent to replacing all _ and . with a
         space, but handles decimal numbers in string, for example:
 
-        >>> cleanRegexedSeriesName("an.example.1.0.test")
-        'an example 1.0 test'
         >>> cleanRegexedSeriesName("an_example_1.0_test")
         'an example 1.0 test'
 
         Stolen from dbr's tvnamer
         """
+        reps = {'X264':' ', 'DTS-HD':' ', 'Bluray':' ', '0000':'0,000', 'HDDVD':'', 'DVDRIP':'', 'DVDR':''}
+        for i, j in reps.iteritems():
+			movie_name = movie_name.replace(i, j)
 
-        movie_name = re.sub("(\D)\.(?!\s)(\D)", "\\1 \\2", movie_name)
-        movie_name = re.sub("(\d)\.(\d{4})", "\\1 \\2", movie_name) # if it ends in a year then don't keep the dot
-        movie_name = re.sub("(\D)\.(?!\s)", "\\1 ", movie_name)
-        movie_name = re.sub("\.(?!\s)(\D)", " \\1", movie_name)
+        movie_name = re.sub("(\D)[.](\D)", "\\1 \\2", movie_name)
+        movie_name = re.sub("(\D)[.]", "\\1 ", movie_name) # if it ends in a year then don't keep the dot
+        movie_name = re.sub("[.](\D)", " \\1", movie_name)
+        movie_name = re.sub("\[.*?\]", "", movie_name)
+        movie_name = movie_name.replace(" - ", " ")
         movie_name = movie_name.replace("_", " ")
         movie_name = re.sub("-$", "", movie_name)
         return movie_name.strip()

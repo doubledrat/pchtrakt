@@ -12,7 +12,7 @@ from pchtrakt import betaseries as bs
 from pchtrakt.config import *
 from time import sleep
 from pchtrakt.pch import EnumStatus
-
+#from pchtrakt.pch import decode_string, utf8_encoded
 class EnumScrobbleResult:
     KO = 0
     TRAKTOK = 1
@@ -123,6 +123,7 @@ def showIsEnding(myMedia):
     except Exception as e:
         Debug(e)
     if TraktScrobbleTvShow:
+        Debug("TV ENDIng")
         result = 0
         response = utilities.scrobbleEpisodeOnTrakt(myMedia.parsedInfo.id,
                                                     myMedia.parsedInfo.name,
@@ -144,6 +145,7 @@ def showIsEnding(myMedia):
 
 
 def movieIsEnding(myMedia):
+    Debug("Movie ENDIng")
     response = utilities.scrobbleMovieOnTrakt(myMedia.parsedInfo.id,
                                                myMedia.parsedInfo.name,
                                                myMedia.parsedInfo.year,
@@ -301,8 +303,10 @@ def isGenreIgnored(genres):
 
 def watchedFileCreation(myMedia):
     if myMedia.oStatus.percent > watched_percent:
+        Debug('watchedFileCreation')
         path = myMedia.oStatus.fileName
         if YamJWatchedVithVideo:
+            Debug('YamJWatchedVithVideo')
             path = myMedia.oStatus.fullPath
 			#Remember that .DVD extension
             if (path.split(".")[-1] == "DVD"):
@@ -310,55 +314,69 @@ def watchedFileCreation(myMedia):
             if not OnPCH:
                 path = path.replace('/opt/sybhttpd/localhost.drives/','')
                 path = path.split('/', 2)[2]
-                path = u'{0}{1}'.format(YamjWatchedPath, path)
+                path = '{0}{1}'.format(YamjWatchedPath, path)
         else:
             if (path.split(".")[-1] == "DVD"):
                 path = path[:-4]
-            path = u'{0}{1}'.format(YamjWatchedPath, path)
-        path = u'{0}.watched'.format(path)#.encode('UTF-8', 'replace')
+            path = '{0}{1}'.format(YamjWatchedPath, path)
+        Debug('path = 1')
+        try:
+			path = '{0}.watched'.format(path.encode('utf-8', 'replace'))
+			matchthis = myMedia.oStatus.fileName.encode('utf-8')
+        except:
+			Debug('doing except for path')
+			path = '{0}.watched'.format(path.encode('latin-1', 'replace'))
+			matchthis = myMedia.oStatus.fileName.encode('utf-8', 'replace')
+        Debug(path + ' = 2')
         #Debug('checking path')
         if not isfile(path):
+            Debug('Start to write file')
             f = open(path, 'w')
             f.close()
             msg = 'I have created the file {0}'.format(path)
             pchtrakt.logger.info(msg)
+            Debug('Start xml update routine')
             if  updatexmlwatched:
-				lookfor = myMedia.oStatus.fileName.encode( "utf-8", "replace" )[:-4]
+				lookfor = matchthis[:-4]
 				msg = 'Starting xml update in '+jukeboxpath
 				pchtrakt.logger.info(msg)
 				if pchtrakt.isMovie:
+					msg = 'Starting Movie xml update in '+jukeboxpath
+					pchtrakt.logger.info(msg)
 					previous = None
 					for xmlword in moviexmlfind:
 						fileinfo = jukeboxpath + xmlword + "*.xml"
-						Debug(fileinfo)
+						Debug('Scanning ' + fileinfo)
 						for name in glob.glob(fileinfo):
-							Debug(name)
+							Debug('Looking for ' + name)
 							if lookfor in open(name).read():#gets xml file name as name
 								Debug("MATCH FOUND")
 								tree = ElementTree.parse(name)
 								for movie in tree.findall('movies/movie'):
-									if movie.find('baseFilenameBase').text == lookfor:#for  content in penContents:
+									if movie.find('baseFilenameBase').text.encode('utf-8') == lookfor:#for  content in penContents:
 										movie.find('watched').text = 'true'
 										for mfile in movie.findall('files/file'):
 											mfile.set('watched', 'true')
 											bak_name = name[:-4]+'.bak'
-											tree.write(bak_name)
+											tree.write(bak_name, encoding="utf-8")
 											os.rename(bak_name, name)
-											txt = name.replace(jukeboxpath, '') + ' has been modified as watched for ' + myMedia.oStatus.fileName
+											txt = name.replace(jukeboxpath, '') + ' has been modified as watched for ' + matchthis
 											pchtrakt.logger.info(txt)
 											previous = xmlword
 										break
 								break
 				elif pchtrakt.isTvShow:
+					msg = 'Starting Tv xml update in '+jukeboxpath
+					pchtrakt.logger.info(msg)
 					epno = str(myMedia.parsedInfo.episode_numbers).replace('[', '').replace(']', '')
 					if version_info >= (2,7): #[@...=...] only available with python >= 2.7 
 						xpath = "*/movie/files/file[@firstPart='{0}'][@season='{1}']".format(
                                                     epno,str(myMedia.parsedInfo.season_number))
 					else:
 						xpath = "*/movie/files/file"
-					a = re.split("([-|.]*[Ss]\\d\\d[Ee]\\d\\d.)", myMedia.oStatus.fileName)
+					a = re.split("([-|.]*[Ss]\\d\\d[Ee]\\d\\d.)", matchthis)
 					if len(a) == 1:
-						a = re.split("(?P<season_num>\d+)[. _-]*", myMedia.oStatus.fileName)
+						a = re.split("(?P<season_num>\d+)[. _-]*", matchthis)
 					ep_name = a[2][:-4].replace(".", " ").replace("- ", "")
 					season_xml = a[0][:-3].replace(".", " ").replace(" - ", "")
 					#f_size = str(os.path.getsize(myMedia.oStatus.fullPath))
@@ -374,9 +392,9 @@ def watchedFileCreation(myMedia):
 								if movie.get('firstPart') == epno and movie.get('season') == str(myMedia.parsedInfo.season_number):
 									movie.set('watched', 'true')
 									bak_name = name[:-4]+'.bak'
-									tree.write(bak_name)
+									tree.write(bak_name, encoding="utf-8")
 									os.rename(bak_name, name)
-									txt = name.replace(jukeboxpath, '') + ' has been modified as watched for ' + myMedia.oStatus.fileName
+									txt = name.replace(jukeboxpath, '') + ' has been modified as watched for ' + matchthis
 									pchtrakt.logger.info(txt)
 								break
 							break
@@ -394,9 +412,9 @@ def watchedFileCreation(myMedia):
 										Debug("match")
 										movie.set('watched', 'true')
 										bak_name = name[:-4]+'.bak'
-										tree.write(bak_name)
+										tree.write(bak_name, encoding="utf-8")
 										os.rename(bak_name, name)
-										txt = name.replace(jukeboxpath, '') + ' has been modified as watched for ' + myMedia.oStatus.fileName
+										txt = name.replace(jukeboxpath, '') + ' has been modified as watched for ' + matchthis
 										pchtrakt.logger.info(txt)
 										previous = xmlword
 									break
@@ -405,7 +423,7 @@ def watchedFileCreation(myMedia):
 				msg = 'Starting html update in '+jukeboxpath
 				pchtrakt.logger.info(msg)
 				if pchtrakt.isMovie:
-					fileinfo = Rutabaga_Mod_Jlb_Watched + myMedia.oStatus.fileName[:-3] + "html"
+					fileinfo = Rutabaga_Mod_Jlb_Watched + matchthis[:-3] + "html"
 					for line in fileinput.FileInput(fileinfo, inplace=1):
 						line=line.replace("Empty_watched","watched")
 						print line

@@ -20,12 +20,12 @@
 from xml.etree import ElementTree
 from string import split
 from urllib2 import Request, urlopen, URLError, HTTPError
-from lib.utilities import Debug
-from lib.encoding import toUnicode, toSafeString
-from xml.sax.saxutils import unescape
+from lib.utilities import Debug #, decode_string, utf8_encoded, xml_decode, xml_encode
+#from lib.encoding import toUnicode, toSafeString
+#from xml.sax.saxutils import unescape
 import math, glob
 import pchtrakt
-
+#import repr
 
 class EnumStatus:
     NOPLAY='noplay'
@@ -38,8 +38,8 @@ class EnumStatus:
 class PchStatus:
     def __init__(self):
         self.status=EnumStatus.NOPLAY
-        self.fullPath = u""
-        self.fileName = u""
+        self.fullPath = ""
+        self.fileName = ""
         self.currentTime = 0
         self.totalTime = 0
         self.percent = 0
@@ -53,14 +53,20 @@ class PchRequestor:
     def parseResponse(self, response):
         oPchStatus = PchStatus()
         try:
-            response = unescape(toUnicode(response))#.decode('Latin-1', 'replace').encode('utf-8', 'replace')
             Debug(response)
-            oXml = ElementTree.XML(response)
+            try:
+				oXml = ElementTree.fromstring(response)
+            except:
+				Debug("doing except")
+				response = '<?xml version="1.0" encoding="Latin-1" ?>' + response
+				oXml = ElementTree.fromstring(response)
+            Debug("hello" + response)
+            Debug("This should equal theDavidBox = " + oXml.tag)
             if oXml.tag == "theDavidBox": # theDavidBox should be the root
                 if oXml.find("returnValue").text == '0' and int(oXml.find("response/totalTime").text) > 90:#Added total time check to avoid scrobble while playing adverts/trailers
                     oPchStatus.totalTime = int(oXml.find("response/totalTime").text)
                     oPchStatus.status = oXml.find("response/currentStatus").text
-                    oPchStatus.fullPath = toUnicode(oXml.find("response/fullPath").text)
+                    oPchStatus.fullPath = oXml.find("response/fullPath").text
                     oPchStatus.currentTime = int(oXml.find("response/currentTime").text)
                     if oXml.find("response/totalchapter")!= None:
                         oPchStatus.currentChapter = int(oXml.find("response/currentchapter").text)
@@ -70,8 +76,7 @@ class PchRequestor:
                         self.mediaType = oXml.find("response/mediatype").text
                         if (oPchStatus.fullPath == "/iso"):#Change path if iso file
 							newpath = glob.glob("/isolink/*.iso")
-							oPchStatus.fullPath = toUnicode(newpath)[2:-2]
-							#oPchStatus.fullPath = newpath.encode('utf8', 'replace')
+							oPchStatus.fullPath = newpath[2:-2]#oPchStatus.fullPath = toUnicode(newpath)[2:-2]
                         if(self.mediaType == "BD"): # Blu-ray Disc are not handle like .mkv or .avi files
 							oPchStatus.fileName = oPchStatus.fullPath.split('/')[::-1][1]# add a / on last position when ISO
 							if oPchStatus.totalTime!=0:
