@@ -20,7 +20,7 @@ import datetime
 import os.path
 import re
 import regexes
-
+from lib.utilities import Debug
 class NameParser(object):
     def __init__(self, file_name=True):
         self.file_name = file_name
@@ -41,12 +41,9 @@ class NameParser(object):
 
         Stolen from dbr's tvnamer
         """
-        reps = {'HDgrp':'', '2bg':'2 Broke Girls', 'tbbt':'The Big Bang Theory'}
-        for i, j in reps.iteritems():
-			series_name = series_name.replace(i, j)
-  
-
-
+        Debug('Tv Search String before changes = ' + series_name)
+        if series_name == "CSI":
+			series_name = "CSI: Crime Scene Investigation"
         series_name = re.sub("(\D)[.](\D)", "\\1 \\2", series_name)
         series_name = re.sub("(\D)[.]", "\\1 ", series_name) # if it ends in a year then don't keep the dot
         series_name = re.sub("[.](\D)", " \\1", series_name)
@@ -54,7 +51,12 @@ class NameParser(object):
         series_name = series_name.replace("_", " ")
         series_name = series_name.replace(" - ", " ")
         series_name = re.sub("-$", "", series_name)
-  
+		
+		
+        reps = {'HDgrp':'', 'CSI New York':'CSI: NY', '2bg':'2 Broke Girls', 'tbbt':'The Big Bang Theory'}
+        for i, j in reps.iteritems():
+			series_name = series_name.replace(i, j)
+        Debug('Tv Search String = ' + series_name)
         return series_name.strip()
 
     def _compile_regexes(self):
