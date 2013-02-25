@@ -126,8 +126,10 @@ def traktJsonRequest(method, req, args={}, returnStatus=False, anon=False, conn=
             return data;
         return None
    
-    conn.set_debuglevel(1)
     response = conn.getresponse()
+    if response == "":
+			raise BadStatusLine()
+
     
     try:
         raw = response.read()

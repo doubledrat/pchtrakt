@@ -250,7 +250,16 @@ if __name__ == '__main__':
 				msg = (':::TheTvDB - Show not found ' \
 				'{0} :::'.format(pchtrakt.lastPath))
 				pchtrakt.logger.warning(msg)
-				sleep(sleepTime)
+				pchtrakt.StopTrying = 0
+				while myMedia.oStatus.status == EnumStatus.PLAY:
+					sleep(sleepTime)
+					myMedia.oStatus = pchtrakt.oPchRequestor.getStatus(ipPch, 10)
+					pchtrakt.StopTrying = 1
+					if YamjWatched == True:
+						try:
+							watchedFileCreation(myMedia)
+						except BaseException as e:
+							pchtrakt.logger.error(e)
 			except utils.AuthenticationTraktError as e:
 				stopTrying()
 				pchtrakt.logger.error(e)
@@ -259,11 +268,24 @@ if __name__ == '__main__':
 				stopTrying()
 				pchtrakt.logger.error(e)
 				sleep(sleepTime)
+			except BadStatusLine as e:
+				stopTrying()
+				pchtrakt.logger.error(e)
+				sleep(sleepTime)
 			except MovieResultNotFound as e:
 				stopTrying()
 				msg = ':::Movie not found - {0}:::'.format(e.file_name)
-				pchtrakt.logger.error(msg)
-				sleep(sleepTime)
+				pchtrakt.logger.warning(msg)
+				pchtrakt.StopTrying = 0
+				while myMedia.oStatus.status == EnumStatus.PLAY:
+					sleep(sleepTime)
+					myMedia.oStatus = pchtrakt.oPchRequestor.getStatus(ipPch, 10)
+					pchtrakt.StopTrying = 1
+					if YamjWatched == True:
+						try:
+							watchedFileCreation(myMedia)
+						except BaseException as e:
+							pchtrakt.logger.error(e)
 			except PchTraktException as e:
 				stopTrying()
 				msg = ':::PchTraktException - {0}:::'.format(e)

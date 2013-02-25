@@ -111,8 +111,8 @@ class MediaParserResultMovie(MediaParserResult):
 					entries = re.findall("/title/tt(\d{7})/", page)
 					self.id = "tt"+str(entries[0])
 					Debug('Search address = '+ address + ' ID = ' + self.id)
-				except URLError, HTTPError:
-					pass
+				except:
+					raise MovieResultNotFound(file_name)
 
 class MediaParserUnableToParse(Exception):
     def __init__(self, file_name):

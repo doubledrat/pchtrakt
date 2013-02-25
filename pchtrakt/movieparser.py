@@ -50,28 +50,30 @@ class MovieParser():
     def parse(self,file_name):
         oResult = None
         for (name,regex) in self.compiled_regexes:
-            match = regex.match(file_name)
-            if not match:
-                    continue
+            try:
+				match = regex.match(file_name)
+				if not match:
+						continue
 
-            tmp_movie_title = ""
-            tmp_year = None
-            tmp_imdbid = None
-            named_groups = match.groupdict().keys()
+				tmp_movie_title = ""
+				tmp_year = None
+				tmp_imdbid = None
+				named_groups = match.groupdict().keys()
 
-            if 'movie_title' in named_groups:
-                tmp_movie_title = self.clean_movie_name(match.group('movie_title'))
+				if 'movie_title' in named_groups:
+					tmp_movie_title = self.clean_movie_name(match.group('movie_title'))
 
-            if 'year' in named_groups:
-                tmp_year = match.group('year')
+				if 'year' in named_groups:
+					tmp_year = match.group('year')
 
-            if 'imdbid' in named_groups:
-                tmp_imdbid = match.group('imdbid')
+				if 'imdbid' in named_groups:
+					tmp_imdbid = match.group('imdbid')
 
-            #Debug(name + "=" + str(regex.search(file_name).groupdict()) + '       [' + file_name + ']')
-            return mediaparser.MediaParserResultMovie(file_name,tmp_movie_title,tmp_year,tmp_imdbid)
-            break
-        raise MovieResultNotFound(file_name)
+				#Debug(name + "=" + str(regex.search(file_name).groupdict()) + '       [' + file_name + ']')
+				return mediaparser.MediaParserResultMovie(file_name,tmp_movie_title,tmp_year,tmp_imdbid)
+				break
+            except:
+				raise MovieResultNotFound(file_name)
 
     def clean_movie_name(self, movie_name):
         """Cleans up name by removing any . and _

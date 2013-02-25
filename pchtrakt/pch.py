@@ -76,7 +76,7 @@ class PchRequestor:
                         self.mediaType = oXml.find("response/mediatype").text
                         if (oPchStatus.fullPath == "/iso"):#Change path if iso file
 							newpath = glob.glob("/isolink/*.iso")
-							oPchStatus.fullPath = newpath[2:-2]#oPchStatus.fullPath = toUnicode(newpath)[2:-2]
+							oPchStatus.fullPath = unicode(newpath)[2:-2]#oPchStatus.fullPath = toUnicode(newpath)[2:-2]
                         if(self.mediaType == "BD"): # Blu-ray Disc are not handle like .mkv or .avi files
 							oPchStatus.fileName = oPchStatus.fullPath.split('/')[::-1][1]# add a / on last position when ISO
 							if oPchStatus.totalTime!=0:
