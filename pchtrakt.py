@@ -274,7 +274,7 @@ if __name__ == '__main__':
 				sleep(sleepTime)
 			except MovieResultNotFound as e:
 				stopTrying()
-				msg = ':::Movie not found - {0}:::'.format(e.file_name)
+				msg = ':::Unable to find match for file - {0}:::'.format(e.file_name)
 				pchtrakt.logger.warning(msg)
 				pchtrakt.StopTrying = 0
 				while myMedia.oStatus.status == EnumStatus.PLAY:
@@ -299,6 +299,16 @@ if __name__ == '__main__':
 			pchtrakt.logger.exception(pchtrakt.lastPath)
 			pchtrakt.logger.exception(e)
 			sleep(sleepTime)
+			pchtrakt.StopTrying = 0
+			while myMedia.oStatus.status == EnumStatus.PLAY:
+				sleep(sleepTime)
+				myMedia.oStatus = pchtrakt.oPchRequestor.getStatus(ipPch, 10)
+				pchtrakt.StopTrying = 1
+				if YamjWatched == True:
+					try:
+						watchedFileCreation(myMedia)
+					except BaseException as e:
+						pchtrakt.logger.error(e)
     pchtrakt.logger.info('Pchtrakt STOP')
 
 
