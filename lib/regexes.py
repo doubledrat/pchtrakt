@@ -158,5 +158,15 @@ ep_regexes = [
                ([. _-]+(?P<extra_info>(?!\d{3}[. _-]+)[^-]+) # Source_Quality_Etc-
                (-(?P<release_group>.+))?)?$                # Group
                '''),
+
+              ('verbose2',
+               # Show Name Season 1 Episode 2 Ep Name
+               '''
+               ^(?P<series_name>.+?)[. _-]+                # Show Name and separator
+               season[. _-]+                               # season and separator
+               (?P<season_num>\d+)[. _-]+                  # 1
+               (?P<ep_num>\d+)[of\d+]+[. _-]+                # episode and separator
+               (?P<extra_info>.+)$                         # Source_Quality_Etc-
+               '''),
               ]
 

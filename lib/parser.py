@@ -53,7 +53,7 @@ class NameParser(object):
         series_name = re.sub("-$", "", series_name)
 		
 		
-        reps = {'HDgrp':'', 'CSI New York':'CSI: NY', '2bg':'2 Broke Girls', 'tbbt':'The Big Bang Theory'}
+        reps = {'Megabuilders':'Mega Builders', 'Discovery ':'', 'HDgrp':'', 'CSI New York':'CSI: NY', '2bg':'2 Broke Girls', 'tbbt':'The Big Bang Theory'}
         for i, j in reps.iteritems():
 			series_name = series_name.replace(i, j)
         Debug('Tv Search String = ' + series_name)
