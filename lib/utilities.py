@@ -39,6 +39,9 @@ class AuthenticationTraktError(TraktError):
 class MaxScrobbleError(TraktError):
 	def __init__(self):
 		Exception.__init__(self, 'Trakt.tv - Shows per hour limit reached')
+class BadStatusLine(TraktError):
+	def __init__(self):
+		Exception.__init__(self, 'Trakt.tv - Unknown error')
 
 def Debug(msg, force=use_debug):
     myMsg = msg

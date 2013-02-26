@@ -268,7 +268,7 @@ if __name__ == '__main__':
 				stopTrying()
 				pchtrakt.logger.error(e)
 				sleep(sleepTime)
-			except BadStatusLine as e:
+			except utils.BadStatusLine as e:
 				stopTrying()
 				pchtrakt.logger.error(e)
 				sleep(sleepTime)
