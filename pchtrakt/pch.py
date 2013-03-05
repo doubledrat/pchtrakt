@@ -68,6 +68,7 @@ class PchRequestor:
                     oPchStatus.status = oXml.find("response/currentStatus").text
                     oPchStatus.fullPath = oXml.find("response/fullPath").text
                     oPchStatus.currentTime = int(oXml.find("response/currentTime").text)
+                    lowerpath = oXml.find("response/fullPath").text.lower
                     if oXml.find("response/totalchapter")!= None:
                         oPchStatus.currentChapter = int(oXml.find("response/currentchapter").text)
                         oPchStatus.totalChapter = int(oXml.find("response/totalchapter").text)
@@ -92,7 +93,10 @@ class PchRequestor:
 								oPchStatus.fullPath = oPchStatus.fullPath[:-1]+".DVD"#Add .DVD extension for later use or will just make .watched file
 								oPchStatus.fileName = oPchStatus.fullPath.split('/')[::-1][0]
 							elif oPchStatus.fullPath[-1:] != "/":
-								oPchStatus.fullPath = oPchStatus.fullPath[:-9] + ".DVD"
+								if lowerpath.split('/')[::-1][0] == "video_ts":
+									oPchStatus.fullPath = oPchStatus.fullPath[:-9] + ".DVD"
+								else:
+									oPchStatus.fullPath = oPchStatus.fullPath + ".DVD"#Add .DVD extension for later use or will just make .watched file
 								oPchStatus.fileName = oPchStatus.fullPath.split('/')[::-1][0]
 							if oPchStatus.totalTime!=0:
 								oPchStatus.percent = int(math.ceil(float(oPchStatus.currentTime) / float(oPchStatus.totalTime) * 100.0))
