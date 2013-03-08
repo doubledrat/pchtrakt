@@ -48,7 +48,7 @@ class MediaParserResultTVShow(MediaParserResult):
 				self.id = tvdb[self.name]['id']
 			season_number = -1
 			episode_numbers = [parse_result.air_date]
-			url = ('http://www.thetvdb.com/api/GetEpisodeByAirDate.php?apikey=0629B785CE550C8D&seriesid={0}&airdate={1}'.format(quote_plus(self.id), parse_result.air_date))
+			url = ('http://thetvdb.com/api/GetEpisodeByAirDate.php?apikey=0629B785CE550C8D&seriesid={0}&airdate={1}'.format(quote_plus(self.id), parse_result.air_date))
 			Debug("GET EPISODE USING: "+url)
 			oResponse = ElementTree.parse(urlopen(url,None,5))
 			#feed = RSSWrapper(tree.getroot())
