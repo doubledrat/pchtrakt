@@ -63,7 +63,7 @@ class PchRequestor:
             Debug("hello" + response)
             Debug("This should equal theDavidBox = " + oXml.tag)
             if oXml.tag == "theDavidBox": # theDavidBox should be the root
-                if oXml.find("returnValue").text == '0' and int(oXml.find("response/totalTime").text) > 90:#Added total time check to avoid scrobble while playing adverts/trailers
+                if oXml.find("returnValue").text == '0' and oXml.find("response/fullPath").text != "/cdrom"  and int(oXml.find("response/totalTime").text) > 90:#Added total time check to avoid scrobble while playing adverts/trailers
                     oPchStatus.totalTime = int(oXml.find("response/totalTime").text)
                     oPchStatus.status = oXml.find("response/currentStatus").text
                     oPchStatus.fullPath = oXml.find("response/fullPath").text
