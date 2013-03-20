@@ -116,39 +116,6 @@ ep_regexes = [
                (?P<extra_info>.+)$                         # Source_Quality_Etc-
                '''),
 
-              ('no_season_multi_ep',
-               # Show.Name.E02-03
-               # Show.Name.E02.2010
-               '''
-               ^((?P<series_name>.+?)[. _-]+)?             # Show_Name and separator
-               (e(p(isode)?)?|part|pt)[. _-]?              # e, ep, episode, or part
-               (?P<ep_num>(\d+|[ivx]+))                    # first ep num
-               ((([. _-]+(and|&|to)[. _-]+)|-)             # and/&/to joiner
-               (?P<extra_ep_num>(?!(1080|720)[pi])(\d+|[ivx]+))[. _-])            # second ep num
-               ([. _-]*(?P<extra_info>.+?)                 # Source_Quality_Etc-
-               ((?<![. _-])(?<!WEB)                        # Make sure this is really the release group
-               -(?P<release_group>[^- ]+))?)?$              # Group
-               '''
-               ),
-
-              ('no_season_general',
-               # Show.Name.E23.Test
-               # Show.Name.Part.3.Source.Quality.Etc-Group
-               # Show.Name.Part.1.and.Part.2.Blah-Group
-               '''
-               ^((?P<series_name>.+?)[. _-]+)?             # Show_Name and separator
-               (e(p(isode)?)?|part|pt)[. _-]?              # e, ep, episode, or part
-               (?P<ep_num>(\d+|([ivx]+(?=[. _-]))))                    # first ep num
-               ([. _-]+((and|&|to)[. _-]+)?                # and/&/to joiner
-               ((e(p(isode)?)?|part|pt)[. _-]?)           # e, ep, episode, or part
-               (?P<extra_ep_num>(?!(1080|720)[pi])
-               (\d+|([ivx]+(?=[. _-]))))[. _-])*            # second ep num
-               ([. _-]*(?P<extra_info>.+?)                 # Source_Quality_Etc-
-               ((?<![. _-])(?<!WEB)                        # Make sure this is really the release group
-               -(?P<release_group>[^- ]+))?)?$              # Group
-               '''
-               ),
-
               ('bare',
                # Show.Name.102.Source.Quality.Etc-Group
                '''
