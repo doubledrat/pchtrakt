@@ -235,7 +235,7 @@ if __name__ == '__main__':
             pchtrakt.dictSerie = json.load(f)
     else:
         pchtrakt.dictSerie = {}
-    pchtrakt.logger.info('Pchtrakt START ' + PchTraktVersion)
+    pchtrakt.logger.info('Pchtrakt START version = ' + PchTraktVersion[11:-1] + ' Mods')
     while not pchtrakt.stop:
 		try:
 			doWork()

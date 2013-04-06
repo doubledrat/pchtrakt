@@ -1,0 +1,8 @@
+{
+    appinfo_format = "1",
+    name = "pchtrakt",
+    version = "0.4.23",
+    enabled = "1",
+    daemon_script = "daemon.sh",
+    crontab="0 */2 * * * pyhton #PATH#/update.py"
+}

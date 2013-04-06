@@ -271,7 +271,7 @@ def isIgnored(myMedia):
                         if ignored:
                             break
         else:
-            file = unicode(myMedia.oStatus.fileName.rsplit('.',1)[0] + '.xml', errors='replace')#.encode('Latin-1', 'replace')
+            file = unicode(myMedia.oStatus.fileName.rsplit('.',1)[0] + '.xml', errors='replace')
             oXml = ElementTree.parse(YamjPath + file)
             genres = oXml.findall('.//genre')
 
