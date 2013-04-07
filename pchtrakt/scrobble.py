@@ -304,10 +304,19 @@ def isGenreIgnored(genres):
 def watchedFileCreation(myMedia):
     if myMedia.oStatus.percent > watched_percent:
         Debug('watchedFileCreation')
-        path = myMedia.oStatus.fileName
+        try:
+			path = myMedia.oStatus.fileName.encode('utf-8', 'replace')
+			matchthis = myMedia.oStatus.fileName.encode('utf-8', 'replace')
+        except:
+			Debug('doing except for path')
+			path = myMedia.oStatus.fileName.encode('latin-1', 'replace')
+			matchthis = myMedia.oStatus.fileName.encode('utf-8', 'replace')
         if YamJWatchedVithVideo:
             Debug('YamJWatchedVithVideo')
-            path = myMedia.oStatus.fullPath
+            try:
+				path = myMedia.oStatus.fullPath.encode('utf-8', 'replace')
+            except:
+				path = myMedia.oStatus.fullPath.encode('latin-1', 'replace')
 			#Remember that .DVD extension
             if (path.split(".")[-1] == "DVD"):
                 path = path[:-4]
@@ -320,13 +329,7 @@ def watchedFileCreation(myMedia):
                 path = path[:-4]
             path = '{0}{1}'.format(YamjWatchedPath, path)
         Debug('path = 1')
-        try:
-			path = '{0}.watched'.format(path.encode('utf-8', 'replace'))
-			matchthis = myMedia.oStatus.fileName.encode('utf-8')
-        except:
-			Debug('doing except for path')
-			path = '{0}.watched'.format(path.encode('latin-1', 'replace'))
-			matchthis = myMedia.oStatus.fileName.encode('utf-8', 'replace')
+        path = '{0}.watched'.format(path)
         Debug(path + ' = 2')
         #Debug('checking path')
         if not isfile(path):
