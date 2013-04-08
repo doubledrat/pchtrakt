@@ -306,11 +306,9 @@ def watchedFileCreation(myMedia):
         Debug('watchedFileCreation')
         try:
 			path = myMedia.oStatus.fileName.encode('utf-8', 'replace')
-			matchthis = myMedia.oStatus.fileName.encode('utf-8', 'replace')
         except:
 			Debug('doing except for path')
 			path = myMedia.oStatus.fileName.encode('latin-1', 'replace')
-			matchthis = myMedia.oStatus.fileName.encode('utf-8', 'replace')
         if YamJWatchedVithVideo:
             Debug('YamJWatchedVithVideo')
             try:
@@ -332,6 +330,7 @@ def watchedFileCreation(myMedia):
         path = '{0}.watched'.format(path)
         Debug(path + ' = 2')
         #Debug('checking path')
+        matchthis = myMedia.oStatus.fileName.encode('utf-8')
         if not isfile(path):
             Debug('Start to write file')
             f = open(path, 'w')
@@ -368,6 +367,25 @@ def watchedFileCreation(myMedia):
 											previous = xmlword
 										break
 								break
+						#fileinfo = myMedia.oStatus.fullPath.encode('utf-8', 'replace')[:-4] + ".xml"
+						#fileinfo = fileinfo[:-4] + ".xml"
+						#Debug('Scanning ' + fileinfo)
+						#if lookfor in open(fileinfo.decode('utf-8', 'replace')).read():#gets xml file name as name
+							#Debug("MATCH FOUND")
+							#tree = ElementTree.parse(name)
+							#for movie in tree.findall('movies/movie'):
+								#if movie.find('baseFilenameBase').text.encode('utf-8') == lookfor:#for  content in penContents:
+									#movie.find('watched').text = 'true'
+									#for mfile in movie.findall('files/file'):
+										#mfile.set('watched', 'true')
+										#bak_name = name[:-4]+'.bak'
+										#tree.write(bak_name, encoding="utf-8")
+										#os.rename(bak_name, name)
+										#txt = name.replace(jukeboxpath, '') + ' has been modified as watched for ' + matchthis
+										#pchtrakt.logger.info(txt)
+										#previous = xmlword
+									#break
+							#break
 				elif pchtrakt.isTvShow:
 					msg = 'Starting Tv xml update in '+jukeboxpath
 					pchtrakt.logger.info(msg)
