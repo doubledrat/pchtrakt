@@ -37,12 +37,11 @@ if not hasattr(sys, "setdefaultencoding"):
     
 import os
 import json
-#import locale #needed?
 
 from pchtrakt.pch import *
 from pchtrakt.scrobble import *
 from pchtrakt.config import *
-
+from subprocess import Popen, PIPE
 from pchtrakt.movieparser import MovieResultNotFound
 
 from pchtrakt import mediaparser as mp
@@ -54,9 +53,9 @@ from lib import regexes
 from lib import utilities as utils
 from datetime import date
 from xml.etree import ElementTree
-from urllib2 import Request, urlopen, URLError, HTTPError
+from urllib2 import Request, urlopen, URLError, HTTPError# check if needed
 from urllib import quote
-from lib.utilities import Debug#, decode_string
+from lib.utilities import Debug
 class PchTraktException(Exception):
     pass
 tvdb = tvdb_api.Tvdb()
@@ -222,7 +221,17 @@ def stopTrying():
     except Exception as e:
         pass
 
-
+def startWait():
+	pchtrakt.StopTrying = 0
+	while myMedia.oStatus.status == EnumStatus.PLAY:
+		sleep(sleepTime)
+		myMedia.oStatus = pchtrakt.oPchRequestor.getStatus(ipPch, 10)
+		pchtrakt.StopTrying = 1
+		if YamjWatched == True:
+			try:
+				watchedFileCreation(myMedia)
+			except BaseException as e:
+				pchtrakt.logger.error(e)
 
 
 
@@ -235,7 +244,23 @@ if __name__ == '__main__':
             pchtrakt.dictSerie = json.load(f)
     else:
         pchtrakt.dictSerie = {}
-    pchtrakt.logger.info('Pchtrakt START version = ' + PchTraktVersion[11:-1] + ' Mods')
+
+    #Check version and update if needed
+    gitproc = Popen(['git', 'show-ref'], stdout = PIPE)
+    (stdout, stderr) = gitproc.communicate()
+    for row in stdout.split('\n'):
+		if row.find('HEAD') != -1:
+			hash = row.split()[0]
+			break
+    if hash == PchTraktVersion:
+		pchtrakt.logger.info('Starting Pchtrakt version = ' + PchTraktVersion[-4:]  + ' Millers Mods (Running latest version)')
+    elif AutoUpdate is True:
+		pchtrakt.logger.info('Pchtrakt START version = ' + PchTraktVersion[-4:] + ' Millers Mods')
+		pchtrakt.logger.info('A new version is online. Starting update')
+    elif AutoUpdate is False:
+		pchtrakt.logger.info('Pchtrakt START version = ' + PchTraktVersion[-4:] + ' Millers Mods')
+		pchtrakt.logger.info('A new version is online. For manual install, download from https://github.com/cptjhmiller/pchtrakt/archive/dvp.zip')
+
     while not pchtrakt.stop:
 		try:
 			doWork()
@@ -249,24 +274,14 @@ if __name__ == '__main__':
 			msg = (':::TheTvDB - Show not found ' \
 			'{0} :::'.format(pchtrakt.lastPath))
 			pchtrakt.logger.warning(msg)
-			pchtrakt.StopTrying = 0
-			while myMedia.oStatus.status == EnumStatus.PLAY:
-				sleep(sleepTime)
-				myMedia.oStatus = pchtrakt.oPchRequestor.getStatus(ipPch, 10)
-				pchtrakt.StopTrying = 1
-				if YamjWatched == True:
-					try:
-						watchedFileCreation(myMedia)
-					except BaseException as e:
-						pchtrakt.logger.error(e)
+			startWait()
 		except utils.AuthenticationTraktError as e:
 			stopTrying()
 			pchtrakt.logger.error(e)
 			sleep(sleepTime)
 		except utils.MaxScrobbleError as e:
-			stopTrying()
-			pchtrakt.logger.error(e)
-			sleep(sleepTime)
+			pchtrakt.logger.warning(e)
+			startWait()
 		except utils.BadStatusLine as e:
 			stopTrying()
 			pchtrakt.logger.error(e)
@@ -275,16 +290,7 @@ if __name__ == '__main__':
 			stopTrying()
 			msg = ':::Unable to find match for file - {0}:::'.format(e.file_name)
 			pchtrakt.logger.warning(msg)
-			pchtrakt.StopTrying = 0
-			while myMedia.oStatus.status == EnumStatus.PLAY:
-				sleep(sleepTime)
-				myMedia.oStatus = pchtrakt.oPchRequestor.getStatus(ipPch, 10)
-				pchtrakt.StopTrying = 1
-				if YamjWatched == True:
-					try:
-						watchedFileCreation(myMedia)
-					except BaseException as e:
-						pchtrakt.logger.error(e)
+			startWait()
 		except PchTraktException as e:
 			stopTrying()
 			msg = ':::PchTraktException - {0}:::'.format(e)
@@ -297,15 +303,5 @@ if __name__ == '__main__':
 			pchtrakt.logger.exception('This should never happend! Please contact me with the error if you read this')
 			pchtrakt.logger.exception(pchtrakt.lastPath)
 			pchtrakt.logger.exception(e)
-			sleep(sleepTime)
-			pchtrakt.StopTrying = 0
-			while myMedia.oStatus.status == EnumStatus.PLAY:
-				sleep(sleepTime)
-				myMedia.oStatus = pchtrakt.oPchRequestor.getStatus(ipPch, 10)
-				pchtrakt.StopTrying = 1
-				if YamjWatched == True:
-					try:
-						watchedFileCreation(myMedia)
-					except BaseException as e:
-						pchtrakt.logger.error(e)
+			startWait()
     pchtrakt.logger.info('Pchtrakt STOP')

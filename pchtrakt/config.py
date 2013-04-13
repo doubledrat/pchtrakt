@@ -34,9 +34,9 @@ class cacheSerie: #Errkk... need to change this
 
 cacheSerie.dictSerie = {}
 if isfile('appinfo.json'):
-    PchTraktVersion = getoutput('cat appinfo.json |grep version')
+    PchTraktVersion = getoutput('cat .git/ORIG_HEAD')
 else:
-    PchTraktVersion = getoutput('cat scripts_install/appinfo.json |grep version')
+    PchTraktVersion = '4'
 
 PchTraktVersion = PchTraktVersion.strip().replace(',','') 
  
@@ -52,10 +52,12 @@ else:
 #PchTrakt
 config.read(pchtrakt.config_file)
 ipPch = config.get('PCHtrakt', 'pch_ip')
+AutoUpdate = config.getboolean('PCHtrakt', 'autoupdate')
 sleepTime = float(config.get('PCHtrakt', 'sleep_time'))
 watched_percent = float(config.get('PCHtrakt', 'watched_percent'))
 if watched_percent > 100 or watched_percent < 0:
 	watched_percent = 90
+log_size = float(config.get('PCHtrakt', 'log_size'))
 ignored_repertory = [x.strip() for x in config.get('PCHtrakt', 'ignored_repertory').split(',')]
 ignored_keywords = [x.strip() for x in config.get('PCHtrakt', 'ignored_keywords').split(',')]
 OnPCH = (ipPch in ['127.0.0.1',myIp])
@@ -85,9 +87,6 @@ YamjWatched = config.getboolean('YAMJ', 'watched')
 YamjIgnoredCategory = [x.strip().lower() for x in config.get('YAMJ', 'ignored_category').split(',')]
 
 #Auto Watched
-jukeboxpath = config.get('Auto Watched', 'jukebox_path')
-if not jukeboxpath.endswith('/'):
-    jukeboxpath += '/'
 RutabagaModwatched = config.getboolean('Auto Watched', 'rutabaga_mod_watched')
 updatexmlwatched = config.getboolean('Auto Watched', 'update_xml_watched')
 tvxmlfind = [x.strip() for x in config.get('Auto Watched', 'tvxml_find').split(',')]

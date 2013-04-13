@@ -12,8 +12,12 @@ force_pchtrakt()
    mkdir /share/tmp
    cd /share/tmp
    
-   git clone git://github.com/cptjhmiller/pchtrakt.git pchtrakt
-    
+    if [ -f /share/Apps/pchtrakt/TEST ]; then
+        git clone -b testing git://github.com/pchtrakt/pchtrakt.git pchtrakt
+        else 
+        git clone git://github.com/pchtrakt/pchtrakt.git pchtrakt
+    fi  
+ 
    cp -R pchtrakt/* /share/Apps/pchtrakt
    chmod -R 777 /share/Apps/pchtrakt
    cp -f /share/Apps/pchtrakt/scripts_install/update.py /share/Apps/pchtrakt/

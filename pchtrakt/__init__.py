@@ -1,6 +1,8 @@
-from os.path import isfile
+from os.path import isfile, getsize
 import ConfigParser
 import logging
+import logging.handlers
+import os
 
 StopTrying = 0
 stop = 0
@@ -17,8 +19,8 @@ idOK = 0
 allowedPauseTime = 0
 
 logger = logging.getLogger('pchtrakt')
-hdlr = logging.FileHandler('pchtrakt.log')
 formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s\r')
+hdlr = logging.handlers.RotatingFileHandler("pchtrakt.log",backupCount=3)
 hdlr.setFormatter(formatter)
 logger.addHandler(hdlr)
 logger.setLevel(logging.INFO)
@@ -32,12 +34,16 @@ def newConfig():
         config.add_section('PCHtrakt')
     if not config.has_option('PCHtrakt','pch_ip'):
         config.set('PCHtrakt', 'pch_ip', '127.0.0.1        ; do not change if installed directly on the popcorn')
+    if not config.has_option('PCHtrakt','autoupdate'):
+        config.set('PCHtrakt', 'autoupdate', 'False')
     if not config.has_option('PCHtrakt','sleep_time'):
         config.set('PCHtrakt', 'sleep_time', '5')
     if not config.has_option('PCHtrakt','watched_percent'):
         config.set('PCHtrakt', 'watched_percent', '90')
     if not config.has_option('PCHtrakt','log_file'):
         config.set('PCHtrakt', 'log_file', 'pchtrakt.log')
+    if not config.has_option('PCHtrakt','log_size'):
+        config.set('PCHtrakt', 'log_size', '0        ; In bytes, set to 0 to rotate log on every restart')
     if not config.has_option('PCHtrakt','ignored_repertory'):
         config.set('PCHtrakt', 'ignored_repertory', '')
     if not config.has_option('PCHtrakt','ignored_keywords'):
@@ -78,12 +84,10 @@ def newConfig():
     if not config.has_option('YAMJ','ignored_category'):
         config.set('YAMJ', 'ignored_category', '')
     if not config.has_option('YAMJ','path'):
-        config.set('YAMJ', 'path', '')
+        config.set('YAMJ', 'path', '        ; Path to your Jukebox folder')
 
     if not config.has_section('Auto Watched'):
         config.add_section('Auto Watched')
-    if not config.has_option('Auto Watched','jukebox_path'):
-        config.set('Auto Watched', 'jukebox_path', '')
     if not config.has_option('Auto Watched','rutabaga_mod_watched'):
         config.set('Auto Watched', 'rutabaga_mod_watched', 'False')
     if not config.has_option('Auto Watched','update_xml_watched'):
@@ -99,3 +103,7 @@ def newConfig():
 if isfile(config_file):
     loadOldConfig()
 newConfig()
+
+# Roll over on application start if file size is over 
+if getsize("pchtrakt.log") > float(config.get('PCHtrakt', 'log_size')):
+	logger.handlers[0].doRollover()

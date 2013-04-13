@@ -20,9 +20,7 @@
 from xml.etree import ElementTree
 from string import split
 from urllib2 import Request, urlopen, URLError, HTTPError
-from lib.utilities import Debug #, decode_string, utf8_encoded, xml_decode, xml_encode
-#from lib.encoding import toUnicode, toSafeString
-#from xml.sax.saxutils import unescape
+from lib.utilities import Debug
 import math, glob
 import pchtrakt
 #import repr
