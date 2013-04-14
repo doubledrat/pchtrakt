@@ -79,7 +79,7 @@ BetaSeriesScrobbleTvShow = config.getboolean('BetaSeries', 'enable_tvshow_scrobb
 YamjWatchedPath = config.get('YAMJ', 'watched_path')
 if not YamjWatchedPath.endswith('/'):
     YamjWatchedPath += '/'
-YamjPath = config.get('YAMJ', 'path')
+YamjPath = config.get('YAMJ', 'jukebox_path')
 if not YamjPath.endswith('/'):
     YamjPath += '/'
 YamJWatchedVithVideo = config.getboolean('YAMJ', 'watched_with_video')
