@@ -299,8 +299,6 @@ if __name__ == '__main__':
 			sleep(sleepTime)
 		except Exception as e:
 			stopTrying()
-			#Debug(u'::: {0} :::'.format(pchtrakt.lastPath))
-			#Debug(u'::: {0} :::'.format(e))
 			pchtrakt.logger.exception('This should never happend! Please contact me with the error if you read this')
 			pchtrakt.logger.exception(pchtrakt.lastPath)
 			pchtrakt.logger.exception(e)
