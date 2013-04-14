@@ -257,6 +257,7 @@ if __name__ == '__main__':
     elif AutoUpdate is True:
 		pchtrakt.logger.info('Pchtrakt START version = ' + PchTraktVersion[-4:] + ' Millers Mods')
 		pchtrakt.logger.info('A new version is online. Starting update')
+		os.system("./daemon.sh update")
     elif AutoUpdate is False:
 		pchtrakt.logger.info('Pchtrakt START version = ' + PchTraktVersion[-4:] + ' Millers Mods')
 		pchtrakt.logger.info('A new version is online. For manual install, download from https://github.com/cptjhmiller/pchtrakt/archive/dvp.zip')
