@@ -246,10 +246,10 @@ if __name__ == '__main__':
         pchtrakt.dictSerie = {}
 
     #Check version and update if needed
-    gitproc = Popen(['git', 'show-ref'], stdout = PIPE)
+    gitproc = Popen(['git', 'ls-remote'], stdout = PIPE)
     (stdout, stderr) = gitproc.communicate()
     for row in stdout.split('\n'):
-		if row.find('HEAD') != -1:
+		if row.find('refs/heads/dvp') != -1:
 			hash = row.split()[0]
 			break
     if hash == PchTraktVersion:
