@@ -33,8 +33,8 @@ class cacheSerie: #Errkk... need to change this
     pass
 
 cacheSerie.dictSerie = {}
-if isfile('appinfo.json'):
-    PchTraktVersion = getoutput('cat .git/ORIG_HEAD')
+if isfile('/share/Apps/pchtrakt/.git/ORIG_HEAD'):
+    PchTraktVersion = getoutput('cat /share/Apps/pchtrakt/.git/ORIG_HEAD')
 else:
     PchTraktVersion = '4'
 
