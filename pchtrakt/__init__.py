@@ -84,7 +84,7 @@ def newConfig():
     if not config.has_option('YAMJ','ignored_category'):
         config.set('YAMJ', 'ignored_category', '')
     if not config.has_option('YAMJ','jukebox_path'):
-        config.set('YAMJ', 'path', '        ; Path to your Jukebox folder')
+        config.set('YAMJ', 'jukebox_path', '        ; Path to your Jukebox folder')
 
     if not config.has_section('Auto Watched'):
         config.add_section('Auto Watched')
