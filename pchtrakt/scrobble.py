@@ -186,9 +186,9 @@ def videoStatusHandleMovie(myMedia):
     #path = '{0}.watched'.format(path.encode('Latin-1', 'replace'))#.encode('utf-8', 'replace'))
     #Debug('checking path 3')
     #if not isfile(path):
-		#f = open(path, 'w')
-		#f.close()
-		#msg = 'I have created the file {0}'.format(path)
+    #f = open(path, 'w')
+    #f.close()
+    #msg = 'I have created the file {0}'.format(path)
 
 def videoStatusHandleTVSeries(myMedia):
     if len(myMedia.parsedInfo.episode_numbers)>1:
@@ -305,17 +305,17 @@ def watchedFileCreation(myMedia):
     if myMedia.oStatus.percent > watched_percent:
         Debug('watchedFileCreation')
         try:
-			path = myMedia.oStatus.fileName.encode('utf-8', 'replace')
+            path = myMedia.oStatus.fileName.encode('utf-8', 'replace')
         except:
-			Debug('doing except for path')
-			path = myMedia.oStatus.fileName.encode('latin-1', 'replace')
+            Debug('doing except for path')
+            path = myMedia.oStatus.fileName.encode('latin-1', 'replace')
         if YamJWatchedVithVideo:
             Debug('YamJWatchedVithVideo')
             try:
-				path = myMedia.oStatus.fullPath.encode('utf-8', 'replace')
+                path = myMedia.oStatus.fullPath.encode('utf-8', 'replace')
             except:
-				path = myMedia.oStatus.fullPath.encode('latin-1', 'replace')
-			#Remember that .DVD extension
+                path = myMedia.oStatus.fullPath.encode('latin-1', 'replace')
+            #Remember that .DVD extension
             if (path.split(".")[-1] == "DVD"):
                 path = path[:-4]
             if not OnPCH:
@@ -340,181 +340,182 @@ def watchedFileCreation(myMedia):
             pchtrakt.logger.info(msg)
             Debug('Start xml update routine')
             if  updatexmlwatched:
-				T=((matchthis.split('-'))[-1].split(']')[0])
-				Debug(T+matchthis)
-				lookfor = matchthis[:-4]
-				lookforfull = matchthisfull[:-4]
-				if pchtrakt.isMovie and T.isdigit() == False:
-					msg = 'Starting Normal Movie xml update in '+YamjPath
-					pchtrakt.logger.info(msg)
-					previous = None
-					for xmlword in moviexmlfind:
-						fileinfo = YamjPath + xmlword + "*.xml"
-						Debug('Scanning ' + fileinfo)
-						for name in glob.glob(fileinfo):
-							Debug('Looking for ' + name)
-							if lookfor in open(name).read():#gets xml file name as name
-								Debug("MATCH FOUND")
-								tree = ElementTree.parse(name)
-								for movie in tree.findall('movies/movie'):
-									if movie.find('baseFilenameBase').text.encode('utf-8') == lookfor:#for  content in penContents:
-										movie.find('watched').text = 'true'
-										for mfile in movie.findall('files/file'):
-											mfile.set('watched', 'true')
-											bak_name = name[:-4]+'.bak'
-											tree.write(bak_name, encoding="utf-8")
-											os.rename(bak_name, name)
-											txt = name.replace(YamjPath, '') + ' has been modified as watched for ' + matchthis
-											pchtrakt.logger.info(txt)
-											previous = xmlword
-										break
-								break
-					name = urllib.unquote_plus(YamjPath + lookfor + '.xml')
-					Debug('Looking in ' + name)
-					tree = ElementTree.parse(name)
-					Debug('1 ' + name)
-					for movie in tree.findall('movie'):
-						Debug('2 ' + name)
-						if movie.find('baseFilenameBase').text.encode('utf-8') == lookfor:#for  content in penContents:
-							Debug('MATCH FOUND 2b')
-							movie.find('watched').text = 'true'
-							for mfile in movie.findall('files/file'):
-								mfile.set('watched', 'true')
-								bak_name = name[:-4]+'.bak'
-								tree.write(bak_name, encoding="utf-8")
-								os.rename(bak_name, name)
-								txt = name.replace(YamjPath, '') + ' has been modified as watched for ' + matchthis
-								pchtrakt.logger.info(txt)
-								previous = xmlword
-								break
-				if pchtrakt.isMovie and T.isdigit() == True:
-					msg = 'Starting Sets Movie xml update in '+YamjPath
-					pchtrakt.logger.info(msg)
-					previous = None
-					moviexmlfind.append(((matchthis.split('['))[-1].split('-')[0]).replace ("SET ", "Set_"))
-					#moviexmlfind.append(lookfor[:-2])
-					Debug('matchthisfull ' + lookfor[:-2])
-					#Extras = lookfor +', ' + ((matchthis.split('['))[-1].split('-')[0])
-					#
-					for xmlword in moviexmlfind:
-						fileinfo = YamjPath + xmlword + "*.xml"
-						for name in glob.glob(fileinfo):
-							Debug('Looking in ' + name)
-							if lookfor in open(name).read():#gets xml file name as name
-								Debug("MATCH FOUND 1")
-								tree = ElementTree.parse(name)
-								if xmlword[:4].lower() == 'set_':
-									Debug('Doing baseFilenameBase as this xml starts with set_')
-									for movie in tree.findall('movies/movie'):
-										Debug('2 ' + name)
-										if movie.find('baseFilenameBase').text.encode('utf-8') == lookfor:#for  content in penContents:
-											Debug('MATCH FOUND 2b')
-											movie.find('watched').text = 'true'
-											for mfile in movie.findall('files/file'):
-												mfile.set('watched', 'true')
-												bak_name = name[:-4]+'.bak'
-												tree.write(bak_name, encoding="utf-8")
-												os.rename(bak_name, name)
-												txt = name.replace(YamjPath, '') + ' has been modified as watched for ' + matchthis
-												pchtrakt.logger.info(txt)
-												previous = xmlword
-												break
-											break
-								else:
-									for movie in tree.findall('movies/movie/files/file'):
-										Debug(movie.find('fileLocation').text.encode('utf-8'))
-										Debug(urllib.unquote_plus(movie.find('fileURL').text.encode('utf-8')))
-										Debug('file://' + matchthisfull)
-										if urllib.unquote_plus(movie.find('fileURL').text.encode('utf-8')) == 'file://' + matchthisfull:
-											Debug("MATCH FOUND 2")
-											movie.set('watched', 'true')
-											bak_name = name[:-4]+'.bak'
-											tree.write(bak_name, encoding="utf-8")
-											os.rename(bak_name, name)
-											txt = name.replace(YamjPath, '') + ' has been modified as watched for ' + matchthis
-											pchtrakt.logger.info(txt)
-											break
-									break
-					name = YamjPath + lookfor + '.xml'
-					Debug('Looking in ' + name)
-					tree = ElementTree.parse(name)
-					Debug('1 ' + name)
-					for movie in tree.findall('movie'):
-						Debug('2 ' + name)
-						if movie.find('baseFilenameBase').text.encode('utf-8') == lookfor:#for  content in penContents:
-							Debug('MATCH FOUND 2b')
-							movie.find('watched').text = 'true'
-							for mfile in movie.findall('files/file'):
-								mfile.set('watched', 'true')
-								bak_name = name[:-4]+'.bak'
-								tree.write(bak_name, encoding="utf-8")
-								os.rename(bak_name, name)
-								txt = name.replace(YamjPath, '') + ' has been modified as watched for ' + matchthis
-								pchtrakt.logger.info(txt)
-								previous = xmlword
-								break
-				elif pchtrakt.isTvShow:
-					msg = 'Starting Tv xml update in '+YamjPath
-					pchtrakt.logger.info(msg)
-					epno = str(myMedia.parsedInfo.episode_numbers).replace('[', '').replace(']', '')
-					if version_info >= (2,7): #[@...=...] only available with python >= 2.7 
-						xpath = "*/movie/files/file[@firstPart='{0}'][@season='{1}']".format(
+                T=((matchthis.split('-'))[-1].split(']')[0])
+                Debug(T+matchthis)
+                lookfor = matchthis[:-4]
+                lookforfull = matchthisfull[:-4]
+                if pchtrakt.isMovie and T.isdigit() == False:
+                    msg = 'Starting Normal Movie xml update in '+YamjPath
+                    pchtrakt.logger.info(msg)
+                    previous = None
+                    for xmlword in moviexmlfind:
+                        fileinfo = YamjPath + xmlword + "*.xml"
+                        Debug('Scanning ' + fileinfo)
+                        for name in glob.glob(fileinfo):
+                            Debug('Looking for ' + name)
+                            if lookfor in open(name).read():#gets xml file name as name
+                                Debug("MATCH FOUND")
+                                tree = ElementTree.parse(name)
+                                for movie in tree.findall('movies/movie'):
+                                    if movie.find('baseFilenameBase').text.encode('utf-8') == lookfor:#for  content in penContents:
+                                        movie.find('watched').text = 'true'
+                                        for mfile in movie.findall('files/file'):
+                                            mfile.set('watched', 'true')
+                                            bak_name = name[:-4]+'.bak'
+                                            tree.write(bak_name, encoding="utf-8")
+                                            os.rename(bak_name, name)
+                                            txt = name.replace(YamjPath, '') + ' has been modified as watched for ' + matchthis
+                                            pchtrakt.logger.info(txt)
+                                            previous = xmlword
+                                        break
+                                break
+                    name = urllib.unquote_plus(YamjPath + lookfor + '.xml')
+                    Debug('Looking in ' + name)
+                    tree = ElementTree.parse(name)
+                    Debug('1 ' + name)
+                    for movie in tree.findall('movie'):
+                        Debug('2 ' + name)
+                        if movie.find('baseFilenameBase').text.encode('utf-8') == lookfor:#for  content in penContents:
+                            Debug('MATCH FOUND 2b')
+                            movie.find('watched').text = 'true'
+                            for mfile in movie.findall('files/file'):
+                                mfile.set('watched', 'true')
+                                bak_name = name[:-4]+'.bak'
+                                tree.write(bak_name, encoding="utf-8")
+                                os.rename(bak_name, name)
+                                txt = name.replace(YamjPath, '') + ' has been modified as watched for ' + matchthis
+                                pchtrakt.logger.info(txt)
+                                previous = xmlword
+                                break
+                elif pchtrakt.isMovie and T.isdigit() == True:
+                    msg = 'Starting Sets Movie xml update in '+YamjPath
+                    pchtrakt.logger.info(msg)
+                    previous = None
+                    moviexmlfind.append(((matchthis.split('['))[-1].split('-')[0]).replace ("SET ", "Set_"))
+                    #moviexmlfind.append(lookfor[:-2])
+                    Debug('matchthisfull ' + lookfor[:-2])
+                    #Extras = lookfor +', ' + ((matchthis.split('['))[-1].split('-')[0])
+                    #
+                    for xmlword in moviexmlfind:
+                        fileinfo = YamjPath + xmlword + "*.xml"
+                        for name in glob.glob(fileinfo):
+                            Debug('Looking in ' + name)
+                            if lookfor in open(name).read():#gets xml file name as name
+                                Debug("MATCH FOUND 1")
+                                tree = ElementTree.parse(name)
+                                if xmlword[:4].lower() == 'set_':
+                                    Debug('Doing baseFilenameBase as this xml starts with set_')
+                                    for movie in tree.findall('movies/movie'):
+                                        Debug('2 ' + name)
+                                        if movie.find('baseFilenameBase').text.encode('utf-8') == lookfor:#for  content in penContents:
+                                            Debug('MATCH FOUND 2b')
+                                            movie.find('watched').text = 'true'
+                                            for mfile in movie.findall('files/file'):
+                                                mfile.set('watched', 'true')
+                                                bak_name = name[:-4]+'.bak'
+                                                tree.write(bak_name, encoding="utf-8")
+                                                os.rename(bak_name, name)
+                                                txt = name.replace(YamjPath, '') + ' has been modified as watched for ' + matchthis
+                                                pchtrakt.logger.info(txt)
+                                                previous = xmlword
+                                                break
+                                            break
+                                else:
+                                    for movie in tree.findall('movies/movie/files/file'):
+                                        Debug(movie.find('fileLocation').text.encode('utf-8'))
+                                        Debug(urllib.unquote_plus(movie.find('fileURL').text.encode('utf-8')))
+                                        Debug('file://' + matchthisfull)
+                                        if urllib.unquote_plus(movie.find('fileURL').text.encode('utf-8')) == 'file://' + matchthisfull:
+                                            Debug("MATCH FOUND 2")
+                                            movie.set('watched', 'true')
+                                            bak_name = name[:-4]+'.bak'
+                                            tree.write(bak_name, encoding="utf-8")
+                                            os.rename(bak_name, name)
+                                            txt = name.replace(YamjPath, '') + ' has been modified as watched for ' + matchthis
+                                            pchtrakt.logger.info(txt)
+                                            break
+                                    break
+                    name = YamjPath + lookfor + '.xml'
+                    Debug('Looking in ' + name)
+                    tree = ElementTree.parse(name)
+                    Debug('1 ' + name)
+                    for movie in tree.findall('movie'):
+                        Debug('2 ' + name)
+                        if movie.find('baseFilenameBase').text.encode('utf-8') == lookfor:#for  content in penContents:
+                            Debug('MATCH FOUND 2b')
+                            movie.find('watched').text = 'true'
+                            for mfile in movie.findall('files/file'):
+                                mfile.set('watched', 'true')
+                                bak_name = name[:-4]+'.bak'
+                                tree.write(bak_name, encoding="utf-8")
+                                os.rename(bak_name, name)
+                                txt = name.replace(YamjPath, '') + ' has been modified as watched for ' + matchthis
+                                pchtrakt.logger.info(txt)
+                                previous = xmlword
+                                break
+                elif pchtrakt.isTvShow:
+                    msg = 'Starting Tv xml update in '+YamjPath
+                    pchtrakt.logger.info(msg)
+                    epno = str(myMedia.parsedInfo.episode_numbers).replace('[', '').replace(']', '')
+                    if version_info >= (2,7): #[@...=...] only available with python >= 2.7
+                        xpath = "*/movie/files/file[@firstPart='{0}'][@season='{1}']".format(
                                                     epno,str(myMedia.parsedInfo.season_number))
-					else:
-						xpath = "*/movie/files/file"
-					a = re.split("([-|.]*[Ss]\\d\\d[Ee]\\d\\d.)", matchthis)
-					if len(a) == 1:
-						a = re.split("(?P<season_num>\d+)[. _-]*", matchthis)
-					ep_name = a[2][:-4].replace(".", " ").replace("- ", "")
-					season_xml = a[0][:-3].replace(".", " ").replace(" - ", "")
-					#f_size = str(os.path.getsize(myMedia.oStatus.fullPath))
-					ep_no = '01'
-					fileinfo = YamjPath + "Set_" + season_xml + "*.xml"
-					Debug(fileinfo)
-					for name in glob.glob(fileinfo):
-						Debug(name)
-						if lookfor in open(name).read():
-							tree = ElementTree.parse(name)
-							for movie in tree.findall(xpath):
-								Debug(movie.get('firstPart'))
-								if urllib.unquote_plus(movie.find('fileURL').text.encode('utf-8')) == 'file://' + matchthisfull:
-									movie.set('watched', 'true')
-									bak_name = name[:-4]+'.bak'
-									tree.write(bak_name, encoding="utf-8")
-									os.rename(bak_name, name)
-									txt = name.replace(YamjPath, '') + ' has been modified as watched for ' + matchthis
-									pchtrakt.logger.info(txt)
-								break
-							break
-					previous = None
-					for xmlword in tvxmlfind:
-						Debug(xmlword)
-						fileinfo = YamjPath + xmlword + "*.xml"
-						for name in glob.glob(fileinfo):
-							Debug("before name")#(name)
-							if lookfor in open(name).read():
-								Debug("after name")
-								tree = ElementTree.parse(name)
-								for movie in tree.findall(xpath):
-									Debug(urllib.unquote_plus(movie.find('fileURL').text.encode('utf-8')))
-									Debug('file://' + matchthisfull)
-									if urllib.unquote_plus(movie.find('fileURL').text.encode('utf-8')) == 'file://' + matchthisfull:
-										Debug("match")
-										movie.set('watched', 'true')
-										bak_name = name[:-4]+'.bak'
-										tree.write(bak_name, encoding="utf-8")
-										os.rename(bak_name, name)
-										txt = name.replace(YamjPath, '') + ' has been modified as watched for ' + matchthis
-										pchtrakt.logger.info(txt)
-										previous = xmlword
-									break
-								break
+                    else:
+                        xpath = "*/movie/files/file"
+                    a = re.split("([-|.]*[Ss]\\d\\d[Ee]\\d\\d.)", matchthis)
+                    if len(a) == 1:
+                        a = re.split("(?P<season_num>\d+)[. _-]*", matchthis)
+                    ep_name = a[2][:-4].replace(".", " ").replace("- ", "")
+                    season_xml = a[0][:-3].replace(".", " ").replace(" - ", "")
+                    #f_size = str(os.path.getsize(myMedia.oStatus.fullPath))
+                    ep_no = '01'
+                    fileinfo = YamjPath + "Set_" + season_xml + "*.xml"
+                    Debug(fileinfo)
+                    for name in glob.glob(fileinfo):
+                        Debug(name)
+                        if lookfor in open(name).read():
+                            tree = ElementTree.parse(name)
+                            for movie in tree.findall(xpath):
+                                Debug(movie.get('firstPart'))
+                                if urllib.unquote_plus(movie.find('fileURL').text.encode('utf-8')) == 'file://' + matchthisfull:
+                                    movie.set('watched', 'true')
+                                    bak_name = name[:-4]+'.bak'
+                                    tree.write(bak_name, encoding="utf-8")
+                                    os.rename(bak_name, name)
+                                    txt = name.replace(YamjPath, '') + ' has been modified as watched for ' + matchthis
+                                    pchtrakt.logger.info(txt)
+                                break
+                            break
+                    previous = None
+                    for xmlword in tvxmlfind:
+                        Debug(xmlword)
+                        fileinfo = YamjPath + xmlword + "*.xml"
+                        for name in glob.glob(fileinfo):
+                            Debug("before name")#(name)
+                            if lookfor in open(name).read():
+                                Debug("after name")
+                                tree = ElementTree.parse(name)
+                                for movie in tree.findall(xpath):
+                                    Debug(urllib.unquote_plus(movie.find('fileURL').text.encode('utf-8')))
+                                    Debug('file://' + matchthisfull)
+                                    if urllib.unquote_plus(movie.find('fileURL').text.encode('utf-8')) == 'file://' + matchthisfull:
+                                        Debug("match")
+                                        movie.set('watched', 'true')
+                                        bak_name = name[:-4]+'.bak'
+                                        tree.write(bak_name, encoding="utf-8")
+                                        os.rename(bak_name, name)
+                                        txt = name.replace(YamjPath, '') + ' has been modified as watched for ' + matchthis
+                                        pchtrakt.logger.info(txt)
+                                        previous = xmlword
+                                    break
+                                break
             if RutabagaModwatched:
-				msg = 'Starting html update in '+YamjPath
-				pchtrakt.logger.info(msg)
-				if pchtrakt.isMovie:
-					fileinfo = Rutabaga_Mod_Jlb_Watched + matchthis[:-3] + "html"
-					for line in fileinput.FileInput(fileinfo, inplace=1):
-						line=line.replace("Empty_watched","watched")
-						print line
-				#elif pchtrakt.isTvShow:
+                msg = 'Starting html update in '+YamjPath
+                pchtrakt.logger.info(msg)
+                #if pchtrakt.isMovie:
+                #fileinfo = YamjPath + lookfor + ".html"
+                fileinfo = 'E://test.html'
+                for line in fileinput.FileInput(fileinfo, inplace=1):
+                    line=line.replace('[code]<td class="title3" width="16%" valign="top">Watched:</td><td id="watched" class="normal" width="16%" valign="top">false</td>[/code]','[code]<td class="title3" width="16%" valign="top">Watched:</td><td id="watched" class="normal" width="16%" valign="top">true</td>[/code]')
+                    print line
+                #elif pchtrakt.isTvShow:

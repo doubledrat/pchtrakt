@@ -33,18 +33,18 @@ class cacheSerie: #Errkk... need to change this
     pass
 
 cacheSerie.dictSerie = {}
-if isfile('/share/Apps/pchtrakt/.git/ORIG_HEAD'):
-    PchTraktVersion = getoutput('cat /share/Apps/pchtrakt/.git/ORIG_HEAD')
+if isfile('.git/ORIG_HEAD'):
+    with open('.git/ORIG_HEAD', 'r') as f:
+        PchTraktVersion = f.readline().split('\n', 1)[0]
 else:
     PchTraktVersion = '4'
 
-PchTraktVersion = PchTraktVersion.strip().replace(',','') 
  
 if isfile('cache.json'):
     with open('cache.json','r+') as f:
-	try:
-		cacheSerie.dictSerie = json.load(f)
-	except:
+        try:
+            cacheSerie.dictSerie = json.load(f)
+        except:
             pass
 else:
     cacheSerie.dictSerie = {}

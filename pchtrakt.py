@@ -34,7 +34,7 @@ sys.setdefaultencoding("ANSI_X3.4-1968")
 pchtrakt.SYS_ENCODING = 'ANSI_X3.4-1968'
 if not hasattr(sys, "setdefaultencoding"):
 	reload(sys)
-    
+
 import os
 import json
 
@@ -165,10 +165,10 @@ def doWork():
     myMedia.oStatus = pchtrakt.oPchRequestor.getStatus(ipPch, 10)
     if pchtrakt.lastPath != myMedia.oStatus.fullPath and myMedia.oStatus.status == EnumStatus.PLAY:
         if isIgnored(myMedia) == True:
-			while myMedia.oStatus.status == EnumStatus.PLAY:
-				sleep(sleepTime)
-				myMedia.oStatus = pchtrakt.oPchRequestor.getStatus(ipPch, 10)
-				pchtrakt.StopTrying = 1
+            while myMedia.oStatus.status == EnumStatus.PLAY:
+                sleep(sleepTime)
+                myMedia.oStatus = pchtrakt.oPchRequestor.getStatus(ipPch, 10)
+                pchtrakt.StopTrying = 1
     if pchtrakt.lastPath != myMedia.oStatus.fullPath and pchtrakt.StopTrying == 0:
         myMedia.parsedInfo = None
         with open('cache.json','w') as f:
@@ -249,58 +249,65 @@ if __name__ == '__main__':
     gitproc = Popen(['git', 'ls-remote'], stdout = PIPE)
     (stdout, stderr) = gitproc.communicate()
     for row in stdout.split('\n'):
-		if row.find('refs/heads/dvp') != -1:
-			hash = row.split()[0]
-			break
+        if row.find('refs/heads/dvp') != -1:
+            hash = row.split()[0]
+            break
     if hash == PchTraktVersion:
-		pchtrakt.logger.info('Starting Pchtrakt version = ' + PchTraktVersion[-4:]  + ' Millers Mods (Running latest version)')
+        pchtrakt.logger.info('Starting Pchtrakt version = ' + PchTraktVersion[-4:]  + ' Millers Mods (Running latest version)')
     elif AutoUpdate is True:
-		pchtrakt.logger.info('Pchtrakt START version = ' + PchTraktVersion[-4:] + ' Millers Mods')
-		pchtrakt.logger.info('A new version is online. Starting update')
-		os.system("./daemon.sh update")
+        pchtrakt.logger.info('Pchtrakt START version = ' + PchTraktVersion[-4:] + ' Millers Mods')
+        pchtrakt.logger.info('A new version is online. Starting update')
+        os.system("./daemon.sh update")
     elif AutoUpdate is False:
-		pchtrakt.logger.info('Pchtrakt START version = ' + PchTraktVersion[-4:] + ' Millers Mods')
-		pchtrakt.logger.info('A new version is online. For manual install, download from https://github.com/cptjhmiller/pchtrakt/archive/dvp.zip')
+        pchtrakt.logger.info('Pchtrakt START version = ' + PchTraktVersion[-4:] + ' Millers Mods')
+        pchtrakt.logger.info('A new version is online. For manual install, download from https://github.com/cptjhmiller/pchtrakt/archive/dvp.zip')
 
     while not pchtrakt.stop:
-		try:
-			doWork()
-			sleep(sleepTime)
-		except (KeyboardInterrupt, SystemExit):
-			Debug(':::Stopping pchtrakt:::')
-			pchtrakt.stop = 1
-			videoStopped()
-		except tvdb_exceptions.tvdb_shownotfound as e:
-			stopTrying()
-			msg = (':::TheTvDB - Show not found ' \
-			'{0} :::'.format(pchtrakt.lastPath))
-			pchtrakt.logger.warning(msg)
-			startWait()
-		except utils.AuthenticationTraktError as e:
-			stopTrying()
-			pchtrakt.logger.error(e)
-			sleep(sleepTime)
-		except utils.MaxScrobbleError as e:
-			pchtrakt.logger.warning(e)
-			startWait()
-		except utils.BadStatusLine as e:
-			stopTrying()
-			pchtrakt.logger.error(e)
-			sleep(sleepTime)
-		except MovieResultNotFound as e:
-			stopTrying()
-			msg = ':::Unable to find match for file - {0}:::'.format(e.file_name)
-			pchtrakt.logger.warning(msg)
-			startWait()
-		except PchTraktException as e:
-			stopTrying()
-			msg = ':::PchTraktException - {0}:::'.format(e)
-			pchtrakt.logger.error(msg)
-			sleep(sleepTime)
-		except Exception as e:
-			stopTrying()
-			pchtrakt.logger.exception('This should never happend! Please contact me with the error if you read this')
-			pchtrakt.logger.exception(pchtrakt.lastPath)
-			pchtrakt.logger.exception(e)
-			startWait()
+        try:
+            doWork()
+            sleep(sleepTime)
+        except (KeyboardInterrupt, SystemExit):
+            Debug(':::Stopping pchtrakt:::')
+            pchtrakt.stop = 1
+            videoStopped()
+        except tvdb_exceptions.tvdb_shownotfound as e:
+            stopTrying()
+            msg = (':::TheTvDB - Show not found ' \
+            '{0} :::'.format(pchtrakt.lastPath))
+            pchtrakt.logger.warning(msg)
+            startWait()
+        except utils.AuthenticationTraktError as e:
+            stopTrying()
+            pchtrakt.logger.error(e)
+            sleep(sleepTime)
+        except utils.MaxScrobbleError as e:
+            pchtrakt.logger.warning(e)
+            startWait()
+        except utils.BadStatusLine as e:
+            stopTrying()
+            pchtrakt.logger.error(e)
+            sleep(sleepTime)
+        except MovieResultNotFound as e:
+            stopTrying()
+            msg = ':::Unable to find match for file - {0}:::'.format(e.file_name)
+            pchtrakt.logger.warning(msg)
+            startWait()
+        except PchTraktException as e:
+            stopTrying()
+            msg = ':::PchTraktException - {0}:::'.format(e)
+            pchtrakt.logger.error(msg)
+            sleep(sleepTime)
+        except utils.traktNetworkError as e:
+            stopTrying()
+            msg = ':::{0}:::'.format(e)
+            pchtrakt.logger.error(msg)
+            sleep(sleepTime)
+        except Exception as e:
+            stopTrying()
+            #Debug(u'::: {0} :::'.format(pchtrakt.lastPath))
+            #Debug(u'::: {0} :::'.format(e))
+            pchtrakt.logger.exception('This should never happend! Please contact me with the error if you read this')
+            pchtrakt.logger.exception(pchtrakt.lastPath)
+            pchtrakt.logger.exception(e)
+            startWait()
     pchtrakt.logger.info('Pchtrakt STOP')

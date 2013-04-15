@@ -41,26 +41,25 @@ class AuthenticationTraktError(traktError):
 		Exception.__init__(self, 'Trakt.tv - Login or password incorrect')
 class MaxScrobbleError(traktError):
     def __init__(self):
-	Exception.__init__(self, 'Trakt.tv - Shows per hour limit reached')
+        Exception.__init__(self, 'Trakt.tv - Shows per hour limit reached')
 class BadStatusLine(traktError):
 	def __init__(self):
 		Exception.__init__(self, 'Trakt.tv - Unknown error')
 class traktServerBusy(traktError): pass
 class traktUnknownError(traktError): pass
 class traktNetworkError(traktError):
-	def __init__(self, value, timeout):
-		super(traktNetworkError, self).__init__(value)
-		self.timeout = timeout
+	def __init__(self):
+		Exception.__init__(self, 'Trakt.tv - Site is down/unavalable')
 
 def Debug(msg, force=use_debug):
     myMsg = msg
     if (pchtrakt.debug or force):
-		try:
-			pchtrakt.logger.info(myMsg)
-		except UnicodeEncodeError:
-			Debug("debuging debug msg")
-			myMsg = myMsg.encode("utf-8", "replace")
-			pchtrakt.logger.info(myMsg)
+        try:
+            pchtrakt.logger.info(myMsg)
+        except UnicodeEncodeError:
+            Debug("debuging debug msg")
+            myMsg = myMsg.encode("utf-8", "replace")
+            pchtrakt.logger.info(myMsg)
 
 def checkSettings(daemon=False):
     if username != 'your_trakt_login':
@@ -78,37 +77,37 @@ def xcp(s):
 def getTraktConnection(url, args, timeout=60):
     data = None
     try:
-		Debug("[traktAPI] getTraktConnection(): urllib2.Request(%s)" % url)
-		if args == None:
-			req = Request(url)
-		else:
-			req = Request(url, args)
-			Debug("[traktAPI] getTraktConnection(): urllib2.urlopen()")
-			t1 = time.time()
-			response = urlopen(req, timeout=timeout)
-			t2 = time.time()
-			Debug("[traktAPI] getTraktConnection(): response.read()")
-			data = response.read()
-			Debug("[traktAPI] getTraktConnection(): Response Code: %i" % response.getcode())
-			Debug("[traktAPI] getTraktConnection(): Response Time: %0.2f ms" % ((t2 - t1) * 1000))
-			Debug("[traktAPI] getTraktConnection(): Response Headers: %s" % str(response.info().dict))
-	
-    except IOError, e:
-		if hasattr(e, 'code'):  # error 401 or 503, possibly others
-			# read the error document, strip newlines, this will make an html page 1 line
-			error_data = e.read().replace("\n", "").replace("\r", "")
-	    
-			if e.code == 401:  # authentication problem
-				raise AuthenticationTraktError()
-			elif e.code == 503:  # server busy problem
-				raise traktServerBusy()
-			else:
-				raise traktUnknownError()
+        Debug("[traktAPI] getTraktConnection(): urllib2.Request(%s)" % url)
+        if args == None:
+            req = Request(url)
+        else:
+            req = Request(url, args)
+            Debug("[traktAPI] getTraktConnection(): urllib2.urlopen()")
+            t1 = time.time()
+            response = urlopen(req, timeout=timeout)
+            t2 = time.time()
+            Debug("[traktAPI] getTraktConnection(): response.read()")
+            data = response.read()
+            Debug("[traktAPI] getTraktConnection(): Response Code: %i" % response.getcode())
+            Debug("[traktAPI] getTraktConnection(): Response Time: %0.2f ms" % ((t2 - t1) * 1000))
+            Debug("[traktAPI] getTraktConnection(): Response Headers: %s" % str(response.info().dict))
 
-		elif hasattr(e, 'reason'):  # usually a read timeout, or unable to reach host
-			raise traktNetworkError(str(e.reason), isinstance(e.reason, socket.timeout))
-		else:
-			raise traktUnknownError(e.message)
+    except IOError, e:
+        if hasattr(e, 'code'):  # error 401 or 503, possibly others
+            # read the error document, strip newlines, this will make an html page 1 line
+            error_data = e.read().replace("\n", "").replace("\r", "")
+
+            if e.code == 401:  # authentication problem
+                raise AuthenticationTraktError()
+            elif e.code == 503:  # server busy problem
+                raise traktServerBusy()
+            else:
+                raise traktUnknownError()
+
+        elif hasattr(e, 'reason'):  # usually a read timeout, or unable to reach host
+            raise traktNetworkError()
+        else:
+            raise traktUnknownError(e.message)
     return data
 
 # make a JSON api request to trakt
@@ -121,33 +120,33 @@ def getTraktConnection(url, args, timeout=60):
 # silent: default is True, when true it disable any error notifications (but not debug messages)
 # passVersions: default is False, when true it passes extra version information to trakt to help debug problems
 # hideResponse: used to not output the json response to the log
-def traktJsonRequest(method, url, args={}, returnStatus=False, returnOnFailure=False, silent=True, passVersions=False, hideResponse=False):
+def traktJsonRequest(method, url, args=None, returnStatus=False, returnOnFailure=False, silent=True, passVersions=False, hideResponse=False):
     raw = None
     data = None
     jdata = {}
     retries = 3
     if args is None:
-		args = {}
+        args = {}
 
     if not (method == 'POST' or method == 'GET'):
-		Debug("[traktAPI] traktJsonRequest(): Unknown method '%s'." % method)
-		return None
-		
+        Debug("[traktAPI] traktJsonRequest(): Unknown method '%s'." % method)
+        return None
+
     if method == 'POST':
-		# debug log before username and sha1hash are injected
-		Debug("[traktAPI] traktJsonRequest(): Request data: '%s'." % str(json.dumps(args)))
-	
-		# inject username/pass into json data
-		args['username'] = username
-		args['password'] = pwdsha1
-	
+        # debug log before username and sha1hash are injected
+        Debug("[traktAPI] traktJsonRequest(): Request data: '%s'." % str(json.dumps(args)))
+
+        # inject username/pass into json data
+        args['username'] = username
+        args['password'] = pwdsha1
+
     # check if plugin version needs to be passed
     if passVersions:
-		args['plugin_version'] = 0  # __settings__.getAddonInfo("version")
-		args['media_center'] = 'popcorn hour'  # Todo get pch version
-		args['media_center_version'] = 0
-		args['media_center_date'] = '10/01/2012' 
-	    
+        args['plugin_version'] = 0  # __settings__.getAddonInfo("version")
+        args['media_center'] = 'popcorn hour'  # Todo get pch version
+        args['media_center_version'] = 0
+        args['media_center_date'] = '10/01/2012' 
+
     # convert to json data
     jdata = json.dumps(args)
 
@@ -155,59 +154,60 @@ def traktJsonRequest(method, url, args={}, returnStatus=False, returnOnFailure=F
     
     # start retry loop
     for i in range(retries):
-		Debug("[traktAPI] traktJsonRequest(): (%i) Request URL '%s'" % (i, url))
+        Debug("[traktAPI] traktJsonRequest(): (%i) Request URL '%s'" % (i, url))
 
-		url = url.replace("%%API_KEY%%", apikey)
-		url = url.replace("%%USERNAME%%", username)
+        url = url.replace("%%API_KEY%%", apikey)
+        url = url.replace("%%USERNAME%%", username)
 
-		try:
-			# get data from trakt.tv
-			raw = getTraktConnection(url, jdata)
-			# check that returned data is not empty
-		except traktError, e:
-			if isinstance(e, traktServerBusy):
-				Debug("[traktAPI] traktRequest(): (%i) Server Busy (%s)" % (i, e.value))
-			elif isinstance(e, traktAuthProblem):
-				Debug("[traktAPI] traktRequest(): (%i) Authentication Failure (%s)" % (i, e.value))
-				return
-			elif isinstance(e, traktNetworkError):
-				Debug("[traktAPI] traktRequest(): (%i) Network error: %s" % (i, e.value))
-			elif isinstance(e, traktUnknownError):
-					Debug("[traktAPI] traktRequest(): (%i) Other problem (%s)" % (i, e.value))
-			else:
-				pass
-	
-		if not raw:
-			Debug("[traktAPI] traktJsonRequest(): (%i) JSON Response empty" % i)
-	    
-		try:
-			# get json formatted data
-			data = json.loads(raw)
-			Debug("[traktAPI] traktJsonRequest(): (%i) JSON response: '%s'" % (i, str(data)))
-		except ValueError:
-			# malformed json response
-			Debug("[traktAPI] traktJsonRequest(): (%i) Bad JSON response: '%s'", (i, raw))
-	
-		# check for the status variable in JSON data
-		if 'status' in data:
-			if data['status'] == 'success':
-				break
-			elif returnOnFailure and data['status'] == 'failure':
-				Debug("[traktAPI] traktJsonRequest(): Return on error set, breaking retry.")
-				break
-			else:
-				Debug("[traktAPI] traktJsonRequest(): (%i) JSON Error '%s' -> '%s'" % (i, data['status'], data['error']))
-		
-		# check to see if we have data, an empty array is still valid data, so check for None only
-		if not data is None:
-			Debug("[traktAPI] traktJsonRequest(): Have JSON data, breaking retry.")
-			break
+        try:
+            # get data from trakt.tv
+            raw = getTraktConnection(url, jdata)
+            # check that returned data is not empty
+        except traktError, e:
+            if isinstance(e, traktServerBusy):
+                Debug("[traktAPI] traktRequest(): (%i) Server Busy (%s)" % (i.value, e))
+            elif isinstance(e, AuthenticationTraktError):
+                Debug("boo")
+                raise AuthenticationTraktError()
+            elif isinstance(e, traktNetworkError):
+                Debug("[traktAPI] traktRequest(): (%i) Network error: %s" % (i, e))
+                raise traktNetworkError()
+            elif isinstance(e, traktUnknownError):
+                Debug("[traktAPI] traktRequest(): (%i) Other problem (%s)" % (i.value, e))
+            else:
+                pass
+
+        if not raw:
+            Debug("[traktAPI] traktJsonRequest(): (%i) JSON Response empty" % i.value)
+
+        try:
+            # get json formatted data
+            data = json.loads(raw)
+            Debug("[traktAPI] traktJsonRequest(): (%i) JSON response: '%s'" % (i, str(data)))
+        except ValueError:
+            # malformed json response
+            Debug("[traktAPI] traktJsonRequest(): (%i) Bad JSON response: '%s'", (i, raw))
+
+        # check for the status variable in JSON data
+        if 'status' in data:
+            if data['status'] == 'success':
+                break
+            elif returnOnFailure and data['status'] == 'failure':
+                Debug("[traktAPI] traktJsonRequest(): Return on error set, breaking retry.")
+                break
+            else:
+                Debug("[traktAPI] traktJsonRequest(): (%i) JSON Error '%s' -> '%s'" % (i, data['status'], data['error']))
+
+        # check to see if we have data, an empty array is still valid data, so check for None only
+        if not data is None:
+            Debug("[traktAPI] traktJsonRequest(): Have JSON data, breaking retry.")
+            break
 
 
     # handle scenario where all retries fail
     if data is None:
-		Debug("[traktAPI] traktJsonRequest(): JSON Request failed, data is still empty after retries.")
-		return None
+        Debug("[traktAPI] traktJsonRequest(): JSON Request failed, data is still empty after retries.")
+        return None
     
     if 'status' in data:
         if data['status'] == 'failure':
@@ -490,7 +490,7 @@ def rateShowOnTrakt(tvdbid, title, year, rating):
         # notification("Trakt Utilities", __language__(1167).encode( "utf-8", "ignore" )) # Rating submitted successfully
     
     return data
-		
+
 # Get the rating for a tv show from trakt
 def getShowRatingFromTrakt(tvdbid, title, year):
     if tvdbid == "" or tvdbid == None:

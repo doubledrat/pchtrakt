@@ -33,7 +33,7 @@ def newConfig():
     if not isfile(config_file):
         config.add_section('PCHtrakt')
     if not config.has_option('PCHtrakt','pch_ip'):
-        config.set('PCHtrakt', 'pch_ip', '127.0.0.1        ; do not change if installed directly on the popcorn')
+        config.set('PCHtrakt', 'pch_ip', '127.0.0.1')
     if not config.has_option('PCHtrakt','autoupdate'):
         config.set('PCHtrakt', 'autoupdate', 'False')
     if not config.has_option('PCHtrakt','sleep_time'):
@@ -43,7 +43,7 @@ def newConfig():
     if not config.has_option('PCHtrakt','log_file'):
         config.set('PCHtrakt', 'log_file', 'pchtrakt.log')
     if not config.has_option('PCHtrakt','log_size'):
-        config.set('PCHtrakt', 'log_size', '0        ; In bytes, set to 0 to rotate log on every restart')
+        config.set('PCHtrakt', 'log_size', '0')
     if not config.has_option('PCHtrakt','ignored_repertory'):
         config.set('PCHtrakt', 'ignored_repertory', '')
     if not config.has_option('PCHtrakt','ignored_keywords'):
@@ -84,7 +84,7 @@ def newConfig():
     if not config.has_option('YAMJ','ignored_category'):
         config.set('YAMJ', 'ignored_category', '')
     if not config.has_option('YAMJ','jukebox_path'):
-        config.set('YAMJ', 'jukebox_path', '        ; Path to your Jukebox folder')
+        config.set('YAMJ', 'jukebox_path', '')
 
     if not config.has_section('Auto Watched'):
         config.add_section('Auto Watched')
@@ -95,8 +95,7 @@ def newConfig():
     if not config.has_option('Auto Watched','tvxml_find'):
         config.set('Auto Watched', 'tvxml_find', 'Other_All,Other_HD,Other_New,Other_Rating,Other_TV,Other_Unwatched,Other_Sets')
     if not config.has_option('Auto Watched','moviexml_find'):
-        config.set('Auto Watched', 'moviexml_find', 'Other_All,Other_HD,Other_New,Other_Rating,Other_Movies,Other_Unwatched,Other_Sets')
-		
+        config.set('Auto Watched', 'moviexml_find', 'Other_All,Other_HD,Other_New,Other_Rating,Other_Movies,Other_Unwatched,Other_Sets')		
     with open(config_file, 'w') as configfile:
         config.write(configfile)
 
