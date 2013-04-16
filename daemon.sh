@@ -7,11 +7,17 @@ MANPATH=$MANPATH:/usr/local/share/man:/share/Apps/local/share/man;export MANPATH
 
 force_pchtrakt()
 {
-   chmod 777 /share/Apps/pchtrakt
-   cd /share/Apps/pchtrakt
-   git stash
-   git pull
-   git reset
+   # install busybox
+	if [ -f /share/Apps/local/bin/busybox ] ; then
+		echo "Required dependency, busybox is installed."
+	else
+		opkg install busybox -force-depends -force-overwrite
+	fi
+	chmod 777 /share/Apps/pchtrakt
+	cd /share/Apps/pchtrakt
+	git stash
+	git pull
+	git reset
 }
 
 force_all()
