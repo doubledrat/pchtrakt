@@ -512,10 +512,25 @@ def watchedFileCreation(myMedia):
             if RutabagaModwatched:
                 msg = 'Starting html update in '+YamjPath
                 pchtrakt.logger.info(msg)
-                #if pchtrakt.isMovie:
-                #fileinfo = YamjPath + lookfor + ".html"
-                fileinfo = 'E://test.html'
-                for line in fileinput.FileInput(fileinfo, inplace=1):
-                    line=line.replace('[code]<td class="title3" width="16%" valign="top">Watched:</td><td id="watched" class="normal" width="16%" valign="top">false</td>[/code]','[code]<td class="title3" width="16%" valign="top">Watched:</td><td id="watched" class="normal" width="16%" valign="top">true</td>[/code]')
-                    print line
+                if pchtrakt.isMovie:
+                    fileinfo = YamjPath + lookfor + ".html"
+                    content = open(fileinfo,'rb+').read()
+                    replacedText = content.replace('unwatched', 'watched') 
+                    if replacedText is not content:
+                        open(fileinfo, 'w').write(replacedText)
+                        txt = name.replace(YamjPath, '') + ' has been modified as watched for ' + matchthis
+                        pchtrakt.logger.info(txt)
+                    else:
+                        txt = name.replace(YamjPath, '') + ' has NOT been modified as watched for ' + matchthis
+                        pchtrakt.logger.info(txt)
                 #elif pchtrakt.isTvShow:
+                    #fileinfo = YamjPath + lookfor + ".html"
+                    #content = open(fileinfo,'rb+').read()
+                    #replacedText = content.replace('unwatched', 'watched') 
+                    #if replacedText is not content:
+                        #open(fileinfo, 'w').write(replacedText)
+                        #txt = name.replace(YamjPath, '') + ' has been modified as watched for ' + matchthis
+                        #pchtrakt.logger.info(txt)
+                    #else:
+                        #txt = name.replace(YamjPath, '') + ' has NOT been modified as watched for ' + matchthis
+                        #pchtrakt.logger.info(txt)
