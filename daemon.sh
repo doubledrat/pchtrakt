@@ -16,7 +16,9 @@ force_pchtrakt()
 	chmod 777 /share/Apps/pchtrakt
 	cd /share/Apps/pchtrakt
 	git stash
+    sleep 3
 	git pull
+    sleep 3
 	git reset
 }
 
@@ -69,9 +71,9 @@ case "$1" in
 
     update)
     stop_pchtrakt;
-    sleep 2
+    sleep 3
     force_pchtrakt;
-    sleep 2
+    sleep 3
     start_pchtrakt;
     ;;
     
