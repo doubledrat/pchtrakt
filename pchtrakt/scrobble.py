@@ -507,8 +507,7 @@ def watchedFileCreation(myMedia):
                                         txt = name.replace(YamjPath, '') + ' has been modified as watched for ' + matchthis
                                         pchtrakt.logger.info(txt)
                                         previous = xmlword
-                                    break
-                                break
+                                        break
             if RutabagaModwatched:
                 msg = 'Starting html update in '+YamjPath
                 pchtrakt.logger.info(msg)
