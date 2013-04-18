@@ -508,7 +508,9 @@ def watchedFileCreation(myMedia):
                                         pchtrakt.logger.info(txt)
                                         previous = xmlword
                                         break
-            if RutabagaModwatched:
+            elif RutabagaModwatched:
+                lookfor = matchthis[:-4]
+                lookforfull = matchthisfull[:-4]
                 msg = 'Starting html update in '+YamjPath
                 pchtrakt.logger.info(msg)
                 if pchtrakt.isMovie:
