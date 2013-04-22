@@ -57,6 +57,7 @@ sleepTime = float(config.get('PCHtrakt', 'sleep_time'))
 watched_percent = float(config.get('PCHtrakt', 'watched_percent'))
 if watched_percent > 100 or watched_percent < 0:
 	watched_percent = 90
+log_file = config.get('PCHtrakt','log_file')
 log_size = float(config.get('PCHtrakt', 'log_size'))
 ignored_repertory = [x.strip() for x in config.get('PCHtrakt', 'ignored_repertory').split(',')]
 ignored_keywords = [x.strip() for x in config.get('PCHtrakt', 'ignored_keywords').split(',')]

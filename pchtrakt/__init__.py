@@ -17,13 +17,6 @@ isTvShow = 0
 isMovie = 0
 idOK = 0
 allowedPauseTime = 0
-
-logger = logging.getLogger('pchtrakt')
-formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s\r')
-hdlr = logging.handlers.RotatingFileHandler("pchtrakt.log",backupCount=3)
-hdlr.setFormatter(formatter)
-logger.addHandler(hdlr)
-logger.setLevel(logging.INFO)
 config = ConfigParser.RawConfigParser()
 
 def loadOldConfig():
@@ -103,6 +96,14 @@ if isfile(config_file):
     loadOldConfig()
 newConfig()
 
-# Roll over on application start if file size is over 
-if getsize("pchtrakt.log") > float(config.get('PCHtrakt', 'log_size')):
+# Roll over on application start if file size is over
+logger = logging.getLogger('pchtrakt')
+log_file = config.get('PCHtrakt', 'log_file')
+formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s\r')
+hdlr = logging.handlers.RotatingFileHandler(log_file,backupCount=3)
+hdlr.setFormatter(formatter)
+logger.addHandler(hdlr)
+logger.setLevel(logging.INFO)
+
+if getsize(log_file) > float(config.get('PCHtrakt', 'log_size')):
 	logger.handlers[0].doRollover()
