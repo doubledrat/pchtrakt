@@ -358,7 +358,7 @@ def watchedFileCreation(myMedia):
                                 tree = ElementTree.parse(name)
                                 for movie in tree.findall('movies/movie'):
                                     if movie.find('baseFilenameBase').text.encode('utf-8') == lookfor:#for  content in penContents:
-                                        movie.findall('watched').text = 'true'
+                                        movie.find('watched').text = 'true'
                                         os.remove(name)
                                         tree.write(name, encoding="utf-8")
                                         txt = name.replace(YamjPath, '') + ' has been modified as watched for ' + matchthis
@@ -501,6 +501,7 @@ def watchedFileCreation(myMedia):
                                         pchtrakt.logger.info(txt)
                                         previous = xmlword
                                         break
+                                break
             elif RutabagaModwatched:
                 lookfor = matchthis[:-4]
                 lookforfull = matchthisfull[:-4]
