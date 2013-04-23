@@ -358,15 +358,12 @@ def watchedFileCreation(myMedia):
                                 tree = ElementTree.parse(name)
                                 for movie in tree.findall('movies/movie'):
                                     if movie.find('baseFilenameBase').text.encode('utf-8') == lookfor:#for  content in penContents:
-                                        movie.find('watched').text = 'true'
-                                        for mfile in movie.findall('files/file'):
-                                            mfile.set('watched', 'true')
-                                            bak_name = name[:-4]+'.bak'
-                                            tree.write(bak_name, encoding="utf-8")
-                                            os.rename(bak_name, name)
-                                            txt = name.replace(YamjPath, '') + ' has been modified as watched for ' + matchthis
-                                            pchtrakt.logger.info(txt)
-                                            previous = xmlword
+                                        movie.findall('watched').text = 'true'
+                                        os.remove(name)
+                                        tree.write(name, encoding="utf-8")
+                                        txt = name.replace(YamjPath, '') + ' has been modified as watched for ' + matchthis
+                                        pchtrakt.logger.info(txt)
+                                        previous = xmlword
                                         break
                                 break
                     name = urllib.unquote_plus(YamjPath + lookfor + '.xml')
@@ -392,10 +389,6 @@ def watchedFileCreation(myMedia):
                     pchtrakt.logger.info(msg)
                     previous = None
                     moviexmlfind.append(((matchthis.split('['))[-1].split('-')[0]).replace ("SET ", "Set_"))
-                    #moviexmlfind.append(lookfor[:-2])
-                    Debug('matchthisfull ' + lookfor[:-2])
-                    #Extras = lookfor +', ' + ((matchthis.split('['))[-1].split('-')[0])
-                    #
                     for xmlword in moviexmlfind:
                         fileinfo = YamjPath + xmlword + "*.xml"
                         for name in glob.glob(fileinfo):
