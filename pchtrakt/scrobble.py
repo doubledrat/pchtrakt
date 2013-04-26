@@ -421,49 +421,22 @@ def watchedFileCreation(myMedia):
                         a = re.split("(?P<season_num>\d+)[. _-]*", matchthis)
                     ep_name = a[2][:-4].replace(".", " ").replace("- ", "")
                     season_xml = re.sub("(^|\s)(\S)", repl_func, a[0][:2])
-                    #f_size = str(os.path.getsize(myMedia.oStatus.fullPath))
-                    ep_no = '01'
-                    fileinfo = YamjPath + "Set_" + season_xml + "*.xml"
-                    Debug(fileinfo)
-                    for name in glob.glob(fileinfo):
-                        Debug(name)
-                        if lookfor in open(name).read():
-                            tree = ElementTree.parse(name)
-                            SET = YamjPath + tree.find('movies/movie/baseFilenameBase').text.encode('utf-8') + '.xml'
-                            for movie in tree.findall(xpath):
-                                Debug(movie.get('firstPart'))
-                                if urllib.unquote_plus(movie.find('fileURL').text.encode('utf-8')) == 'file://' + matchthisfull:
-                                    movie.set('watched', 'true')
-                                    bak_name = name[:-4]+'.bak'
-                                    tree.write(bak_name, encoding="utf-8")
-                                    os.rename(bak_name, name)
-                                    txt = name.replace(YamjPath, '') + ' has been modified as watched for ' + matchthis
-                                    pchtrakt.logger.info(txt)
-                                    break
-                            break
-                    Debug(SET)
-                    tree = ElementTree.parse(SET)
-                    Debug(SET)
-                    for movie in tree.findall('./movie/files/file'):
-						Debug(name)
-						if urllib.unquote_plus(movie.find('fileURL').text.encode('utf-8')) == 'file://' + matchthisfull:
-							movie.set('watched', 'true')
-							bak_name = SET[:-4]+'.bak'
-							tree.write(bak_name, encoding="utf-8")
-							os.rename(bak_name, SET)
-							txt = SET.replace(YamjPath, '') + ' has been modified as watched for ' + matchthis
-							pchtrakt.logger.info(txt)
-							break
-                    previous = None
+                    tvxmlfind.extend(["Set_" + season_xml,season_xml])
                     for xmlword in tvxmlfind:
                         Debug(xmlword)
                         fileinfo = YamjPath + xmlword + "*.xml"
                         for name in glob.glob(fileinfo):
                             Debug("before name")#(name)
                             if lookfor in open(name).read():
-                                Debug("after name")
+                                Debug("after name " + fileinfo)
                                 tree = ElementTree.parse(name)
-                                for movie in tree.findall(xpath):
+                                if xmlword == season_xml:
+									zpath = "./movie/files/file[@firstPart='{0}'][@season='{1}']".format(
+                                                    epno,str(myMedia.parsedInfo.season_number))
+                                else:
+									zpath = xpath
+                                Debug(zpath)
+                                for movie in tree.findall(zpath):
                                     Debug(urllib.unquote_plus(movie.find('fileURL').text.encode('utf-8')))
                                     Debug('file://' + matchthisfull)
                                     if urllib.unquote_plus(movie.find('fileURL').text.encode('utf-8')) == 'file://' + matchthisfull:
