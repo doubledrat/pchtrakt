@@ -18,6 +18,9 @@ class EnumScrobbleResult:
     TRAKTOK = 1
     BETASERIESOK= 2
 
+class OutToMainLoop(Exception):
+    pass
+
 def repl_func(m):
     return m.group(1) + m.group(2).upper()
 
@@ -353,7 +356,7 @@ def watchedFileCreation(myMedia):
                     Debug('Looking in ' + name)
                     tree = ElementTree.parse(name)
                     try:
-						SET = YamjPath + urllib.unquote_plus(tree.find('movie/sets/set').attrib['index']).encode('utf-8')
+						SET = urllib.unquote_plus(tree.find('movie/sets/set').attrib['index']).encode('utf-8')
                     except AttributeError:
 						SET = '0'
                     Debug('1 ' + name)
@@ -370,35 +373,27 @@ def watchedFileCreation(myMedia):
                                 txt = name.replace(YamjPath, '') + ' has been modified as watched for ' + matchthis
                                 pchtrakt.logger.info(txt)
                                 break
-                    if SET != "0":
-						Debug(SET)
-						for name in glob.glob(SET+'*xml'):
-							Debug('Looking in ' + name)
-							if lookfor in open(name).read():#gets xml file name as name
-								Debug("MATCH FOUND 1")
-								tree = ElementTree.parse(name)
-								for movie in tree.findall('movies/movie'):
-									Debug('2 ' + name)
-									if movie.find('baseFilenameBase').text.encode('utf-8') == lookfor:#for  content in penContents:
-										Debug('MATCH FOUND 2b')
-										movie.find('watched').text = 'true'
-										bak_name = name[:-4]+'.bak'
-										tree.write(bak_name, encoding="utf-8")
-										os.rename(bak_name, name)
-										txt = name.replace(YamjPath, '') + ' has been modified as watched for ' + matchthis
-										pchtrakt.logger.info(txt)
-										break
-                    else:
+                    try:
+						if SET != "0":
+							moviexmlfind.insert(0,SET)
+							Debug("Has Set_ file: " + SET)
 						for xmlword in moviexmlfind:
-							fileinfo = YamjPath + xmlword + "*.xml"
+							fileinfo = YamjPath + xmlword + "*xml"
 							Debug('Scanning ' + fileinfo)
 							for name in glob.glob(fileinfo):
-								Debug('Looking for ' + name)
-								if lookfor in open(name).read():#gets xml file name as name
+								if xmlword != SET:
+									findthis = SET
+								else:
+									findthis = lookfor
+								Debug('Looking for ' + findthis + " in " + name)
+								if findthis in open(name).read():#gets xml file name as name
 									Debug("MATCH FOUND")
 									tree = ElementTree.parse(name)
 									for movie in tree.findall('movies/movie'):
-										if movie.find('baseFilenameBase').text.encode('utf-8') == lookfor:#for  content in penContents:
+										if movie.find('baseFilenameBase').text.encode('utf-8') == findthis:
+											if movie.attrib['isSet'] == "true":
+												Debug("isset is true")
+												raise OutToMainLoop()
 											movie.find('watched').text = 'true'
 											os.remove(name)
 											tree.write(name, encoding="utf-8")
@@ -407,6 +402,8 @@ def watchedFileCreation(myMedia):
 											previous = xmlword
 											break
 									break
+                    except OutToMainLoop:
+						pass
                 elif pchtrakt.isTvShow:
                     msg = 'Starting Tv xml update in '+YamjPath
                     pchtrakt.logger.info(msg)
