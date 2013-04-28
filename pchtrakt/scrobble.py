@@ -391,7 +391,7 @@ def watchedFileCreation(myMedia):
 									tree = ElementTree.parse(name)
 									for movie in tree.findall('movies/movie'):
 										if movie.find('baseFilenameBase').text.encode('utf-8') == findthis:
-											if movie.attrib['isSet'] == "true":
+											if movie.attrib['isSet'] == "true" and SET != "0":
 												Debug("isset is true")
 												raise OutToMainLoop()
 											movie.find('watched').text = 'true'
