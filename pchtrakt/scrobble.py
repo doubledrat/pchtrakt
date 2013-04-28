@@ -381,16 +381,12 @@ def watchedFileCreation(myMedia):
 							fileinfo = YamjPath + xmlword + "*xml"
 							Debug('Scanning ' + fileinfo)
 							for name in glob.glob(fileinfo):
-								if xmlword != SET:
-									findthis = SET
-								else:
-									findthis = lookfor
-								Debug('Looking for ' + findthis + " in " + name)
-								if findthis in open(name).read():#gets xml file name as name
+								Debug('Looking for ' + lookfor + " in " + name)
+								if lookfor in open(name).read():#gets xml file name as name
 									Debug("MATCH FOUND")
 									tree = ElementTree.parse(name)
 									for movie in tree.findall('movies/movie'):
-										if movie.find('baseFilenameBase').text.encode('utf-8') == findthis:
+										if movie.find('baseFilenameBase').text.encode('utf-8') == lookfor:
 											if movie.attrib['isSet'] == "true" and SET != "0":
 												Debug("isset is true")
 												raise OutToMainLoop()
