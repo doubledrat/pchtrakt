@@ -18,7 +18,7 @@ except ImportError: import json
 from hashlib import sha1
 import urllib2, re
 from urllib2 import Request, urlopen, HTTPError, URLError
-from httplib import HTTPException
+from httplib import HTTPException, BadStatusLine
 
   
 __author__ = "Ralph-Gordon Paul, Adrian Cowan"
@@ -92,6 +92,8 @@ def getTraktConnection(url, args, timeout=60):
             Debug("[traktAPI] getTraktConnection(): Response Time: %0.2f ms" % ((t2 - t1) * 1000))
             Debug("[traktAPI] getTraktConnection(): Response Headers: %s" % str(response.info().dict))
 
+    except BadStatusLine, e:
+        raise traktUnknownError("BadStatusLine: '%s' from URL: '%s'" % (e.line, url)) 
     except IOError, e:
         if hasattr(e, 'code'):  # error 401 or 503, possibly others
             # read the error document, strip newlines, this will make an html page 1 line
@@ -165,20 +167,20 @@ def traktJsonRequest(method, url, args=None, returnStatus=False, returnOnFailure
             # check that returned data is not empty
         except traktError, e:
             if isinstance(e, traktServerBusy):
-                Debug("[traktAPI] traktRequest(): (%i) Server Busy (%s)" % (i.value, e))
+                Debug("[traktAPI] traktRequest(): (%i) Server Busy (%s)" % (i, e.value))
             elif isinstance(e, AuthenticationTraktError):
                 Debug("boo")
                 raise AuthenticationTraktError()
             elif isinstance(e, traktNetworkError):
-                Debug("[traktAPI] traktRequest(): (%i) Network error: %s" % (i, e))
+                Debug("[traktAPI] traktRequest(): (%i) Network error: %s" % (i, e.value))
                 raise traktNetworkError()
             elif isinstance(e, traktUnknownError):
-                Debug("[traktAPI] traktRequest(): (%i) Other problem (%s)" % (i.value, e))
+                Debug("[traktAPI] traktRequest(): (%i) Other problem (%s)" % (i, e.value))
             else:
                 pass
 
         if not raw:
-            Debug("[traktAPI] traktJsonRequest(): (%i) JSON Response empty" % i.value)
+            Debug("[traktAPI] traktJsonRequest(): (%i) JSON Response empty" % i)
 
         try:
             # get json formatted data
