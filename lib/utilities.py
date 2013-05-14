@@ -80,8 +80,10 @@ def getTraktConnection(url, args, timeout=60):
         Debug("[traktAPI] getTraktConnection(): urllib2.Request(%s)" % url)
         if args == None:
             req = Request(url)
+            req.add_header('Accept', '*/*')
         else:
             req = Request(url, args)
+            req.add_header('Accept', '*/*')
             Debug("[traktAPI] getTraktConnection(): urllib2.urlopen()")
             t1 = time.time()
             response = urlopen(req, timeout=timeout)
