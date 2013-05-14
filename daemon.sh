@@ -7,11 +7,11 @@ MANPATH=$MANPATH:/usr/local/share/man:/share/Apps/local/share/man;export MANPATH
 
 force_pchtrakt()
 {
-   # install busybox
-	if [ -f /share/Apps/local/bin/busybox ] ; then
-		echo "Required dependency, busybox is installed."
+   # install coreutils
+	if [ -f /share/Apps/local/bin/tr ] ; then
+		echo "Required dependency, coreutils is installed."
 	else
-		opkg install busybox -force-depends -force-overwrite
+		opkg install coreutils -force-depends -force-overwrite
 	fi
 	chmod 777 /share/Apps/pchtrakt
 	cd /share/Apps/pchtrakt
