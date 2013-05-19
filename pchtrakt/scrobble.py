@@ -26,13 +26,17 @@ def repl_func(m):
 
 def showStarted(myMedia):
     if TraktScrobbleTvShow:
+        percent = myMedia.oStatus.percent * len(myMedia.parsedInfo.episode_numbers)  - (myMedia.idxEpisode * 100 )#fixed percent for multipleEpisode
+
+        if percent < 0 : percent = 0
+        
         response = utilities.watchingEpisodeOnTrakt(myMedia.parsedInfo.id,
                                                     myMedia.parsedInfo.name,
                                                     myMedia.parsedInfo.year,
                                                     str(myMedia.parsedInfo.season_number),
                                                     str(myMedia.parsedInfo.episode_numbers[myMedia.idxEpisode]),
                                                     str(myMedia.oStatus.totalTime),
-                                                    str(myMedia.oStatus.percent))
+                                                    str(percent))
         msg = u'Sending play: {0} {1} {2} {3}' \
               ' {4} {5} {6}'.format(myMedia.parsedInfo.id,
                                     myMedia.parsedInfo.name,
@@ -40,7 +44,7 @@ def showStarted(myMedia):
                                     str(myMedia.parsedInfo.season_number),
                                     str(myMedia.parsedInfo.episode_numbers[myMedia.idxEpisode]),
                                     str(myMedia.oStatus.totalTime),
-                                    str(myMedia.oStatus.percent))
+                                    str(percent))
         pchtrakt.logger.info(msg)
         if response != None:
             msg = 'Video playing: %s - %s' %(response['status'],response['message'])
