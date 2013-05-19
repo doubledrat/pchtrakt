@@ -103,7 +103,7 @@ formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s\r')
 hdlr = logging.handlers.RotatingFileHandler(log_file,backupCount=3)
 hdlr.setFormatter(formatter)
 logger.addHandler(hdlr)
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 
 if getsize(log_file) > float(config.get('PCHtrakt', 'log_size')):
 	logger.handlers[0].doRollover()

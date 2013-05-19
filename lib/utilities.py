@@ -3,22 +3,27 @@
 
 try:
     # Python 3.0 +
-    import http.client as httplib
+    from http.client import HTTPException, BadStatusLine
 except ImportError:
     # Python 2.7 and earlier
-    import httplib
-
-import os, sys
-import time, socket
-from pchtrakt.config import *
+    from httplib import HTTPException, BadStatusLine
+try:
+    import simplejson as json
+except ImportError:
+    import json
+try:
+	from hashlib import sha1
+except ImportError:
+	from sha import new as sha1
+import os
+import sys
+import time
+import socket
 import pchtrakt
-try: import simplejson as json
-except ImportError: import json
-
-from hashlib import sha1
-import urllib2, re
+import re
+from pchtrakt.config import *
 from urllib2 import Request, urlopen, HTTPError, URLError
-from httplib import HTTPException, BadStatusLine
+#from httplib import HTTPException, BadStatusLine
 
   
 __author__ = "Ralph-Gordon Paul, Adrian Cowan"
@@ -35,7 +40,6 @@ headers = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/
 
 class traktError(Exception):
     pass
-
 class AuthenticationTraktError(traktError):
 	def __init__(self):
 		Exception.__init__(self, 'Trakt.tv - Login or password incorrect')
@@ -51,11 +55,10 @@ class traktNetworkError(traktError):
 	def __init__(self):
 		Exception.__init__(self, 'Trakt.tv - Site is down/unavalable')
 
-def Debug(msg, force=use_debug):
-    myMsg = msg
+def Debug(myMsg, force=use_debug):
     if (pchtrakt.debug or force):
         try:
-            pchtrakt.logger.info(myMsg)
+            pchtrakt.logger.debug(myMsg)
         except UnicodeEncodeError:
             Debug("debuging debug msg")
             myMsg = myMsg.encode("utf-8", "replace")

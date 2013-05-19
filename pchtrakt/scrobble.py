@@ -190,15 +190,6 @@ def videoStatusHandleMovie(myMedia):
         pchtrakt.watched = 0
         pchtrakt.currentTime = myMedia.oStatus.currentTime
         movieStarted(myMedia)
-    #Debug('checking path 1')
-    #path = myMedia.oStatus.fullPath
-    #Debug('checking path 2')
-    #path = '{0}.watched'.format(path.encode('Latin-1', 'replace'))#.encode('utf-8', 'replace'))
-    #Debug('checking path 3')
-    #if not isfile(path):
-    #f = open(path, 'w')
-    #f.close()
-    #msg = 'I have created the file {0}'.format(path)
 
 def videoStatusHandleTVSeries(myMedia):
     if len(myMedia.parsedInfo.episode_numbers)>1:
@@ -360,7 +351,7 @@ def watchedFileCreation(myMedia):
                     Debug('Looking in ' + name)
                     tree = ElementTree.parse(name)
                     try:
-						SET = urllib.unquote_plus(tree.find('movie/sets/set').attrib['index']).encode('utf-8')
+						SET = urllib.unquote_plus(tree.find('movie/sets/set').attrib['index'])
                     except AttributeError:
 						SET = '0'
                     Debug('1 ' + name)
