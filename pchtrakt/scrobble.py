@@ -363,7 +363,7 @@ def watchedFileCreation(myMedia):
                             for mfile in movie.findall('files/file'):
                                 mfile.set('watched', 'true')
                                 bak_name = name[:-4]+'.bak'
-                                tree.write(bak_name, encoding="utf-8")
+                                tree.write(bak_name, xml_declaration=True, encoding='utf-8')
                                 os.rename(bak_name, name)
                                 txt = name.replace(YamjPath, '') + ' has been modified as watched for ' + matchthis
                                 pchtrakt.logger.info(txt)
@@ -386,8 +386,9 @@ def watchedFileCreation(myMedia):
 												Debug("isset is true")
 												raise OutToMainLoop()
 											movie.find('watched').text = 'true'
-											os.remove(name)
-											tree.write(name, encoding="utf-8")
+											bak_name = name[:-4]+'.bak'
+											tree.write(bak_name, xml_declaration=True, encoding='utf-8')
+											os.rename(bak_name, name)
 											txt = name.replace(YamjPath, '') + ' has been modified as watched for ' + matchthis
 											pchtrakt.logger.info(txt)
 											previous = xmlword
@@ -431,7 +432,7 @@ def watchedFileCreation(myMedia):
                                         Debug("match")
                                         movie.set('watched', 'true')
                                         bak_name = name[:-4]+'.bak'
-                                        tree.write(bak_name, encoding="utf-8")
+                                        tree.write(bak_name, xml_declaration=True, encoding='utf-8')
                                         os.rename(bak_name, name)
                                         txt = name.replace(YamjPath, '') + ' has been modified as watched for ' + matchthis
                                         pchtrakt.logger.info(txt)
