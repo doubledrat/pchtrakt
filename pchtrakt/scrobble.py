@@ -246,9 +246,8 @@ def videoStatusHandle(myMedia):
 def isIgnored(myMedia):
     ignored = False
 
-    msg = u'File: {0}'.format(myMedia.oStatus.fileName)#.encode('Latin-1', 'replace')
+    msg = u'File: {0}'.format(myMedia.oStatus.fileName)
     pchtrakt.logger.info(msg)
-
     ignored = isKeywordIgnored(myMedia.oStatus.fileName)
 
     if not ignored and ignored_repertory[0] != '':
@@ -397,8 +396,7 @@ def watchedFileCreation(myMedia):
                     except OutToMainLoop:
 						pass
                 elif pchtrakt.isTvShow:
-                    msg = 'Starting Tv xml update in '+YamjPath
-                    pchtrakt.logger.info(msg)
+                    pchtrakt.logger.info('Starting Tv xml update in '+ YamjPath)
                     epno = str(myMedia.parsedInfo.episode_numbers).replace('[', '').replace(']', '')
                     if version_info >= (2,7): #[@...=...] only available with python >= 2.7
                         xpath = "*/movie/files/file[@firstPart='{0}'][@season='{1}']".format(
@@ -420,8 +418,11 @@ def watchedFileCreation(myMedia):
                                 Debug("after name " + fileinfo)
                                 tree = ElementTree.parse(name)
                                 if xmlword == season_xml:
-									zpath = "./movie/files/file[@firstPart='{0}'][@season='{1}']".format(
-                                                    epno,str(myMedia.parsedInfo.season_number))
+									if version_info >= (2,7):
+										zpath = "./movie/files/file[@firstPart='{0}'][@season='{1}']".format(
+										                            epno,str(myMedia.parsedInfo.season_number))
+									else:
+										zpath = "./movie/files/file"
                                 else:
 									zpath = xpath
                                 Debug(zpath)

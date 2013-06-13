@@ -24,7 +24,7 @@ force_pchtrakt()
 force_all()
 {
     opkg update
-    opkg install python2.7-dev -force-depends -force-overwrite
+    opkg install python2.7 -force-depends -force-overwrite
     opkg install git -force-depends -force-overwrite
     cd /share/Apps/pchtrakt/
 }

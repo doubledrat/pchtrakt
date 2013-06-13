@@ -233,6 +233,18 @@ def startWait():
 			except BaseException as e:
 				pchtrakt.logger.error(e)
 
+def starttvdbWait():
+    while urllib.urlopen("http://thetvdb.com").getcode() != 200:
+        pchtrakt.StopTrying = 0
+        while myMedia.oStatus.status == EnumStatus.PLAY:
+            sleep(sleepTime)
+            myMedia.oStatus = pchtrakt.oPchRequestor.getStatus(ipPch, 10)
+            pchtrakt.StopTrying = 1
+            if YamjWatched == True:
+                try:
+                    watchedFileCreation(myMedia)
+                except BaseException as e:
+                    pchtrakt.logger.error(e)
 
 
 if __name__ == '__main__':
@@ -276,6 +288,10 @@ if __name__ == '__main__':
             '{0} :::'.format(pchtrakt.lastPath))
             pchtrakt.logger.warning(msg)
             startWait()
+        except tvdb_exceptions.tvdb_error, e:
+            stopTrying()
+            pchtrakt.logger.error(':::TheTvDB - Site apears to be down:::')
+            starttvdbWait()
         except utils.AuthenticationTraktError as e:
             stopTrying()
             pchtrakt.logger.error(e)

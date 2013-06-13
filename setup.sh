@@ -35,21 +35,21 @@ else
 	tar xvf opkg.tar -C /share/Apps/local
 	cd /
 	/share/Apps/AppInit/appinit.cgi start local >/dev/null
-	rm -r /share/tmp
+	rm -fR /share/tmp
 fi
  
 # Update opkg installation
 opkg update
 
-# install python2.7-dev
+# install python2.7
 if [ -f /share/Apps/local/bin/python2.7 ]; then
 	echo "Required dependency, python is installed."
 else
+	mkdir -p /share/tmp
 	echo "Installing dependency, python2.7"
-	chmod 777 /share/Apps/sickbeard
+	cd /share/tmp
 	if [ -e "/nmt/apps" ]; then
 		opkg install python2.7 --force-depends --force-overwrite #--force-reinstall
-		cd /share/Apps/sickbeard
 		wget http://jamied.pwp.blueyonder.co.uk/donotdelete.tar.gz
 		if [ "$configid" = "8911" ]; then
 			tar zxf donotdelete.tar.gz -C /share/Apps/local/
@@ -75,7 +75,7 @@ else
 		if [ -d /share/Apps/local/lib/python2.7/site-packages/Cheetah ] ; then     
 			echo "Cheetah is installed"
 		else
-			cd /share/Apps/sickbeard/
+			cd /share/tmp
 			wget http://pypi.python.org/packages/source/C/Cheetah/Cheetah-2.4.4.tar.gz
 			tar -zxvf Cheetah-2.4.4.tar.gz
 			cd Cheetah-2.4.4
@@ -88,9 +88,10 @@ else
 			echo "Host name has been added already"
 		 else
 			echo "Host name added to list"
-			echo "127.0.0.1 localhost localhost.images localhost.drives $name1" >/share/Apps/sickbeard/hosts
-			cp /share/Apps/sickbeard/hosts /etc/hosts
+			echo "127.0.0.1 localhost localhost.images localhost.drives $name1" >/tmp/hosts
+			cp /tmp/hosts /etc/hosts
 		 fi
+	rm -fR /share/tmp
 	fi
 fi
 
@@ -115,24 +116,13 @@ if [ -d /share/Apps/pchtrakt/lib ] ; then
 	echo "pchtrakt is installed"
 else
    chmod 777 /share/Apps/pchtrakt
-   cd /share/Apps/pchtrakt
    mkdir /share/tmp
    cd /share/tmp
-   
-    if [ -f /share/Apps/pchtrakt/TEST ]; then
-        git clone -b testing git://github.com/pchtrakt/pchtrakt.git pchtrakt
-        else 
-        git clone git://github.com/pchtrakt/pchtrakt.git pchtrakt
-    fi  
- 
-   cp -R pchtrakt/* /share/Apps/pchtrakt
+   git clone git://github.com/cptjhmiller/pchtrakt.git
+   cp -fr pchtrakt/. /share/Apps/pchtrakt
    chmod -R 777 /share/Apps/pchtrakt
-   cp -f /share/Apps/pchtrakt/scripts_install/update.py /share/Apps/pchtrakt/
-   cp -f /share/Apps/pchtrakt/scripts_install/appinfo.json /share/Apps/pchtrakt/
-#   cp -f /share/Apps/pchtrakt/scripts_install/daemon.sh /share/Apps/pchtrakt/
-   rm -fr /share/Apps/pchtrakt/scripts_install/
    cd
-   rm -r /share/tmp
+   rm -fR /share/tmp
 fi
 }
 
