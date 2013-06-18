@@ -53,7 +53,7 @@ from lib import regexes
 from lib import utilities as utils
 from datetime import date
 from xml.etree import ElementTree
-from urllib2 import Request, urlopen, URLError, HTTPError# check if needed
+from urllib2 import Request, urlopen, URLError, HTTPError
 from urllib import quote
 from lib.utilities import Debug
 class PchTraktException(Exception):
@@ -183,18 +183,19 @@ def doWork():
     if not pchtrakt.StopTrying:
         if myMedia.oStatus.status not in   [EnumStatus.NOPLAY,
                                             EnumStatus.UNKNOWN,
-                                            EnumStatus.PAUSE]:
+                                            EnumStatus.PAUSE,
+                                            EnumStatus.LOAD]:
             pchtrakt.allowedPauseTime = TraktMaxPauseTime
             if myMedia.oStatus.status != EnumStatus.LOAD:
                 if myMedia.parsedInfo == None:
                     myMedia.parsedInfo = pchtrakt.mediaparser.parse(
                                             myMedia.oStatus.fileName)
-                Debug(myMedia.__str__())
+                #Debug(myMedia.__str__())
                 videoStatusHandle(myMedia)
         elif (myMedia.oStatus.status == EnumStatus.PAUSE
             and pchtrakt.allowedPauseTime > 0):
             pchtrakt.allowedPauseTime -= sleepTime
-            Debug(myMedia.__str__())
+            #Debug(myMedia.__str__())
         else:
             if pchtrakt.lastPath != '':
                 if not pchtrakt.watched:
@@ -218,6 +219,7 @@ def stopTrying():
     try:
         pchtrakt.StopTrying = 1
         pchtrakt.lastPath = myMedia.oStatus.fullPath
+        sleep(sleepTime)
     except Exception as e:
         pass
 
