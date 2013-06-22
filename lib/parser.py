@@ -21,6 +21,7 @@ import os.path
 import re
 import regexes
 from lib.utilities import Debug
+
 class NameParser(object):
     def __init__(self, file_name=True):
         self.file_name = file_name
@@ -41,9 +42,6 @@ class NameParser(object):
 
         Stolen from dbr's tvnamer
         """
-        Debug('Tv Search String before changes = ' + series_name)
-        if series_name == "CSI":
-            series_name = "CSI: Crime Scene Investigation"
         series_name = re.sub("(\D)[.](\D)", "\\1 \\2", series_name)
         series_name = re.sub("(\D)[.]", "\\1 ", series_name) # if it ends in a year then don't keep the dot
         series_name = re.sub("[.](\D)", " \\1", series_name)
@@ -51,11 +49,11 @@ class NameParser(object):
         series_name = series_name.replace("_", " ")
         series_name = series_name.replace(" - ", " ")
         series_name = re.sub("-$", "", series_name)
-
-        reps = {'Megabuilders':'Mega Builders', 'Discovery ':'', 'HDgrp':'', 'CSI New York':'CSI: NY', '2bg':'2 Broke Girls', 'tbbt':'The Big Bang Theory'}
+        Debug('[The TvDB] Tv search string before changes = ' + series_name)
+        reps = {'CSI':'CSI: Crime Scene Investigation','Megabuilders':'Mega Builders', 'Discovery ':'', 'BBC':'', 'HDgrp':'', 'CSI New York':'CSI: NY', '2bg':'2 Broke Girls', 'tbbt':'The Big Bang Theory'}
         for i, j in reps.iteritems():
-            series_name = series_name.replace(i, j)
-        Debug('Tv Search String = ' + series_name)
+			series_name = series_name.replace(i, j)
+        Debug('[The TvDB] Actually searching for: ' + series_name)
         return series_name.strip()
 
     def _compile_regexes(self):
@@ -63,7 +61,7 @@ class NameParser(object):
             try:
                 cur_regex = re.compile(cur_pattern, re.VERBOSE | re.IGNORECASE)
             except re.error, errormsg:
-                Debug(u"WARNING: Invalid episode_pattern, %s. %s" % (errormsg, cur_regex.pattern))
+                Debug(u'[The TvDB] WARNING: Invalid episode_pattern, %s. %s' % (errormsg, cur_regex.pattern))
             else:
                 self.compiled_regexes.append((cur_pattern_name, cur_regex))
 

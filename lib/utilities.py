@@ -40,27 +40,29 @@ headers = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/
 
 class traktError(Exception):
     pass
+class NotFoundError(traktError):
+	def __init__(self):
+		Exception.__init__(self, '[traktAPI] Show not found on Trakt.tv')
 class AuthenticationTraktError(traktError):
 	def __init__(self):
-		Exception.__init__(self, 'Trakt.tv - Login or password incorrect')
+		Exception.__init__(self, '[traktAPI] Login or password incorrect')
 class MaxScrobbleError(traktError):
     def __init__(self):
-        Exception.__init__(self, 'Trakt.tv - Shows per hour limit reached')
+        Exception.__init__(self, '[traktAPI] Shows per hour limit reached')
 class BadStatusLine(traktError):
 	def __init__(self):
-		Exception.__init__(self, 'Trakt.tv - Unknown error')
+		Exception.__init__(self, '[traktAPI] Unknown error')
 class traktServerBusy(traktError): pass
 class traktUnknownError(traktError): pass
 class traktNetworkError(traktError):
 	def __init__(self):
-		Exception.__init__(self, 'Trakt.tv - Site is down/unavalable')
+		Exception.__init__(self, '[traktAPI] Site is down/unavalable')
 
 def Debug(myMsg, force=use_debug):
     if (pchtrakt.debug or force):
         try:
             pchtrakt.logger.debug(myMsg)
         except UnicodeEncodeError:
-            Debug("debuging debug msg")
             myMsg = myMsg.encode("utf-8", "replace")
             pchtrakt.logger.info(myMsg)
 
@@ -172,15 +174,15 @@ def traktJsonRequest(method, url, args=None, returnStatus=False, returnOnFailure
             # check that returned data is not empty
         except traktError, e:
             if isinstance(e, traktServerBusy):
-                Debug("[traktAPI] traktRequest(): (%i) Server Busy (%s)" % (i, e.value))
+                pchtrakt.logger.info("[traktAPI] traktRequest(): (%i) Server Busy (%s)" % (i, e))
             elif isinstance(e, AuthenticationTraktError):
                 Debug("boo")
                 raise AuthenticationTraktError()
             elif isinstance(e, traktNetworkError):
-                Debug("[traktAPI] traktRequest(): (%i) Network error: %s" % (i, e.value))
+                pchtrakt.logger.info("[traktAPI] traktRequest(): (%i) Network error: %s" % (i, e))
                 raise traktNetworkError()
             elif isinstance(e, traktUnknownError):
-                Debug("[traktAPI] traktRequest(): (%i) Other problem (%s)" % (i, e.value))
+                pchtrakt.logger.info("[traktAPI] traktRequest(): (%i) Other problem (%s)" % (i, e))
             else:
                 pass
 
@@ -218,7 +220,9 @@ def traktJsonRequest(method, url, args=None, returnStatus=False, returnOnFailure
     
     if 'status' in data:
         if data['status'] == 'failure':
-            Debug("traktQuery: Error: " + str(data['error']))
+            Debug("[traktAPI] Error: " + str(data['error']))
+            if data['error'] == 'episode not found':
+                raise NotFoundError()
             if data['error'] == 'failed authentication':
                 raise AuthenticationTraktError()
             if data['error'] == 'shows per hour limit reached':
@@ -568,7 +572,7 @@ def watchingEpisodeOnTrakt(tvdb_id, title, year, season, episode, duration, perc
     responce = traktJsonRequest('POST', 'https://api.trakt.tv/show/watching/%%API_KEY%%', {'tvdb_id': tvdb_id, 'title': title, 'year': year, 'season': season, 'episode': episode, 'duration': duration, 'progress': percent}, passVersions=True)
     Debug(responce)
     if responce == None:
-        Debug("Error in request from 'watchingEpisodeOnTrakt()'")
+        Debug("[traktAPI] Error in request from 'watchingEpisodeOnTrakt()'")
     return responce
 
 # tell trakt that the user has stopped watching a movie
@@ -576,7 +580,7 @@ def cancelWatchingMovieOnTrakt():
     responce = traktJsonRequest('POST', 'https://api.trakt.tv/movie/cancelwatching/%%API_KEY%%')
     Debug(responce)
     if responce == None:
-        Debug("Error in request from 'cancelWatchingMovieOnTrakt()'")
+        Debug("[traktAPI] Error in request from 'cancelWatchingMovieOnTrakt()'")
     return responce
 
 # tell trakt that the user has stopped an episode
@@ -584,7 +588,7 @@ def cancelWatchingEpisodeOnTrakt():
     responce = traktJsonRequest('POST', 'https://api.trakt.tv/show/cancelwatching/%%API_KEY%%')
     Debug(responce)
     if responce == None:
-        Debug("Error in request from 'cancelWatchingEpisodeOnTrakt()'")
+        Debug("[traktAPI] Error in request from 'cancelWatchingEpisodeOnTrakt()'")
     return responce
 
 # tell trakt that the user has finished watching an movie
@@ -592,7 +596,7 @@ def scrobbleMovieOnTrakt(imdb_id, title, year, duration, percent):
     responce = traktJsonRequest('POST', 'https://api.trakt.tv/movie/scrobble/%%API_KEY%%', {'imdb_id': imdb_id, 'title': title, 'year': year, 'duration': duration, 'progress': percent}, passVersions=True)
     Debug(responce)
     if responce == None:
-        Debug("Error in request from 'scrobbleMovieOnTrakt()'")
+        Debug("[traktAPI] Error in request from 'scrobbleMovieOnTrakt()'")
     return responce
 
 # tell trakt that the user has finished watching an episode

@@ -173,7 +173,7 @@ def doWork():
         myMedia.parsedInfo = None
         with open('cache.json','w') as f:
             json.dump(pchtrakt.dictSerie, f, separators=(',',':'), indent=4)
-    if YamjWatched == True:
+    if YamjWatched == True and not pchtrakt.watched:
         try:
             watchedFileCreation(myMedia)
         except BaseException as e:
@@ -201,7 +201,7 @@ def doWork():
                 if not pchtrakt.watched:
                     videoStopped()
                 if pchtrakt.allowedPauseTime <= 0:
-                    pchtrakt.logger.info('It seems you paused ' \
+                    pchtrakt.logger.info(' [Pchtrakt] It seems you paused ' \
                                          'the video for more than {0} minutes: ' \
                                          'I say to trakt you stopped watching ' \
                                          'your video'.format(TraktMaxPauseTime/60))
@@ -209,7 +209,7 @@ def doWork():
                 pchtrakt.lastPath = ''
                 pchtrakt.isMovie = 0
                 pchtrakt.isTvShow = 0
-            Debug("PCH status = {0}".format(myMedia.oStatus.status))
+            Debug('[Pchtrakt] PCH status = {0}'.format(myMedia.oStatus.status))
 
 
 
@@ -267,33 +267,37 @@ if __name__ == '__main__':
             hash = row.split()[0]
             break
     if hash == PchTraktVersion:
-        pchtrakt.logger.info('Starting Pchtrakt version = ' + PchTraktVersion[-4:]  + ' Millers Mods (Running latest version)')
+        pchtrakt.logger.info(' [Pchtrakt] Starting Pchtrakt version = ' + PchTraktVersion[-4:]  + ' Millers Mods (Running latest version)')
     elif AutoUpdate is True:
-        pchtrakt.logger.info('Pchtrakt START version = ' + PchTraktVersion[-4:] + ' Millers Mods')
-        pchtrakt.logger.info('A new version is online. Starting update')
+        pchtrakt.logger.info(' [Pchtrakt] Pchtrakt START version = ' + PchTraktVersion[-4:] + ' Millers Mods')
+        pchtrakt.logger.info(' [Pchtrakt] A new version is online. Starting update')
         os.system("./daemon.sh update")
     elif AutoUpdate is False:
-        pchtrakt.logger.info('Pchtrakt START version = ' + PchTraktVersion[-4:] + ' Millers Mods')
-        pchtrakt.logger.info('A new version is online. For manual install, download from https://github.com/cptjhmiller/pchtrakt/archive/dvp.zip')
+        pchtrakt.logger.info(' [Pchtrakt] Pchtrakt START version = ' + PchTraktVersion[-4:] + ' Millers Mods')
+        pchtrakt.logger.info(' [Pchtrakt] A new version is online. For manual install, download from https://github.com/cptjhmiller/pchtrakt/archive/dvp.zip')
 
     while not pchtrakt.stop:
         try:
             doWork()
             sleep(sleepTime)
         except (KeyboardInterrupt, SystemExit):
-            Debug(':::Stopping pchtrakt:::')
+            Debug('[Pchtrakt] Stopping pchtrakt')
             pchtrakt.stop = 1
             videoStopped()
         except tvdb_exceptions.tvdb_shownotfound as e:
             stopTrying()
-            msg = (':::TheTvDB - Show not found ' \
+            msg = ('[The TvDB] Show not found ' \
             '{0} :::'.format(pchtrakt.lastPath))
             pchtrakt.logger.warning(msg)
             startWait()
         except tvdb_exceptions.tvdb_error, e:
             stopTrying()
-            pchtrakt.logger.error(':::TheTvDB - Site apears to be down:::')
+            pchtrakt.logger.error('[The TvDB] Site apears to be down:::')
             starttvdbWait()
+        except utils.NotFoundError as e:
+            stopTrying()
+            pchtrakt.logger.error(e)
+            sleep(sleepTime)
         except utils.AuthenticationTraktError as e:
             stopTrying()
             pchtrakt.logger.error(e)
@@ -307,17 +311,17 @@ if __name__ == '__main__':
             sleep(sleepTime)
         except MovieResultNotFound as e:
             stopTrying()
-            msg = ':::Unable to find match for file - {0}:::'.format(e.file_name)
+            msg = '[Pchtrakt] Unable to find match for file - {0}:::'.format(e.file_name)
             pchtrakt.logger.warning(msg)
             startWait()
         except PchTraktException as e:
             stopTrying()
-            msg = ':::PchTraktException - {0}:::'.format(e)
+            msg = '[Pchtrakt] PchTraktException - {0}:::'.format(e)
             pchtrakt.logger.error(msg)
             sleep(sleepTime)
         except utils.traktNetworkError as e:
             stopTrying()
-            msg = ':::{0}:::'.format(e)
+            msg = '[traktAPI] {0}'.format(e)
             pchtrakt.logger.error(msg)
             sleep(sleepTime)
         except Exception as e:
@@ -328,4 +332,4 @@ if __name__ == '__main__':
             pchtrakt.logger.exception(pchtrakt.lastPath)
             pchtrakt.logger.exception(e)
             startWait()
-    pchtrakt.logger.info('Pchtrakt STOP')
+    pchtrakt.logger.info(' [Pchtrakt]  STOP')

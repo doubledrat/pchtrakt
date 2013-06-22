@@ -51,15 +51,8 @@ class PchRequestor:
     def parseResponse(self, response):
         oPchStatus = PchStatus()
         try:
-            Debug(response)
-            try:
-                oXml = ElementTree.fromstring(response)
-            except:
-                Debug("doing except")
-                response = '<?xml version="1.0" encoding="Latin-1" ?>' + response
-                oXml = ElementTree.fromstring(response)
-            Debug("hello" + response)
-            Debug("This should equal theDavidBox = " + oXml.tag)
+            oXml = ElementTree.fromstring(response)
+            Debug('[Pchtrakt] ' + response)
             if oXml.tag == "theDavidBox": # theDavidBox should be the root
                 if oXml.find("returnValue").text == '0' and oXml.find("response/fullPath").text != "/cdrom"  and int(oXml.find("response/totalTime").text) > 90:#Added total time check to avoid scrobble while playing adverts/trailers
                     oPchStatus.totalTime = int(oXml.find("response/totalTime").text)
@@ -71,7 +64,6 @@ class PchRequestor:
                         oPchStatus.currentChapter = int(oXml.find("response/currentchapter").text)
                         oPchStatus.totalChapter = int(oXml.find("response/totalchapter").text)
                     if oXml.find("response/mediatype")!= None:
-                        Debug(oPchStatus.fullPath)
                         self.mediaType = oXml.find("response/mediatype").text
                         if (oPchStatus.fullPath == "/iso"):#Change path if iso file
                             newpath = glob.glob("/isolink/*.iso")
@@ -109,6 +101,7 @@ class PchRequestor:
         except ElementTree.ParseError, e:
             oPchStatus.error = e
             oPchStatus.status = EnumStatus.UNKNOWN
+        Debug('[Pchtrakt] full path: ' + oPchStatus.fullPath)
         return oPchStatus
 
     def getStatus(self,ip,timeout=10.0):

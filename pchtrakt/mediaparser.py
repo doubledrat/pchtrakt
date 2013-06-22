@@ -49,7 +49,7 @@ class MediaParserResultTVShow(MediaParserResult):
             season_number = -1
             episode_numbers = [parse_result.air_date]
             url = ('http://thetvdb.com/api/GetEpisodeByAirDate.php?apikey=0629B785CE550C8D&seriesid={0}&airdate={1}'.format(quote_plus(self.id), parse_result.air_date))
-            Debug("GET EPISODE USING: "+url)
+            Debug('[The TvDB] GET EPISODE USING: ' + url)
             oResponse = ElementTree.parse(urlopen(url,None,5))
             #feed = RSSWrapper(tree.getroot())
             for movie in oResponse.findall('./'):
@@ -82,12 +82,12 @@ class MediaParserResultMovie(MediaParserResult):
         ImdbAPIurl = ('http://www.imdbapi.com/?t={0}&y={1}'.format(
                                         quote_plus(self.name.encode('utf-8', 'replace')),
                                         self.year))
-        Debug("Trying search 1: "+ImdbAPIurl)
+        Debug('[IMDB api] Trying search 1: ' + ImdbAPIurl)
         try:
             oResponse = urlopen(ImdbAPIurl,None,5)
             myMovieJson = json.loads(oResponse.read())
             self.id = myMovieJson['imdbID']
-            Debug("Found Movie match using: "+ImdbAPIurl)
+            Debug('[IMDB api] Movie match using: ' + ImdbAPIurl)
         except URLError, HTTPError:
             pass
         except KeyError:
@@ -95,22 +95,22 @@ class MediaParserResultMovie(MediaParserResult):
                           'imdb/?q={0}&year={1}'.format(
                                 quote_plus(self.name.encode('utf-8', 'replace')),
                                 self.year))
-            Debug("Trying search 2: "+ImdbAPIurl)
+            Debug('[IMDB api] Trying search 2: ' + ImdbAPIurl)
             try:
                 oResponse = urlopen(ImdbAPIurl,None,5)
                 myMovieJson = json.loads(oResponse.read())
                 self.id = myMovieJson['imdbid']
-                Debug("Found Movie match using: "+ImdbAPIurl)
+                Debug('[IMDBapi] Found Movie match using: ' + ImdbAPIurl)
             except:
                 try:
                     address = ('http://www.google.com/search?q=www.imdb.com:site+{0}&num=1&start=0'.format(quote_plus(self.name.encode('utf-8', 'replace'))))
-                    Debug("Trying search 3: "+address)
+                    Debug('[IMDB api] Trying search 3: ' + address)
                     request = Request(address, None, {'User-Agent':'Mosilla/5.0 (Macintosh; Intel Mac OS X 10_7_4) AppleWebKit/536.11 (KHTML, like Gecko) Chrome/20.0.1132.57 Safari/536.11'})
                     urlfile = urlopen(request)
                     page = urlfile.read()
                     entries = re.findall("/title/tt(\d{7})/", page)
                     self.id = "tt"+str(entries[0])
-                    Debug('Search address = '+ address + ' ID = ' + self.id)
+                    Debug('[IMDB api] Search address = ' + address + ' ID = ' + self.id)
                 except:
                     raise MovieResultNotFound(file_name)
 
@@ -131,4 +131,4 @@ class MediaParser():
         except parser.InvalidNameException as e:
             oMovie = self.MovieParser.parse(file_name)
             return oMovie
-            raise MediaParserUnableToParse("Unable to parse the filename and detecte an movie or a tv show")
+        raise MediaParserUnableToParse(' [Pchtrakt] Unable to parse the filename and detecte an movie or a tv show')
