@@ -100,7 +100,7 @@ class MediaParserResultMovie(MediaParserResult):
                 oResponse = urlopen(ImdbAPIurl,None,5)
                 myMovieJson = json.loads(oResponse.read())
                 self.id = myMovieJson['imdbid']
-                Debug('[IMDBapi] Found Movie match using: ' + ImdbAPIurl)
+                Debug('[IMDB api] Found Movie match using: ' + ImdbAPIurl)
             except:
                 try:
                     address = ('http://www.google.com/search?q=www.imdb.com:site+{0}&num=1&start=0'.format(quote_plus(self.name.encode('utf-8', 'replace'))))

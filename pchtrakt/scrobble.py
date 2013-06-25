@@ -346,7 +346,7 @@ def watchedFileCreation(myMedia):
             if  updatexmlwatched:
                 lookfor = matchthis[:-4]
                 lookforfull = matchthisfull[:-4]
-                if pchtrakt.isMovie:# and T.isdigit() == False:
+                if pchtrakt.isMovie:
                     msg = ' [Pchtrakt] Starting Normal Movie xml update in '+YamjPath
                     pchtrakt.logger.info(msg)
                     previous = None

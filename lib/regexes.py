@@ -33,28 +33,6 @@ ep_regexes = [
                -(?P<release_group>[^- ]+))?)?$             # Group
                '''),
 
-              ('Millers1',
-               # Show Name 1of2 Ep Name
-               '''
-               ^(?P<series_name>.+?)[. _-]+                # Show Name and separator
-               (?P<ep_num>\d+)[of .of -of _of of]+[. _-]+  # episode and separator
-               (?P<extra_info>.+)                          # Source_Quality_Etc-
-               '''),
-
-              ('fov_repeat',
-               # Show.Name.1x02.1x03.Source.Quality.Etc-Group
-               # Show Name - 1x02 - 1x03 - 1x04 - Ep Name
-               '''
-               ^(?P<series_name>.+?)[. _-]+                # Show_Name and separator
-               (?P<season_num>\d+)x                        # 1x
-               (?P<ep_num>\d+)                             # 02 and separator
-               ([. _-]+(?P=season_num)x                    # 1x
-               (?P<extra_ep_num>\d+))+                     # 03/etc and separator
-               [. _-]*((?P<extra_info>.+?)                 # Source_Quality_Etc-
-               ((?<![. _-])(?<!WEB)                        # Make sure this is really the release group
-               -(?P<release_group>[^- ]+))?)?$             # Group
-               '''),
-
               ('standard',
                # Show.Name.S01E02.Source.Quality.Etc-Group
                # Show Name - S01E02 - My Ep Name
@@ -73,6 +51,14 @@ ep_regexes = [
                -(?P<release_group>[^- ]+))?)?$             # Group
                '''),
 
+              ('Millers1',
+               # Show Name 1of2 Ep Name
+               '''
+               ^(?P<series_name>.+?)[. _-]+                # Show Name and separator
+               (?P<ep_num>\d+)[of .of -of _of of]+[. _-]+  # episode and separator
+               (?P<extra_info>.+)                          # Source_Quality_Etc-
+               '''),
+
               ('fov',
                # Show_Name.1x02.Source_Quality_Etc-Group
                # Show Name - 1x02 - My Ep Name
@@ -87,6 +73,20 @@ ep_regexes = [
                (?!(1080|720)[pi])(?!(?<=x)264)             # ignore obviously wrong multi-eps
                \d+))*                                      # additional x03/etc
                [\]. _-]*((?P<extra_info>.+?)               # Source_Quality_Etc-
+               ((?<![. _-])(?<!WEB)                        # Make sure this is really the release group
+               -(?P<release_group>[^- ]+))?)?$             # Group
+               '''),
+
+              ('fov_repeat',
+               # Show.Name.1x02.1x03.Source.Quality.Etc-Group
+               # Show Name - 1x02 - 1x03 - 1x04 - Ep Name
+               '''
+               ^(?P<series_name>.+?)[. _-]+                # Show_Name and separator
+               (?P<season_num>\d+)x                        # 1x
+               (?P<ep_num>\d+)                             # 02 and separator
+               ([. _-]+(?P=season_num)x                    # 1x
+               (?P<extra_ep_num>\d+))+                     # 03/etc and separator
+               [. _-]*((?P<extra_info>.+?)                 # Source_Quality_Etc-
                ((?<![. _-])(?<!WEB)                        # Make sure this is really the release group
                -(?P<release_group>[^- ]+))?)?$             # Group
                '''),

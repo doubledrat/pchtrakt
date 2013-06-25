@@ -50,11 +50,14 @@ class PchRequestor:
 
     def parseResponse(self, response):
         oPchStatus = PchStatus()
+        t = 0
         try:
             oXml = ElementTree.fromstring(response)
-            Debug('[Pchtrakt] ' + response)
             if oXml.tag == "theDavidBox": # theDavidBox should be the root
                 if oXml.find("returnValue").text == '0' and oXml.find("response/fullPath").text != "/cdrom"  and int(oXml.find("response/totalTime").text) > 90:#Added total time check to avoid scrobble while playing adverts/trailers
+                    if not pchtrakt.lastPath:
+						t = 1
+						Debug('[Pchtrakt] ' + response)
                     oPchStatus.totalTime = int(oXml.find("response/totalTime").text)
                     oPchStatus.status = oXml.find("response/currentStatus").text
                     oPchStatus.fullPath = oXml.find("response/fullPath").text
@@ -101,7 +104,8 @@ class PchRequestor:
         except ElementTree.ParseError, e:
             oPchStatus.error = e
             oPchStatus.status = EnumStatus.UNKNOWN
-        Debug('[Pchtrakt] full path: ' + oPchStatus.fullPath)
+        if not pchtrakt.lastPath and t == 1:
+			Debug('[Pchtrakt] full path: ' + oPchStatus.fullPath)
         return oPchStatus
 
     def getStatus(self,ip,timeout=10.0):

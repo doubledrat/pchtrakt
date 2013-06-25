@@ -209,7 +209,7 @@ def doWork():
                 pchtrakt.lastPath = ''
                 pchtrakt.isMovie = 0
                 pchtrakt.isTvShow = 0
-            Debug('[Pchtrakt] PCH status = {0}'.format(myMedia.oStatus.status))
+            #Debug('[Pchtrakt] PCH status = {0}'.format(myMedia.oStatus.status))
 
 
 

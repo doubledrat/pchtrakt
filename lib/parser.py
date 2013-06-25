@@ -78,7 +78,7 @@ class NameParser(object):
 
             result = ParseResult(name)
             result.which_regex = [cur_regex_name]
-
+            Debug('[The TvDB] Found match using ' + cur_regex_name + ' regex')
             named_groups = match.groupdict().keys()
 
             if 'series_name' in named_groups:

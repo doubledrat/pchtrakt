@@ -88,10 +88,14 @@ def getTraktConnection(url, args, timeout=60):
             req.add_header('Accept', '*/*')
         else:
             req = Request(url, args)
+            #Debug('[traktAPI] getTraktConnection(): urllib2.urlopen()' + urlopen(req).read())
             req.add_header('Accept', '*/*')
-            Debug("[traktAPI] getTraktConnection(): urllib2.urlopen()")
+            #Debug('[traktAPI] getTraktConnection(): urllib2.urlopen()' + urlopen(req).read())
             t1 = time.time()
-            response = urlopen(req, timeout=timeout)
+            try:
+				response = urlopen(req, timeout=timeout)
+            except BadStatusLine, e:
+				raise traktUnknownError("BadStatusLine: '%s' from URL: '%s'" % (e.line, url)) 
             t2 = time.time()
             Debug("[traktAPI] getTraktConnection(): response.read()")
             data = response.read()
@@ -99,8 +103,6 @@ def getTraktConnection(url, args, timeout=60):
             Debug("[traktAPI] getTraktConnection(): Response Time: %0.2f ms" % ((t2 - t1) * 1000))
             Debug("[traktAPI] getTraktConnection(): Response Headers: %s" % str(response.info().dict))
 
-    except BadStatusLine, e:
-        raise traktUnknownError("BadStatusLine: '%s' from URL: '%s'" % (e.line, url)) 
     except IOError, e:
         if hasattr(e, 'code'):  # error 401 or 503, possibly others
             # read the error document, strip newlines, this will make an html page 1 line
@@ -182,7 +184,7 @@ def traktJsonRequest(method, url, args=None, returnStatus=False, returnOnFailure
                 pchtrakt.logger.info("[traktAPI] traktRequest(): (%i) Network error: %s" % (i, e))
                 raise traktNetworkError()
             elif isinstance(e, traktUnknownError):
-                pchtrakt.logger.info("[traktAPI] traktRequest(): (%i) Other problem (%s)" % (i, e))
+                pchtrakt.logger.info(" [traktAPI] traktRequest(): (%i) Other problem (%s)" % (i, e))
             else:
                 pass
 
