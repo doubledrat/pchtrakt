@@ -54,9 +54,9 @@ ep_regexes = [
               ('Millers1',
                # Show Name 1of2 Ep Name
                '''
-               ^(?P<series_name>.+?)[. _-]+                # Show Name and separator
-               (?P<ep_num>\d+)[of .of -of _of of]+[. _-]+  # episode and separator
-               (?P<extra_info>.+)                          # Source_Quality_Etc-
+               ^(?P<series_name>.+?)[. _-]                # Show Name and separator
+               (?P<ep_num>[0-9](?=of[0-9]|.of.[0-9]|.of[0-9]|of.[0-9]))# episode and separator
+               (?P<extra_info>.+)                         # Source_Quality_Etc-
                '''),
 
               ('fov',

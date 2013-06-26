@@ -93,9 +93,9 @@ def getTraktConnection(url, args, timeout=60):
             #Debug('[traktAPI] getTraktConnection(): urllib2.urlopen()' + urlopen(req).read())
             t1 = time.time()
             try:
-				response = urlopen(req, timeout=timeout)
+                response = urlopen(req, timeout=timeout)
             except BadStatusLine, e:
-				raise traktUnknownError("BadStatusLine: '%s' from URL: '%s'" % (e.line, url)) 
+                raise traktUnknownError("BadStatusLine: '%s' from URL: '%s'" % (e.line, url)) 
             t2 = time.time()
             Debug("[traktAPI] getTraktConnection(): response.read()")
             data = response.read()

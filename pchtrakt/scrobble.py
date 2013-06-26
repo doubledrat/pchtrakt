@@ -31,7 +31,7 @@ def showStarted(myMedia):
         if percent < 0 : percent = 0
         
         if str(myMedia.parsedInfo.season_number) == "None":
-			myMedia.parsedInfo.season_number = "1"
+            myMedia.parsedInfo.season_number = "1"
         response = utilities.watchingEpisodeOnTrakt(myMedia.parsedInfo.id,
                                                     myMedia.parsedInfo.name,
                                                     myMedia.parsedInfo.year,
@@ -138,7 +138,7 @@ def showIsEnding(myMedia):
         Debug("[traktAPI] TV ENDIng")
         result = 0
         if str(myMedia.parsedInfo.season_number) == "None":
-			myMedia.parsedInfo.season_number = "1"
+            myMedia.parsedInfo.season_number = "1"
         response = utilities.scrobbleEpisodeOnTrakt(myMedia.parsedInfo.id,
                                                     myMedia.parsedInfo.name,
                                                     myMedia.parsedInfo.year,
@@ -354,9 +354,9 @@ def watchedFileCreation(myMedia):
                     Debug('[Pchtrakt] Looking at ' + name)
                     tree = ElementTree.parse(name)
                     try:
-						SET = urllib.unquote_plus(tree.find('movie/sets/set').attrib['index'])
+                        SET = urllib.unquote_plus(tree.find('movie/sets/set').attrib['index'])
                     except AttributeError:
-						SET = '0'
+                        SET = '0'
                     Debug('[Pchtrakt] 1 ' + name)
                     for movie in tree.findall('movie'):
                         Debug('[Pchtrakt] 2 ' + name)
@@ -372,33 +372,33 @@ def watchedFileCreation(myMedia):
                                 pchtrakt.logger.info(' [Pchtrakt] ' + txt)
                                 break
                     try:
-						if SET != "0":
-							moviexmlfind.insert(0,SET)
-							Debug('[Pchtrakt] Has Set_ file: ' + SET)
-						for xmlword in moviexmlfind:
-							fileinfo = YamjPath + xmlword + "*xml"
-							Debug('[Pchtrakt] ' + fileinfo)
-							for name in glob.glob(fileinfo):
-								Debug('[Pchtrakt] Looking for ' + lookfor + " in " + name)
-								if lookfor in open(name).read():#gets xml file name as name
-									Debug('[Pchtrakt] MATCH FOUND')
-									tree = ElementTree.parse(name)
-									for movie in tree.findall('movies/movie'):
-										if movie.find('baseFilenameBase').text.encode('utf-8') == lookfor:
-											if movie.attrib['isSet'] == "true" and SET != "0":
-												Debug('[Pchtrakt] isset is true')
-												raise OutToMainLoop()
-											movie.find('watched').text = 'true'
-											bak_name = name[:-4]+'.bak'
-											tree.write(bak_name, encoding='utf-8')
-											os.rename(bak_name, name)
-											txt = name.replace(YamjPath, '') + ' has been modified as watched for ' + matchthis
-											pchtrakt.logger.info(' [Pchtrakt] ' + txt)
-											previous = xmlword
-											break
-									break
+                        if SET != "0":
+                            moviexmlfind.insert(0,SET)
+                            Debug('[Pchtrakt] Has Set_ file: ' + SET)
+                        for xmlword in moviexmlfind:
+                            fileinfo = YamjPath + xmlword + "*xml"
+                            Debug('[Pchtrakt] ' + fileinfo)
+                            for name in glob.glob(fileinfo):
+                                Debug('[Pchtrakt] Looking for ' + lookfor + " in " + name)
+                                if lookfor in open(name).read():#gets xml file name as name
+                                    Debug('[Pchtrakt] MATCH FOUND')
+                                    tree = ElementTree.parse(name)
+                                    for movie in tree.findall('movies/movie'):
+                                        if movie.find('baseFilenameBase').text.encode('utf-8') == lookfor:
+                                            if movie.attrib['isSet'] == "true" and SET != "0":
+                                                Debug('[Pchtrakt] isset is true')
+                                                raise OutToMainLoop()
+                                            movie.find('watched').text = 'true'
+                                            bak_name = name[:-4]+'.bak'
+                                            tree.write(bak_name, encoding='utf-8')
+                                            os.rename(bak_name, name)
+                                            txt = name.replace(YamjPath, '') + ' has been modified as watched for ' + matchthis
+                                            pchtrakt.logger.info(' [Pchtrakt] ' + txt)
+                                            previous = xmlword
+                                            break
+                                    break
                     except OutToMainLoop:
-						pass
+                        pass
                 elif pchtrakt.isTvShow:
                     pchtrakt.logger.info(' [Pchtrakt] Starting Tv xml update in '+ YamjPath)
                     epno = str(myMedia.parsedInfo.episode_numbers).replace('[', '').replace(']', '')
@@ -421,13 +421,13 @@ def watchedFileCreation(myMedia):
                                 Debug("after name " + fileinfo)
                                 tree = ElementTree.parse(name)
                                 if xmlword == season_xml:
-									if version_info >= (2,7):
-										zpath = "./movie/files/file[@firstPart='{0}'][@season='{1}']".format(
+                                    if version_info >= (2,7):
+                                        zpath = "./movie/files/file[@firstPart='{0}'][@season='{1}']".format(
 										                            epno,str(myMedia.parsedInfo.season_number))
-									else:
-										zpath = "./movie/files/file"
+                                    else:
+                                        zpath = "./movie/files/file"
                                 else:
-									zpath = xpath
+                                    zpath = xpath
                                 Debug(zpath)
                                 for movie in tree.findall(zpath):
                                     Debug('[Pchtrakt] looking for file://' + matchthisfull)

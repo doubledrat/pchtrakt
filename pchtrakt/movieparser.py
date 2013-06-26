@@ -16,7 +16,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with pchtrakt.  If not, see <http://www.gnu.org/licenses/>.
-
+#'(.cp.(?P<id>tt[0-9{7}]+).)'
 from lib import regexes
 import re
 import mediaparser
@@ -30,9 +30,27 @@ regexes_movies = [
                         """
                     )
                     ,
-                    ("movie_only", "^(?P<movie_title>.+).[A-Za-z]{3,4}$")
+                    ("movie_only", "^(?P<movie_title>.+$)")
                 ]
 
+# black words in file names
+blackwords = [
+              # video type
+              'DVDRip', 'HD-DVD', 'HDDVD', 'HDDVDRip', 'BluRay', 'Blu-ray', 'BDRip', 'BRRip',
+              'HDRip', 'DVD', 'DVDivX', 'HDTV', 'DVB', 'DVBRip', 'PDTV', 'WEBRip', 'DVDSCR',
+              'Screener', 'VHS', 'VIDEO_TS', 'DVDR',
+              # language
+              '720p', '720', '1080p', '1080',
+              # video codec
+              'XviD', 'DivX', 'x264', 'h264', 'Rv10',
+              # audio codec
+              'DTS-HD', 'AC3', 'DTS', 'He-AAC', 'AAC-He', 'AAC', '5.1',
+              # ripper teams
+              'ESiR', 'WAF', 'SEPTiC', '[XCT]', 'iNT', 'PUKKA', 'CHD', 'ViTE', 'TLF',
+              'DEiTY', 'FLAiTE', 'MDX', 'GM4F', 'DVL', 'SVD', 'iLUMiNADOS',
+              'UnSeeN', 'aXXo', 'KLAXXON', 'NoTV', 'ZeaL', 'LOL'
+              ]
+				
 class MovieParser():
     def __init__(self):
         self.compiled_regexes = []
@@ -49,6 +67,7 @@ class MovieParser():
 
     def parse(self,file_name):
         oResult = None
+        file_name = self.clean_movie_name(file_name)
         for (name,regex) in self.compiled_regexes:
             try:
                 match = regex.match(file_name)
@@ -61,7 +80,7 @@ class MovieParser():
                 named_groups = match.groupdict().keys()
 
                 if 'movie_title' in named_groups:
-                    tmp_movie_title = self.clean_movie_name(match.group('movie_title'))
+                    tmp_movie_title = match.group('movie_title')
 
                 if 'year' in named_groups:
                     tmp_year = match.group('year')
@@ -87,17 +106,29 @@ class MovieParser():
 
         Stolen from dbr's tvnamer
         """
-        reps = {'X264':' ', 'DTS-HD':' ', 'Bluray':' ', '0000':'0,000', 'HDDVD':'', 'DVDRIP':'', 'DVDR':''}
+        reps = {'0000':'0,000'}
         for i, j in reps.iteritems():
             movie_name = movie_name.replace(i, j)
 
-        movie_name = re.sub("(\D)[.](\D)", "\\1 \\2", movie_name)
-        movie_name = re.sub("(\D)[.]", "\\1 ", movie_name) # if it ends in a year then don't keep the dot
-        movie_name = re.sub("[.](\D)", " \\1", movie_name)
-        movie_name = re.sub("\[.*?\]", "", movie_name)
-        movie_name = movie_name.replace(" - ", " ")
-        movie_name = movie_name.replace("_", " ")
-        movie_name = re.sub("-$", "", movie_name)
+        # remove everything inside parenthesis
+        movie_name = re.sub('[([{].*?[)\]}]', '', movie_name)
+        # replace dots, underscores and dashes with spaces
+        movie_name = re.sub(r'[^a-zA-Z0-9]', ' ', movie_name)
+        stitle = movie_name.split()
+        movie_name = []
+        # loop on name
+        # keep only words which are not black words
+        for word in stitle:
+            is_not_a_blackword = True
+            for blackword in blackwords:
+                if word.lower() == blackword.lower():
+                    is_not_a_blackword = False
+                    break
+            if is_not_a_blackword:
+                movie_name.append(word)
+            else:
+                break
+        movie_name = ' '.join(movie_name)
         return movie_name.strip()
 
 class MovieResultNotFound(Exception):

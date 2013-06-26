@@ -52,7 +52,7 @@ class NameParser(object):
         Debug('[The TvDB] Tv search string before changes = ' + series_name)
         reps = {'CSI':'CSI: Crime Scene Investigation','Megabuilders':'Mega Builders', 'Discovery ':'', 'BBC':'', 'HDgrp':'', 'CSI New York':'CSI: NY', '2bg':'2 Broke Girls', 'tbbt':'The Big Bang Theory'}
         for i, j in reps.iteritems():
-			series_name = series_name.replace(i, j)
+            series_name = series_name.replace(i, j)
         Debug('[The TvDB] Actually searching for: ' + series_name)
         return series_name.strip()
 
