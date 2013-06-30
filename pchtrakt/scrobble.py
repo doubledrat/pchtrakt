@@ -57,10 +57,10 @@ def showStarted(myMedia):
 
 def movieStarted(myMedia):
     response = utilities.watchingMovieOnTrakt(myMedia.parsedInfo.id,
-                                               myMedia.parsedInfo.name,
-                                               myMedia.parsedInfo.year,
-                                               str(myMedia.oStatus.totalTime),
-                                               str(myMedia.oStatus.percent))
+												myMedia.parsedInfo.name,
+												myMedia.parsedInfo.year,
+												str(myMedia.oStatus.totalTime),
+												str(myMedia.oStatus.percent))
     if response != None:
         msg = ' [traktAPI] Movie is playing: %s - %s' %(response['status'],response['message'])
     else:

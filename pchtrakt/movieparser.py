@@ -111,7 +111,7 @@ class MovieParser():
             movie_name = movie_name.replace(i, j)
 
         # remove everything inside parenthesis
-        movie_name = re.sub('[([{].*?[)\]}]', '', movie_name)
+        #movie_name = re.sub('[([{].*?[)\]}]', '', movie_name)
         # replace dots, underscores and dashes with spaces
         movie_name = re.sub(r'[^a-zA-Z0-9]', ' ', movie_name)
         stitle = movie_name.split()

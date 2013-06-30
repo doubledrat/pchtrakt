@@ -79,9 +79,7 @@ class MediaParserResultMovie(MediaParserResult):
         self.name = name
         self.year = year
 
-        ImdbAPIurl = ('http://www.imdbapi.com/?t={0}&y={1}'.format(
-                                        quote_plus(self.name.encode('utf-8', 'replace')),
-                                        self.year))
+        ImdbAPIurl = ('http://www.imdbapi.com/?t={0}&y={1}'.format(quote_plus(self.name.encode('utf-8', 'replace')), self.year))
         Debug('[IMDB api] Trying search 1: ' + ImdbAPIurl)
         try:
             oResponse = urlopen(ImdbAPIurl,None,5)
@@ -91,10 +89,7 @@ class MediaParserResultMovie(MediaParserResult):
         except URLError, HTTPError:
             pass
         except KeyError:
-            ImdbAPIurl = ('http://www.deanclatworthy.com/' \
-                          'imdb/?q={0}&year={1}'.format(
-                                quote_plus(self.name.encode('utf-8', 'replace')),
-                                self.year))
+            ImdbAPIurl = ('http://www.deanclatworthy.com/imdb/?q={0}&year={1}'.format(quote_plus(self.name.encode('utf-8', 'replace')), self.year))
             Debug('[IMDB api] Trying search 2: ' + ImdbAPIurl)
             try:
                 oResponse = urlopen(ImdbAPIurl,None,5)

@@ -287,49 +287,66 @@ if __name__ == '__main__':
         except tvdb_exceptions.tvdb_shownotfound as e:
             stopTrying()
             msg = ('[The TvDB] Show not found ' \
-            '{0} :::'.format(pchtrakt.lastPath))
+            '{0} '.format(pchtrakt.lastPath))
             pchtrakt.logger.warning(msg)
             startWait()
         except tvdb_exceptions.tvdb_error, e:
             stopTrying()
             pchtrakt.logger.error('[The TvDB] Site apears to be down:::')
             starttvdbWait()
-        except utils.NotFoundError as e:
-            stopTrying()
-            pchtrakt.logger.error(e)
-            sleep(sleepTime)
-        except utils.AuthenticationTraktError as e:
-            stopTrying()
-            pchtrakt.logger.error(e)
-            sleep(sleepTime)
-        except utils.MaxScrobbleError as e:
-            pchtrakt.logger.warning(e)
-            startWait()
-        except utils.BadStatusLine as e:
-            stopTrying()
-            pchtrakt.logger.error(e)
-            sleep(sleepTime)
         except MovieResultNotFound as e:
             stopTrying()
-            msg = '[Pchtrakt] Unable to find match for file - {0}:::'.format(e.file_name)
+            msg = '[Pchtrakt] Unable to find match for file - {0}'.format(e.file_name)
             pchtrakt.logger.warning(msg)
             startWait()
         except PchTraktException as e:
             stopTrying()
-            msg = '[Pchtrakt] PchTraktException - {0}:::'.format(e)
+            msg = '[Pchtrakt] PchTraktException - {0}'.format(e)
             pchtrakt.logger.error(msg)
             sleep(sleepTime)
-        except utils.traktNetworkError as e:
-            stopTrying()
-            msg = '[traktAPI] {0}'.format(e)
-            pchtrakt.logger.error(msg)
-            sleep(sleepTime)
+        except AttributeError as e:
+            Debug('[Pchtrakt] ID not found will retry in 60 seconds')
+            while not (hasattr(myMedia.parsedInfo, 'id')) and myMedia.oStatus.status == EnumStatus.PLAY:
+                sleep(15)
+                myMedia.parsedInfo = pchtrakt.mediaparser.parse(
+                                                myMedia.oStatus.fileName)
+                myMedia.oStatus = pchtrakt.oPchRequestor.getStatus(ipPch, 10)
+                Debug('[Pchtrakt] ID not found will retry in 60 seconds')
+            videoStatusHandleMovie(myMedia)
         except Exception as e:
-            stopTrying()
-            #Debug(u'::: {0} :::'.format(pchtrakt.lastPath))
-            #Debug(u'::: {0} :::'.format(e))
-            pchtrakt.logger.exception('This should never happend! Please contact me with the error if you read this')
-            pchtrakt.logger.exception(pchtrakt.lastPath)
-            pchtrakt.logger.exception(e)
-            startWait()
+            if hasattr(e, 'code'):  # error 401 or 503, possibly others
+                # read the error document, strip newlines, this will make an html page 1 line
+                error_data = e.read().replace("\n", "").replace("\r", "")
+                if e.code == 401:  # authentication problem
+                    stopTrying()
+                    pchtrakt.logger.error('[traktAPI] Login or password incorrect')
+                    sleep(sleepTime)
+                    startWait()
+                elif e.code == 503:  # server busy problem
+                    stopTrying()
+                    pchtrakt.logger.error('[traktAPI] trakt.tv server is busy')
+                    sleep(sleepTime)
+                    startWait()
+                elif e.code == 404:  # Not found on trakt.tv
+                    stopTrying()
+                    pchtrakt.logger.error('[traktAPI] Item not found on trakt.tv')
+                    sleep(sleepTime)
+                    startWait()
+                else:
+                    raise traktUnknownError(e.message)
+                    stopTrying()
+                    #Debug(u'::: {0} :::'.format(pchtrakt.lastPath))
+                    #Debug(u'::: {0} :::'.format(e))
+                    pchtrakt.logger.exception('This should never happend! Please contact me with the error if you read this')
+                    pchtrakt.logger.exception(pchtrakt.lastPath)
+                    pchtrakt.logger.exception(e)
+                    startWait()
+            else:
+                stopTrying()
+                #Debug(u'::: {0} :::'.format(pchtrakt.lastPath))
+                #Debug(u'::: {0} :::'.format(e))
+                pchtrakt.logger.exception('This should never happend! Please contact me with the error if you read this')
+                pchtrakt.logger.exception(pchtrakt.lastPath)
+                pchtrakt.logger.exception(e)
+                startWait()
     pchtrakt.logger.info(' [Pchtrakt]  STOP')
