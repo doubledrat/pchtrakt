@@ -342,6 +342,7 @@ def watchedFileCreation(myMedia):
             f.close()
             msg = ' [Pchtrakt] I have created the file {0}'.format(path)
             pchtrakt.logger.info(msg)
+            pchtrakt.CreatedFile = 1
             Debug('[Pchtrakt] Start xml update routine')
             if  updatexmlwatched:
                 lookfor = matchthis[:-4]
@@ -443,6 +444,8 @@ def watchedFileCreation(myMedia):
                                         previous = xmlword
                                         break
                                 break
+                msg = ' [Pchtrakt] XML Update complete'
+                pchtrakt.logger.info(msg)
             elif RutabagaModwatched:
                 lookfor = matchthis[:-4]
                 lookforfull = matchthisfull[:-4]

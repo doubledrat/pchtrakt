@@ -61,6 +61,7 @@ class PchTraktException(Exception):
 tvdb = tvdb_api.Tvdb()
 pchtrakt.oPchRequestor = PchRequestor()
 pchtrakt.mediaparser = mp.MediaParser()
+pchtrakt.CreatedFile = 0
 class media():
     def __str__(self):
         if isinstance(self.parsedInfo, mp.MediaParserResultTVShow):
@@ -173,7 +174,7 @@ def doWork():
         myMedia.parsedInfo = None
         with open('cache.json','w') as f:
             json.dump(pchtrakt.dictSerie, f, separators=(',',':'), indent=4)
-    if YamjWatched == True and not pchtrakt.watched:
+    if YamjWatched == True and not pchtrakt.watched and pchtrakt.CreatedFile == 0:
         try:
             watchedFileCreation(myMedia)
         except BaseException as e:
@@ -190,6 +191,7 @@ def doWork():
                 if myMedia.parsedInfo == None:
                     myMedia.parsedInfo = pchtrakt.mediaparser.parse(
                                             myMedia.oStatus.fileName)
+                    pchtrakt.CreatedFile = 0
                 #Debug(myMedia.__str__())
                 videoStatusHandle(myMedia)
         elif (myMedia.oStatus.status == EnumStatus.PAUSE
