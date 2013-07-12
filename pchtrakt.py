@@ -173,7 +173,7 @@ def doWork():
         myMedia.parsedInfo = None
         with open('cache.json','w') as f:
             json.dump(pchtrakt.dictSerie, f, separators=(',',':'), indent=4)
-    if YamjWatched == True and not pchtrakt.watched and pchtrakt.CreatedFile == 0:
+    if YamjWatched == True and not pchtrakt.watched and myMedia.oStatus.percent > watched_percent and pchtrakt.CreatedFile == 0:
         try:
             watchedFileCreation(myMedia)
         except BaseException as e:
@@ -191,8 +191,10 @@ def doWork():
                     myMedia.parsedInfo = pchtrakt.mediaparser.parse(
                                             myMedia.oStatus.fileName)
                     pchtrakt.CreatedFile = 0
-                    x = float(myMedia.oStatus.totalTime - float(myMedia.oStatus.currentTime))
-                    pchtrakt.Check = int(float(x / 100) * float(watched_percent) / int(float(TraktRefreshTime)*60))
+                    x = float(myMedia.oStatus.totalTime) - float(myMedia.oStatus.currentTime)
+                    pchtrakt.Check = int(float(x / 100) * float(watched_percent) / float(int(sleepTime)))
+                    pchtrakt.currentTimeB = myMedia.oStatus.currentTime
+                    pchtrakt.BigJump = 0
                 #Debug(myMedia.__str__())
                 videoStatusHandle(myMedia)
         elif (myMedia.oStatus.status == EnumStatus.PAUSE
@@ -221,6 +223,8 @@ def doWork():
                 pchtrakt.lastName = ''
                 pchtrakt.isMovie = 0
                 pchtrakt.isTvShow = 0
+                pchtrakt.PlayCount = 0
+                pchtrakt.Check = 0
             #Debug('[Pchtrakt] PCH status = {0}'.format(myMedia.oStatus.status))
     #if pchtrakt.StopTrying:
     #    pchtrakt.logger.info(' [Pchtrakt] stopped trying')
@@ -244,7 +248,7 @@ def startWait():
 		sleep(sleepTime)
 		myMedia.oStatus = pchtrakt.oPchRequestor.getStatus(ipPch, 10)
 		pchtrakt.StopTrying = 1
-		if YamjWatched == True:
+		if YamjWatched == True and not pchtrakt.watched and myMedia.oStatus.percent > watched_percent and pchtrakt.CreatedFile == 0:
 			try:
 				watchedFileCreation(myMedia)
 			except BaseException as e:
@@ -257,7 +261,7 @@ def starttvdbWait():
             sleep(sleepTime)
             myMedia.oStatus = pchtrakt.oPchRequestor.getStatus(ipPch, 10)
             pchtrakt.StopTrying = 1
-            if YamjWatched == True:
+            if YamjWatched == True and not pchtrakt.watched and myMedia.oStatus.percent > watched_percent and pchtrakt.CreatedFile == 0:
                 try:
                     watchedFileCreation(myMedia)
                 except BaseException as e:
