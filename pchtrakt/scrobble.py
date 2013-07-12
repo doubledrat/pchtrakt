@@ -91,10 +91,8 @@ def videoStopped():
         showStopped()
     elif pchtrakt.isMovie and TraktScrobbleMovie:
         movieStopped()
-    pchtrakt.PlayCount = 0
-    pchtrakt.watched = 1
 
-
+	
 def showStillRunning(myMedia):
     showStarted(myMedia)
 
@@ -187,7 +185,7 @@ def videoStatusHandleMovie(myMedia):
             else:
                 movieStarted(myMedia)
     if not pchtrakt.watched:
-        if myMedia.oStatus.percent > watched_percent and pchtrakt.Check <= pchtrakt.PlayCount:
+        if myMedia.oStatus.percent > watched_percent and pchtrakt.Check <= pchtrakt.PlayCount and not pchtrakt.BigJump:
             pchtrakt.watched = movieIsEnding(myMedia)
             if pchtrakt.watched:
 			    pchtrakt.StopTrying = 0
@@ -199,7 +197,6 @@ def videoStatusHandleMovie(myMedia):
         elif myMedia.oStatus.currentTime > pchtrakt.currentTime + int(TraktRefreshTime)*60:
             pchtrakt.currentTime = myMedia.oStatus.currentTime
             movieStillRunning(myMedia)
-            pchtrakt.PlayCount += 1
     elif myMedia.oStatus.percent < 10 and myMedia.oStatus.status != EnumStatus.STOP:
         pchtrakt.logger.info(' [Pchtrakt] It seems you came back at the begining of the video... so I say to trakt it\'s playing')
         pchtrakt.watched = 0
@@ -232,7 +229,7 @@ def videoStatusHandleTVSeries(myMedia):
             else:
                 showStarted(myMedia)
     if not pchtrakt.watched:
-        if myMedia.oStatus.percent > watched_percent and pchtrakt.Check <= pchtrakt.PlayCount:
+        if myMedia.oStatus.percent > watched_percent and pchtrakt.Check <= pchtrakt.PlayCount and not pchtrakt.BigJump:
             pchtrakt.watched = showIsEnding(myMedia)
             if pchtrakt.watched:
 			    pchtrakt.StopTrying = 0
@@ -244,12 +241,10 @@ def videoStatusHandleTVSeries(myMedia):
         elif myMedia.oStatus.currentTime > pchtrakt.currentTime + int(TraktRefreshTime)*60:
             pchtrakt.currentTime = myMedia.oStatus.currentTime
             showStillRunning(myMedia)
-            pchtrakt.PlayCount += 1
         elif doubleEpisode and myMedia.oStatus.percent > (myMedia.idxEpisode+1) * watched_percent/len(myMedia.parsedInfo.episode_numbers) and myMedia.idxEpisode+1 < len(myMedia.parsedInfo.episode_numbers):
             showIsEnding(myMedia)
             myMedia.idxEpisode += 1
             showStarted(myMedia)
-
     elif myMedia.oStatus.percent < 10 and myMedia.oStatus.status != EnumStatus.STOP:
         pchtrakt.logger.info(' [Pchtrakt] It seems you came back at the begining of the video... so I say to trakt it\'s playing')
         pchtrakt.watched = 0
@@ -272,19 +267,38 @@ def videoStatusHandle(myMedia):
         pchtrakt.StopTrying = 1
     pchtrakt.lastPath = myMedia.oStatus.fullPath
     pchtrakt.lastName = myMedia.oStatus.fileName
-    if not TraktScrobbleMovie and not TraktScrobbleTvShow and not BetaSeriesScrobbleTvShow:
-	    if myMedia.oStatus.currentTime > pchtrakt.currentTime + int(TraktRefreshTime)*60:
-	        pchtrakt.currentTime = myMedia.oStatus.currentTime
-	        pchtrakt.PlayCount += 1
-	    elif myMedia.oStatus.currentTime < pchtrakt.currentTime - int(TraktRefreshTime)*60:
-	        pchtrakt.currentTime = myMedia.oStatus.currentTime
-	        if pchtrakt.PlayCount != 0:
-			    pchtrakt.PlayCount -= 1
-    else:
-	    if myMedia.oStatus.currentTime < pchtrakt.currentTime - int(TraktRefreshTime)*60:
+    if myMedia.oStatus.currentTime > pchtrakt.currentTimeB + int(sleepTime):
+	    Z = int(myMedia.oStatus.currentTime - pchtrakt.currentTimeB)
+	    Z = int(Z / float(int(sleepTime)))
+	    #work out length of jump or not?
+	    Debug('[Pchtrakt] FORWARDS' + str(Z) + ' - ' + str(pchtrakt.currentTimeB))
+	    pchtrakt.currentTimeB = myMedia.oStatus.currentTime
+	    pchtrakt.PlayCount += Z
+	    if pchtrakt.BigJump:
+	        pchtrakt.BigJump += Z
+                if pchtrakt.BigJump >= int(pchtrakt.Check / 10):
+				    pchtrakt.BigJump = 0
+	    if Z >= int(pchtrakt.Check / 10):
+	        pchtrakt.BigJump = 1
+    elif myMedia.oStatus.currentTime < pchtrakt.currentTimeB:# + int(TraktRefreshTime):
+	    Debug('[Pchtrakt] BACKWARDS' + str(myMedia.oStatus.currentTime) + ' - ' + str(pchtrakt.currentTimeB))
+	    Z = int(pchtrakt.currentTimeB - myMedia.oStatus.currentTime)# + int(TraktRefreshTime))
+	    Z = int(Z / float(int(sleepTime)) + 1)
+	    if Z >= pchtrakt.PlayCount:
+	        pchtrakt.PlayCount = 0
+	        x = float(myMedia.oStatus.totalTime) - float(myMedia.oStatus.currentTime)
+	        pchtrakt.Check = int(float(x / 100) * float(watched_percent) / float(int(sleepTime)))
+	        pchtrakt.currentTimeB = myMedia.oStatus.currentTime
+	    else:
+	        pchtrakt.PlayCount -= Z
+	    Debug('[Pchtrakt] BACKWARDS: ' + str(Z) + ' - ' + str(pchtrakt.currentTimeB))
+	    pchtrakt.currentTimeB = myMedia.oStatus.currentTime
+	    if pchtrakt.PlayCount != 0:
 	        pchtrakt.PlayCount -= 1
-	        pchtrakt.currentTime = myMedia.oStatus.currentTime
-    Debug('[Pchtrakt] ' + str(myMedia.oStatus.currentTime) + ' ' + str(pchtrakt.currentTime + int(TraktRefreshTime)*60))
+	    if pchtrakt.BigJump and Z >= int(pchtrakt.Check / 9):
+	        pchtrakt.BigJump = 0
+    Debug('[Pchtrakt] ' + str(myMedia.oStatus.currentTime) + ' ' + str(pchtrakt.currentTimeB + int(sleepTime)))
+    Debug('[Pchtrakt] ' + str(pchtrakt.Check) + ' <= ' + str(pchtrakt.PlayCount))#could add +1 here and below
 
 def isIgnored(myMedia):
     ignored = False
@@ -346,7 +360,7 @@ def isGenreIgnored(genres):
 
 def watchedFileCreation(myMedia):
     Debug('[Pchtrakt] ' + str(pchtrakt.Check) + ' <= ' + str(pchtrakt.PlayCount))#could add +1 here and below
-    if myMedia.oStatus.percent > watched_percent and pchtrakt.Check <= pchtrakt.PlayCount:
+    if myMedia.oStatus.percent > watched_percent and pchtrakt.Check <= pchtrakt.PlayCount and not pchtrakt.BigJump:
         Debug('watchedFileCreation')
         try:
             path = myMedia.oStatus.fileName.encode('utf-8', 'replace')
@@ -354,7 +368,6 @@ def watchedFileCreation(myMedia):
             Debug('doing except for path')
             path = myMedia.oStatus.fileName.encode('latin-1', 'replace')
         if YamJWatchedVithVideo:
-            Debug('YamJWatchedVithVideo')
             try:
                 path = myMedia.oStatus.fullPath.encode('utf-8', 'replace')
             except:
@@ -370,10 +383,7 @@ def watchedFileCreation(myMedia):
             if (path.split(".")[-1] == "DVD"):
                 path = path[:-4]
             path = '{0}{1}'.format(YamjWatchedPath, path)
-        Debug('path = 1')
         path = '{0}.watched'.format(path)
-        Debug(path + ' = 2')
-        #Debug('checking path')
         if not isfile(path):
             Debug('[Pchtrakt] Start to write file')
             f = open(path, 'w')
@@ -386,7 +396,7 @@ def watchedFileCreation(myMedia):
 
 def UpdateXMLFiles(pchtrakt):
     Debug('[Pchtrakt] ' + str(pchtrakt.CreatedFile))
-    if pchtrakt.CreatedFile == 1:
+    if pchtrakt.CreatedFile == 1 and not pchtrakt.BigJump:
         if  updatexmlwatched:
             matchthis = pchtrakt.lastName.encode('utf-8')
             matchthisfull = pchtrakt.lastPath.encode('utf-8')
