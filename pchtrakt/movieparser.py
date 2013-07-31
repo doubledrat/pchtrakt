@@ -22,20 +22,16 @@ import re
 import mediaparser
 
 regexes_movies = [
-                    ("movie_year", # bug sometimes 1080 = year
-                        # Movie.Title.(year) or Movie.Title.[year]
-                        """
-                        ^(?P<movie_title>.+?)[. _-]+
-                        [\(\[]{0,1}(?P<year>[0-9]{4})[\)\]]{0,1}
-                        """
-                    )
+                    ("imdb", "^.+(?P<imdbid>tt\d{7}).+$")
+                    ,
+                    ("movie_year", "^(?P<movie_title>.+?)[. _-]+[\(\[]{0,1}(?P<year>[0-9]{4})[\)\]]{0,1}")
                     ,
                     ("movie_only", "^(?P<movie_title>.+$)")
                 ]
 
 # black words in file names
 blackwords = [
-              # video type
+              # video tags
               'DVDRip', 'HD-DVD', 'HDDVD', 'HDDVDRip', 'BluRay', 'Blu-ray', 'BDRip', 'BRRip',
               'HDRip', 'DVD', 'DVDivX', 'HDTV', 'DVB', 'DVBRip', 'PDTV', 'WEBRip', 'DVDSCR',
               'Screener', 'VHS', 'VIDEO_TS', 'DVDR',
@@ -81,10 +77,8 @@ class MovieParser():
 
                 if 'movie_title' in named_groups:
                     tmp_movie_title = match.group('movie_title')
-
                 if 'year' in named_groups:
                     tmp_year = match.group('year')
-
                 if 'imdbid' in named_groups:
                     tmp_imdbid = match.group('imdbid')
 

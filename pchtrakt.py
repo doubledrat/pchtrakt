@@ -26,46 +26,52 @@
 
 import sys
 import getopt
-import pchtrakt
+#import pchtrakt
 #This needed?
-pchtrakt.SYS_ENCODING = None
-reload(sys)
-sys.setdefaultencoding("ANSI_X3.4-1968")
-pchtrakt.SYS_ENCODING = 'ANSI_X3.4-1968'
+#pchtrakt.SYS_ENCODING = None
+#reload(sys)
+#sys.setdefaultencoding("ANSI_X3.4-1968")
+#pchtrakt.SYS_ENCODING = 'ANSI_X3.4-1968'
 if not hasattr(sys, "setdefaultencoding"):
 	reload(sys)
 
 import os
 import json
-
 from pchtrakt.pch import *
 from pchtrakt.scrobble import *
 from pchtrakt.config import *
-from subprocess import Popen, PIPE
 from pchtrakt.movieparser import MovieResultNotFound
-
 from pchtrakt import mediaparser as mp
-from time import sleep
+from time import sleep, time
 from lib.tvdb_api import tvdb_api
 from lib.tvdb_api import tvdb_exceptions
-from lib import parser
-from lib import regexes
-from lib import utilities as utils
-from datetime import date
+from lib.utilities import Debug, checkSettings#, AuthenticationTraktError
 from xml.etree import ElementTree
-from urllib2 import Request, urlopen, URLError, HTTPError
-from urllib import quote
-from lib.utilities import Debug
+#from urllib2 import URLError, HTTPError#Request, urlopen, URLError, HTTPError
+#from datetime import date
+#from subprocess import Popen, PIPE
+#from lib import parser
+#from lib import regexes
+#from urllib import quote
+#from lib.utilities import Debug
+try:
+    # Python 3.0 +
+    from http.client import HTTPException, BadStatusLine
+except ImportError:
+    # Python 2.7 and earlier
+    from httplib import HTTPException, BadStatusLine
+
 class PchTraktException(Exception):
     pass
+
 tvdb = tvdb_api.Tvdb()
 pchtrakt.oPchRequestor = PchRequestor()
 pchtrakt.mediaparser = mp.MediaParser()
-pchtrakt.CreatedFile = 0
+
 class media():
     def __str__(self):
         if isinstance(self.parsedInfo, mp.MediaParserResultTVShow):
-            msg = u'TV Show : {0} - Season:{1} - Episode:{2} ' \
+            msg = 'TV Show : {0} - Season:{1} - Episode:{2} ' \
                     '- {3}% - {4} - TvDB: {5}'.format(
                     self.parsedInfo.name,
                     self.parsedInfo.season_number,
@@ -74,7 +80,7 @@ class media():
                     self.oStatus.status,
                     self.parsedInfo.id)
         else:
-            msg = u'Movie : {0} - Year : {1} - ' \
+            msg = 'Movie : {0} - Year : {1} - ' \
                     '{2}% - IMDB: {3}'.format(
                     self.parsedInfo.name,
                     self.parsedInfo.year,
@@ -89,8 +95,6 @@ def printHelp():
     print('Options:')
     print('    -h,--help    :    display this message')
     print('    -d,--daemon  :    launches pchtrakt in the background')
-
-
 
 def getParams():
     try:
@@ -109,7 +113,7 @@ def getParams():
                       'starting normally')
             else:
                 pchtrakt.DAEMON = True
-                pchtrakt.debug = False
+                #pchtrakt.debug = False
 
         if o in ('-h', '--help'):
             printHelp()
@@ -117,12 +121,35 @@ def getParams():
 
         if o in ('-t'):
             try:
-                utils.checkSettings()
-            except util.AuthenticationTraktError:
+                checkSettings()
+            except AuthenticationTraktError:
                 pass
             finally:
                 sys.exit()
 
+def checkUpdate(when):
+    #pchtrakt.logger.info('update checker')
+    hash = ""
+    for row in os.popen('git ls-remote').read().split('\n'):
+        if row.find('refs/heads/dvp') != -1:
+            hash = row.split()[0]
+            break
+    if hash == PchTraktVersion or hash == "":
+        if when == "first":
+	        pchtrakt.logger.info(' [Pchtrakt] Starting Pchtrakt version = ' + PchTraktVersion[-4:]  + ' Millers Mods (Running latest ' + pchtrakt.chip + ' version)')
+    else:
+        if AutoUpdate => 0:
+            if when == "first":
+                pchtrakt.logger.info(' [Pchtrakt] Starting Pchtrakt version = ' + PchTraktVersion[-4:]  + ' Millers Mods (Running latest ' + pchtrakt.chip + ' version)')
+                pchtrakt.logger.info(' [Pchtrakt] A new version is online. Starting update')
+            else:
+                pchtrakt.logger.info(' [Pchtrakt] Checking for new version.... ' + PchTraktVersion[-4:]  + ' Millers Mods (Running latest ' + pchtrakt.chip + ' version)')
+                pchtrakt.logger.info(' [Pchtrakt] A new version is online. Starting update')
+                os.system("./daemon.sh update")
+        elif AutoUpdate < 0:
+            if when == "first":
+                pchtrakt.logger.info(' [Pchtrakt] Starting Pchtrakt version = ' + PchTraktVersion[-4:] + ' Millers Mods (' + pchtrakt.chip + ' version)')
+                pchtrakt.logger.info(' [Pchtrakt] A new version is online. For manual install, download from https://github.com/cptjhmiller/pchtrakt/archive/dvp.zip')
 
 
 def daemonize():
@@ -156,10 +183,6 @@ def daemonize():
     dev_null = file('/dev/null', 'r')
     os.dup2(dev_null.fileno(), sys.stdin.fileno())
 
-
-
-
-
 def doWork():
     myMedia.ScrobResult = 0
     pchtrakt.StopTrying = 0
@@ -174,7 +197,11 @@ def doWork():
         myMedia.parsedInfo = None
         with open('cache.json','w') as f:
             json.dump(pchtrakt.dictSerie, f, separators=(',',':'), indent=4)
-    if YamjWatched == True and not pchtrakt.watched and pchtrakt.CreatedFile == 0:
+    #if pchtrakt.online and (myMedia.parsedInfo.id == '0' or myMedia.parsedInfo.year == '0'):
+    #    myMedia.parsedInfo = None
+    #    with open('cache.json','w') as f:
+    #        json.dump(pchtrakt.dictSerie, f, separators=(',',':'), indent=4)
+    if YamjWatched == True and not pchtrakt.watched and myMedia.oStatus.percent > watched_percent and pchtrakt.CreatedFile == 0:
         try:
             watchedFileCreation(myMedia)
         except BaseException as e:
@@ -182,173 +209,254 @@ def doWork():
             #Debug('::: {0} :::'.format(e))
             pchtrakt.logger.error(e)
     if not pchtrakt.StopTrying:
-        if myMedia.oStatus.status not in   [EnumStatus.NOPLAY,
-                                            EnumStatus.UNKNOWN,
-                                            EnumStatus.PAUSE,
-                                            EnumStatus.LOAD]:
+        if myMedia.oStatus.status not in [EnumStatus.NOPLAY,
+                                          EnumStatus.UNKNOWN,
+                                          EnumStatus.PAUSE]:
             pchtrakt.allowedPauseTime = TraktMaxPauseTime
             if myMedia.oStatus.status != EnumStatus.LOAD:
-                if myMedia.parsedInfo == None:
-                    myMedia.parsedInfo = pchtrakt.mediaparser.parse(
-                                            myMedia.oStatus.fileName)
+                if myMedia.parsedInfo == None:# and pchtrakt.online:
+                    #if pchtrakt.lastPath != '':
+                    Debug('[Pchtrakt] full path: ' + myMedia.oStatus.fullPath)
+                    msg = u' [Pchtrakt] File: {0}'.format(myMedia.oStatus.fileName)
+                    pchtrakt.logger.info(msg)
                     pchtrakt.CreatedFile = 0
-                #Debug(myMedia.__str__())
+                    myMedia.parsedInfo = pchtrakt.mediaparser.parse(myMedia.oStatus.fileName)
+                    pchtrakt.Ttime = myMedia.oStatus.totalTime
                 videoStatusHandle(myMedia)
+                    #else:
+                    #if pchtrakt.Ttime == 0:
         elif (myMedia.oStatus.status == EnumStatus.PAUSE
             and pchtrakt.allowedPauseTime > 0):
             pchtrakt.allowedPauseTime -= sleepTime
             #Debug(myMedia.__str__())
         else:
-            if pchtrakt.lastPath != '':
-                if not pchtrakt.watched:
+            if pchtrakt.lastPath != '':# and myMedia.oStatus.status == EnumStatus.NOPLAY:
+                if not pchtrakt.watched and myMedia.oStatus.status != EnumStatus.PAUSE:
+                    #pchtrakt.logger.info(' [Pchtrakt] ' + myMedia.oStatus.fullPath)
+                    #pchtrakt.logger.info(' [Pchtrakt] ' + myMedia.oStatus.fileName)
+                    #pchtrakt.logger.info(' [Pchtrakt] ' + oldmyMedia.oStatus.fullPath)
+                    #pchtrakt.logger.info(' [Pchtrakt] ' + oldmyMedia.oStatus.fileName)
+                    #pchtrakt.logger.info(' [Pchtrakt] ' + pchtrakt.lastPath)
+                    #pchtrakt.logger.info(' [Pchtrakt] ' + myMedia.oStatus.status)
+                    pchtrakt.logger.info(' [Pchtrakt] video Stopped')
+                    #if pchtrakt.online:
                     videoStopped()
+                    #elif myMedia.oStatus.percent > watched_percent and (TraktScrobbleTvShow or TraktScrobbleMovie):
+                    #    pchtrakt.logger.info(' [Pchtrakt] saving off-line scrobble')
+                    #    scrobbleMissed() 
                 if pchtrakt.allowedPauseTime <= 0:
                     pchtrakt.logger.info(' [Pchtrakt] It seems you paused ' \
                                          'the video for more than {0} minutes: ' \
                                          'I say to trakt you stopped watching ' \
                                          'your video'.format(TraktMaxPauseTime/60))
+                    pchtrakt.logger.info(' [Pchtrakt] video Stopped')
+                    videoStopped()
                 pchtrakt.watched = 0
                 pchtrakt.lastPath = ''
+                pchtrakt.lastName = ''
                 pchtrakt.isMovie = 0
                 pchtrakt.isTvShow = 0
-            #Debug('[Pchtrakt] PCH status = {0}'.format(myMedia.oStatus.status))
-
-
-
-
+                pchtrakt.Check = 0
+                pchtrakt.Ttime = 0
 
 def stopTrying():
     try:
         pchtrakt.StopTrying = 1
         pchtrakt.lastPath = myMedia.oStatus.fullPath
+        pchtrakt.lastName = myMedia.oStatus.fileName
         sleep(sleepTime)
     except Exception as e:
         pass
 
 def startWait():
-	pchtrakt.StopTrying = 0
+	pchtrakt.StopTrying = 1#pchtrakt.StopTrying = 0
 	while myMedia.oStatus.status == EnumStatus.PLAY:
 		sleep(sleepTime)
 		myMedia.oStatus = pchtrakt.oPchRequestor.getStatus(ipPch, 10)
-		pchtrakt.StopTrying = 1
-		if YamjWatched == True:
+		#pchtrakt.StopTrying = 1
+		if YamjWatched == True and not pchtrakt.watched and myMedia.oStatus.percent > watched_percent and pchtrakt.CreatedFile == 0:
 			try:
 				watchedFileCreation(myMedia)
 			except BaseException as e:
 				pchtrakt.logger.error(e)
 
 def starttvdbWait():
-    while urllib.urlopen("http://thetvdb.com").getcode() != 200:
-        pchtrakt.StopTrying = 0
-        while myMedia.oStatus.status == EnumStatus.PLAY:
-            sleep(sleepTime)
-            myMedia.oStatus = pchtrakt.oPchRequestor.getStatus(ipPch, 10)
-            pchtrakt.StopTrying = 1
-            if YamjWatched == True:
-                try:
-                    watchedFileCreation(myMedia)
-                except BaseException as e:
-                    pchtrakt.logger.error(e)
-
-
-if __name__ == '__main__':
-    getParams()
-    if pchtrakt.DAEMON:
-        daemonize()
-    if os.path.isfile('cache.json'):
-        with open('cache.json','r+') as f:
-            pchtrakt.dictSerie = json.load(f)
-    else:
-        pchtrakt.dictSerie = {}
-
-    #Check version and update if needed
-    gitproc = Popen(['git', 'ls-remote'], stdout = PIPE)
-    (stdout, stderr) = gitproc.communicate()
-    for row in stdout.split('\n'):
-        if row.find('refs/heads/dvp') != -1:
-            hash = row.split()[0]
-            break
-    if hash == PchTraktVersion:
-        pchtrakt.logger.info(' [Pchtrakt] Starting Pchtrakt version = ' + PchTraktVersion[-4:]  + ' Millers Mods (Running latest version)')
-    elif AutoUpdate is True:
-        pchtrakt.logger.info(' [Pchtrakt] Pchtrakt START version = ' + PchTraktVersion[-4:] + ' Millers Mods')
-        pchtrakt.logger.info(' [Pchtrakt] A new version is online. Starting update')
-        os.system("./daemon.sh update")
-    elif AutoUpdate is False:
-        pchtrakt.logger.info(' [Pchtrakt] Pchtrakt START version = ' + PchTraktVersion[-4:] + ' Millers Mods')
-        pchtrakt.logger.info(' [Pchtrakt] A new version is online. For manual install, download from https://github.com/cptjhmiller/pchtrakt/archive/dvp.zip')
-
-    while not pchtrakt.stop:
-        try:
-            doWork()
-            sleep(sleepTime)
-        except (KeyboardInterrupt, SystemExit):
-            Debug('[Pchtrakt] Stopping pchtrakt')
-            pchtrakt.stop = 1
-            videoStopped()
-        except tvdb_exceptions.tvdb_shownotfound as e:
-            stopTrying()
-            msg = ('[The TvDB] Show not found ' \
-            '{0} '.format(pchtrakt.lastPath))
-            pchtrakt.logger.warning(msg)
-            startWait()
-        except tvdb_exceptions.tvdb_error, e:
-            stopTrying()
-            pchtrakt.logger.error('[The TvDB] Site apears to be down:::')
-            starttvdbWait()
-        except MovieResultNotFound as e:
-            stopTrying()
-            msg = '[Pchtrakt] Unable to find match for file - {0}'.format(e.file_name)
-            pchtrakt.logger.warning(msg)
-            startWait()
-        except PchTraktException as e:
-            stopTrying()
-            msg = '[Pchtrakt] PchTraktException - {0}'.format(e)
-            pchtrakt.logger.error(msg)
-            sleep(sleepTime)
-        except AttributeError as e:
-            Debug('[Pchtrakt] ID not found will retry in 60 seconds')
-            while not (hasattr(myMedia.parsedInfo, 'id')) and myMedia.oStatus.status == EnumStatus.PLAY:
-                sleep(15)
-                myMedia.parsedInfo = pchtrakt.mediaparser.parse(
-                                                myMedia.oStatus.fileName)
+    if pchtrakt.online:
+        while urllib.urlopen("http://thetvdb.com").getcode() != 200:
+            pchtrakt.StopTrying = 1#pchtrakt.StopTrying = 0
+            while myMedia.oStatus.status == EnumStatus.PLAY:
+                sleep(sleepTime)
                 myMedia.oStatus = pchtrakt.oPchRequestor.getStatus(ipPch, 10)
-                Debug('[Pchtrakt] ID not found will retry in 60 seconds')
-            videoStatusHandleMovie(myMedia)
-        except Exception as e:
-            if hasattr(e, 'code'):  # error 401 or 503, possibly others
-                # read the error document, strip newlines, this will make an html page 1 line
-                error_data = e.read().replace("\n", "").replace("\r", "")
-                if e.code == 401:  # authentication problem
-                    stopTrying()
-                    pchtrakt.logger.error('[traktAPI] Login or password incorrect')
-                    sleep(sleepTime)
-                    startWait()
-                elif e.code == 503:  # server busy problem
-                    stopTrying()
-                    pchtrakt.logger.error('[traktAPI] trakt.tv server is busy')
-                    sleep(sleepTime)
-                    startWait()
-                elif e.code == 404:  # Not found on trakt.tv
-                    stopTrying()
-                    pchtrakt.logger.error('[traktAPI] Item not found on trakt.tv')
-                    sleep(sleepTime)
-                    startWait()
+                #pchtrakt.StopTrying = 1
+                if YamjWatched == True and not pchtrakt.watched and myMedia.oStatus.percent > watched_percent and pchtrakt.CreatedFile == 0:
+                    try:
+                        watchedFileCreation(myMedia)
+                    except BaseException as e:
+                        pchtrakt.logger.error(e)
+
+try:
+    if __name__ == '__main__':
+        getParams()
+        if pchtrakt.DAEMON:
+            daemonize()
+        if os.path.isfile('cache.json'):
+            with open('cache.json','r+') as f:
+                pchtrakt.dictSerie = json.load(f)
+        else:
+            pchtrakt.dictSerie = {}
+
+        #Get model
+        pchtrakt.chip = os.popen('gbus_read_uint32 0x0002fee8').read()[-5:-1]
+        if pchtrakt.chip == "8911":
+            pchtrakt.chip = "A400 series"
+        elif pchtrakt.chip == "8647":
+            pchtrakt.chip = "300 series"
+        elif pchtrakt.chip == "8643":
+            pchtrakt.chip = "200 series"
+        elif pchtrakt.chip == "8635":
+            pchtrakt.chip = "100 series"#do we want/need this?
+        else:
+            pchtrakt.chip = ""
+
+        #Check version and update if needed
+        #gitproc = Popen(['git', 'ls-remote'], stdout = PIPE)
+        #(stdout, stderr) = gitproc.communicate()
+        if pchtrakt.online:
+            checkUpdate('first')
+            if os.path.isfile('missed.scrobbles'):
+                pchtrakt.logger.info(' [Pchtrakt] Found missed scrobbles, updating trakt.tv')
+                with open('missed.scrobbles','r+') as f:
+                    pchtrakt.missed = json.load(f)
+                new_list = {}
+                for xname in pchtrakt.missed:
+                    pchtrakt.logger.info(u' [Pchtrakt] marking %s watched on trakt.tv' % xname.split('/')[::-1][0])
+                    myMedia.parsedInfo = pchtrakt.mediaparser.parse(xname.split('/')[::-1][0])
+                    myMedia.idxEpisode = 0
+                    myMedia.ScrobResult = 0
+                    myMedia.oStatus = PchStatus()
+                    myMedia.oStatus.totalTime = pchtrakt.missed[xname]['Totaltime']
+                    myMedia.oStatus.percent = 100
+                    if isinstance(myMedia.parsedInfo,mp.MediaParserResultTVShow):
+                        pchtrakt.watched = showIsSeen(myMedia, pchtrakt.missed[xname]['Totallength'])
+                    elif isinstance(myMedia.parsedInfo,mp.MediaParserResultMovie):
+                        pchtrakt.watched = movieIsSeen(myMedia, pchtrakt.missed[xname]['Totallength'])#movieIsEnding(myMedia)
+                    if not pchtrakt.watched:
+                        pchtrakt.logger.info(u' [traktAPI]  %s was NOT marked as watched on trakt.tv' % xname.split('/')[::-1][0])
+                        new_list[xname]={"Totaltime": int(pchtrakt.missed[xname]['Totaltime']), "Totallength": int(pchtrakt.missed[xname]['Totallength'])}
+                if new_list != {}:
+                    with open('missed.scrobbles','w') as f:
+                        json.dump(new_list, f, separators=(',',':'), indent=4)
                 else:
-                    raise traktUnknownError(e.message)
-                    stopTrying()
-                    #Debug(u'::: {0} :::'.format(pchtrakt.lastPath))
-                    #Debug(u'::: {0} :::'.format(e))
-                    pchtrakt.logger.exception('This should never happend! Please contact me with the error if you read this')
-                    pchtrakt.logger.exception(pchtrakt.lastPath)
-                    pchtrakt.logger.exception(e)
-                    startWait()
-            else:
-                stopTrying()
-                #Debug(u'::: {0} :::'.format(pchtrakt.lastPath))
-                #Debug(u'::: {0} :::'.format(e))
-                pchtrakt.logger.exception('This should never happend! Please contact me with the error if you read this')
-                pchtrakt.logger.exception(pchtrakt.lastPath)
-                pchtrakt.logger.exception(e)
-                startWait()
-    pchtrakt.logger.info(' [Pchtrakt]  STOP')
+                    os.remove('missed.scrobbles')
+        else:
+            pchtrakt.logger.info(' [Pchtrakt] Pchtrakt START version = ' + PchTraktVersion[-4:] + ' Millers Mods (' + pchtrakt.chip + ' version)')
+            pchtrakt.logger.info(' [Pchtrakt] No internet - can not check for updates')
+            pchtrakt.logger.info(' [Pchtrakt] .watched files will be created but no xml updating or track.tv scrobbles will happen.')
+            pchtrakt.logger.info(' [Pchtrakt] track.tv scrobbles will be saved and processed when next on-line.')
+        pchtrakt.logger.info(' [Pchtrakt] Waiting for a file to start.....')
+        pchtrakt.Started = time()
+		
+        #Main routine
+        while not pchtrakt.stop:
+                doWork()
+                sleep(sleepTime)
+                if myMedia.oStatus.status == EnumStatus.NOPLAY and float(time()) > float(pchtrakt.Started+AutoUpdate) and AutoUpdate > 0:
+                    checkUpdate('no')
+                    pchtrakt.Started = time()
+        pchtrakt.logger.info(' [Pchtrakt]  STOP')
+
+#Error routine
+except BadStatusLine, e:
+    msg = ('[BadStatusLine] ' \
+    '{0} '.format(pchtrakt.lastPath))
+    pchtrakt.logger.warning(msg)
+    sleep(15)
+    os.system("./daemon.sh restart")
+except tvdb_exceptions.tvdb_shownotfound as e:
+    stopTrying()
+    msg = ('[The TvDB] Show not found ' \
+    '{0} '.format(pchtrakt.lastPath))
+    pchtrakt.logger.warning(msg)
+    startWait()
+except tvdb_exceptions.tvdb_error, e:
+    stopTrying()
+    pchtrakt.logger.error('[The TvDB] Site apears to be down:::')
+    starttvdbWait()
+except MovieResultNotFound as e:
+    stopTrying()
+    msg = '[Pchtrakt] Unable to find match for file - {0}'.format(e.file_name)
+    pchtrakt.logger.warning(msg)
+    startWait()
+except PchTraktException as e:
+    stopTrying()
+    msg = '[Pchtrakt] PchTraktException - {0}'.format(e)
+    pchtrakt.logger.error(msg)
+    sleep(sleepTime)
+except BetaSerieAuthenticationException as e:
+    pchtrakt.logger.error(e)
+except IOError, e:
+     if hasattr(e, 'reason'):
+         pchtrakt.logger.error('Reason: %s ' % (e.reason))
+     elif hasattr(e, 'code'):
+         pchtrakt.logger.error('Error code: %s' % (e.code))
+except ValueError as e:
+    pchtrakt.logger.error('[traktAPI] Problem with trakt.tv site  - {0}'.format(e))
+    #pchtrakt.stop = 1
+    #videoStopped()
+except AttributeError as e:
+    if pchtrakt.online:
+        Debug('[Pchtrakt] ID not found will retry in 60 seconds  - {0}'.format(e))
+        while not (hasattr(myMedia.parsedInfo, 'id')) and myMedia.oStatus.status == EnumStatus.PLAY:
+            sleep(15)
+            myMedia.parsedInfo = pchtrakt.mediaparser.parse(myMedia.oStatus.fileName)
+            myMedia.oStatus = pchtrakt.oPchRequestor.getStatus(ipPch, 10)
+            Debug('[Pchtrakt] ID not found will retry in 60 seconds')
+        videoStatusHandleMovie(myMedia)
+    #else:
+    #    Debug('[Pchtrakt] not on-line bla bla bla')
+except Exception as e:
+    if hasattr(e, 'code'):  # error 401 or 503, possibly others
+        # read the error document, strip newlines, this will make an html page 1 line
+        error_data = e.read().replace("\n", "").replace("\r", "")
+        if e.code == 401:  # authentication problem
+            stopTrying()
+            pchtrakt.logger.error('[traktAPI] Login or password incorrect')
+            sleep(sleepTime)
+            startWait()
+        elif e.code == 503:  # server busy problem
+            stopTrying()
+            pchtrakt.logger.error('[traktAPI] trakt.tv server is busy')
+            sleep(sleepTime)
+            startWait()
+        elif e.code == 404:  # Not found on trakt.tv
+            stopTrying()
+            pchtrakt.logger.error('[traktAPI] Item not found on trakt.tv')
+            sleep(sleepTime)
+            startWait()
+        elif e.code == 403:  # Forbidden on trakt.tv
+            stopTrying()
+            pchtrakt.logger.error('[traktAPI] Item not found on trakt.tv')
+            sleep(sleepTime)
+            startWait()
+        elif e.code == 502:  # Bad Gateway
+            stopTrying()
+            pchtrakt.logger.error('[traktAPI] Bad Gateway')
+            sleep(sleepTime)
+            startWait()
+        else:
+            #raise traktUnknownError(e.message)
+            stopTrying()
+            #Debug(u'::: {0} :::'.format(pchtrakt.lastPath))
+            #Debug(u'::: {0} :::'.format(e))
+            pchtrakt.logger.exception('This should never happend! Please contact me with the error if you read this')
+            pchtrakt.logger.exception(pchtrakt.lastPath)
+            pchtrakt.logger.exception(e)
+            startWait()
+    else:
+        stopTrying()
+        #Debug(u'::: {0} :::'.format(pchtrakt.lastPath))
+        #Debug(u'::: {0} :::'.format(e))
+        pchtrakt.logger.exception('This should never happend! Please contact me with the error if you read this')
+        pchtrakt.logger.exception(pchtrakt.lastPath)
+        pchtrakt.logger.exception(e)
+        startWait()

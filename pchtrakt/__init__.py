@@ -2,7 +2,9 @@ from os.path import isfile, getsize
 import ConfigParser
 import logging
 import logging.handlers
-import os
+#import os
+#nbr = 0
+#idOK = 0
 
 StopTrying = 0
 stop = 0
@@ -10,13 +12,11 @@ lastPath = ''
 currentTime = 0
 watched = 0
 DAEMON = 0
-nbr = 0
 config_file = 'pchtrakt.ini'
 debug = False
 isTvShow = 0
 isMovie = 0
-idOK = 0
-allowedPauseTime = 0
+allowedPauseTime = 15
 config = ConfigParser.RawConfigParser()
 
 def loadOldConfig():
@@ -29,6 +29,8 @@ def newConfig():
         config.set('PCHtrakt', 'pch_ip', '127.0.0.1')
     if not config.has_option('PCHtrakt','autoupdate'):
         config.set('PCHtrakt', 'autoupdate', 'False')
+    if not config.has_option('PCHtrakt','update_check'):
+        config.set('PCHtrakt', 'update_check', '0')
     if not config.has_option('PCHtrakt','sleep_time'):
         config.set('PCHtrakt', 'sleep_time', '5')
     if not config.has_option('PCHtrakt','watched_percent'):
@@ -76,19 +78,27 @@ def newConfig():
         config.set('YAMJ', 'watched_with_video', True)
     if not config.has_option('YAMJ','ignored_category'):
         config.set('YAMJ', 'ignored_category', '')
-    if not config.has_option('YAMJ','jukebox_path'):
-        config.set('YAMJ', 'jukebox_path', '')
 
-    if not config.has_section('Auto Watched'):
-        config.add_section('Auto Watched')
-    if not config.has_option('Auto Watched','rutabaga_mod_watched'):
-        config.set('Auto Watched', 'rutabaga_mod_watched', 'False')
-    if not config.has_option('Auto Watched','update_xml_watched'):
-        config.set('Auto Watched', 'update_xml_watched', 'False')
-    if not config.has_option('Auto Watched','tvxml_find'):
-        config.set('Auto Watched', 'tvxml_find', 'Other_All,Other_HD,Other_New,Other_Rating,Other_TV,Other_Unwatched,Other_Sets')
-    if not config.has_option('Auto Watched','moviexml_find'):
-        config.set('Auto Watched', 'moviexml_find', 'Other_All,Other_HD,Other_New,Other_Rating,Other_Movies,Other_Unwatched,Other_Sets')		
+    if not config.has_section('YAMJ2'):
+        config.add_section('YAMJ2')
+    if not config.has_option('YAMJ2','jukebox_path'):
+        config.set('YAMJ2', 'jukebox_path', '')
+
+    if not config.has_section('YAMJ3'):
+        config.add_section('YAMJ3')
+    if not config.has_option('YAMJ3','API url'):
+        config.set('YAMJ3', 'API url', '')
+
+    if not config.has_section('XML/HTML Update'):
+        config.add_section('XML/HTML Update')
+    if not config.has_option('XML/HTML Update','rutabaga_mod_watched'):
+        config.set('XML/HTML Update', 'rutabaga_mod_watched', 'False')
+    if not config.has_option('XML/HTML Update','update_xml_watched'):
+        config.set('XML/HTML Update', 'update_xml_watched', 'False')
+    if not config.has_option('XML/HTML Update','tvxml_find'):
+        config.set('XML/HTML Update', 'tvxml_find', 'Other_All,Other_HD,Other_New,Other_Rating,Other_TV,Other_Unwatched,Other_Sets')
+    if not config.has_option('XML/HTML Update','moviexml_find'):
+        config.set('XML/HTML Update', 'moviexml_find', 'Other_All,Other_HD,Other_New,Other_Rating,Other_Movies,Other_Unwatched,Other_Sets')		
     with open(config_file, 'w') as configfile:
         config.write(configfile)
 

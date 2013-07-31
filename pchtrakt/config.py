@@ -22,10 +22,17 @@ import json
 from os.path import isfile
 from commands import getoutput
 import socket
-s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-s.connect(("gmail.com",80))
-myIp = s.getsockname()[0]
-s.close()
+pchtrakt.online = 1
+pchtrakt.CreatedFile = 1
+pchtrakt.Ttime = 0
+try:
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.connect(("gmail.com",80))
+    myIp = s.getsockname()[0]
+    s.close()
+except socket.gaierror:
+    myIp = '0.0.0.0'
+    pchtrakt.online = 0
 
 config = ConfigParser.RawConfigParser()
 
@@ -52,7 +59,10 @@ else:
 #PchTrakt
 config.read(pchtrakt.config_file)
 ipPch = config.get('PCHtrakt', 'pch_ip')
-AutoUpdate = config.getboolean('PCHtrakt', 'autoupdate')
+AutoUpdate = float(config.get('PCHtrakt', 'autoupdate'))
+if AutoUpdate > 0:
+    AutoUpdate = AutoUpdate*60*60
+#uptime = float(config.get('PCHtrakt', 'update_check'))*60*60
 sleepTime = float(config.get('PCHtrakt', 'sleep_time'))
 watched_percent = float(config.get('PCHtrakt', 'watched_percent'))
 if watched_percent > 100 or watched_percent < 0:
@@ -63,6 +73,7 @@ ignored_repertory = [x.strip() for x in config.get('PCHtrakt', 'ignored_repertor
 ignored_keywords = [x.strip() for x in config.get('PCHtrakt', 'ignored_keywords').split(',')]
 OnPCH = (ipPch in ['127.0.0.1',myIp])
 use_debug = config.getboolean('PCHtrakt', 'use_debug')
+
 #Trakt
 TraktUsername = config.get('Trakt', 'login')
 TraktPwd = config.get('Trakt', 'password')
@@ -80,15 +91,20 @@ BetaSeriesScrobbleTvShow = config.getboolean('BetaSeries', 'enable_tvshow_scrobb
 YamjWatchedPath = config.get('YAMJ', 'watched_path')
 if not YamjWatchedPath.endswith('/'):
     YamjWatchedPath += '/'
-YamjPath = config.get('YAMJ', 'jukebox_path')
-if not YamjPath.endswith('/'):
-    YamjPath += '/'
 YamJWatchedVithVideo = config.getboolean('YAMJ', 'watched_with_video')
 YamjWatched = config.getboolean('YAMJ', 'watched')
 YamjIgnoredCategory = [x.strip().lower() for x in config.get('YAMJ', 'ignored_category').split(',')]
 
+#YAMJ2
+YamjPath = config.get('YAMJ2', 'jukebox_path')
+if not YamjPath.endswith('/'):
+    YamjPath += '/'
+
+#YAMJ3
+apiurl = config.get('YAMJ3', 'API url')
+
 #Auto Watched
-RutabagaModwatched = config.getboolean('Auto Watched', 'rutabaga_mod_watched')
-updatexmlwatched = config.getboolean('Auto Watched', 'update_xml_watched')
-tvxmlfind = [x.strip() for x in config.get('Auto Watched', 'tvxml_find').split(',')]
-moviexmlfind = [x.strip() for x in config.get('Auto Watched', 'moviexml_find').split(',')]
+RutabagaModwatched = config.getboolean('XML/HTML Update', 'rutabaga_mod_watched')
+updatexmlwatched = config.getboolean('XML/HTML Update', 'update_xml_watched')
+tvxmlfind = [x.strip() for x in config.get('XML/HTML Update', 'tvxml_find').split(',')]
+moviexmlfind = [x.strip() for x in config.get('XML/HTML Update', 'moviexml_find').split(',')]
