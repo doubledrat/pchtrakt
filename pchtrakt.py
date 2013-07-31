@@ -138,7 +138,7 @@ def checkUpdate(when):
         if when == "first":
 	        pchtrakt.logger.info(' [Pchtrakt] Starting Pchtrakt version = ' + PchTraktVersion[-4:]  + ' Millers Mods (Running latest ' + pchtrakt.chip + ' version)')
     else:
-        if AutoUpdate => 0:
+        if AutoUpdate >= 0:
             if when == "first":
                 pchtrakt.logger.info(' [Pchtrakt] Starting Pchtrakt version = ' + PchTraktVersion[-4:]  + ' Millers Mods (Running latest ' + pchtrakt.chip + ' version)')
                 pchtrakt.logger.info(' [Pchtrakt] A new version is online. Starting update')
