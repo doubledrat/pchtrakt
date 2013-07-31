@@ -28,9 +28,9 @@ def newConfig():
     if not config.has_option('PCHtrakt','pch_ip'):
         config.set('PCHtrakt', 'pch_ip', '127.0.0.1')
     if not config.has_option('PCHtrakt','autoupdate'):
-        config.set('PCHtrakt', 'autoupdate', 'False')
-    if not config.has_option('PCHtrakt','update_check'):
-        config.set('PCHtrakt', 'update_check', '0')
+        config.set('PCHtrakt', 'autoupdate', '-1')
+#    if not config.has_option('PCHtrakt','update_check'):
+#        config.set('PCHtrakt', 'update_check', '0')
     if not config.has_option('PCHtrakt','sleep_time'):
         config.set('PCHtrakt', 'sleep_time', '5')
     if not config.has_option('PCHtrakt','watched_percent'):
