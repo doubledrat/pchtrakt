@@ -145,7 +145,7 @@ def checkUpdate(when):
             else:
                 pchtrakt.logger.info(' [Pchtrakt] Checking for new version.... ' + PchTraktVersion[-4:]  + ' Millers Mods (Running latest ' + pchtrakt.chip + ' version)')
                 pchtrakt.logger.info(' [Pchtrakt] A new version is online. Starting update')
-                os.system("./daemon.sh update")
+            os.system("./daemon.sh update")
         elif AutoUpdate < 0:
             if when == "first":
                 pchtrakt.logger.info(' [Pchtrakt] Starting Pchtrakt version = ' + PchTraktVersion[-4:] + ' Millers Mods (' + pchtrakt.chip + ' version)')
