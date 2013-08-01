@@ -43,6 +43,9 @@ cacheSerie.dictSerie = {}
 if isfile('.git/ORIG_HEAD'):
     with open('.git/ORIG_HEAD', 'r') as f:
         PchTraktVersion = f.readline().split('\n', 1)[0]
+elif isfile('.git/refs/heads/dvp'):
+    with open('.git/refs/heads/dvp', 'r') as f:
+        PchTraktVersion = f.readline().split('\n', 1)[0]
 else:
     PchTraktVersion = '4'
 
