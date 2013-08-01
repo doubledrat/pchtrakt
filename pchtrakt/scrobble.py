@@ -402,7 +402,7 @@ def watchedFileCreation(myMedia):
         if (path.split(".")[-1] == "DVD"):
             path = path[:-4]
         path = '{0}{1}'.format(YamjWatchedPath, path)
-        path = '{0}.watched'.format(path)
+    path = '{0}.watched'.format(path)
     if not isfile(path):
         Debug('[Pchtrakt] Start to write file')
         f = open(path, 'w')
