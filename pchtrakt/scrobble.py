@@ -253,14 +253,6 @@ def videoStatusHandleTVSeries(myMedia):
     else:
         doubleEpisode = 0
     if pchtrakt.lastPath != myMedia.oStatus.fullPath:
-        pchtrakt.watched = 0
-        pchtrakt.lastPath = myMedia.oStatus.fullPath
-        pchtrakt.lastName = myMedia.oStatus.fileName
-        pchtrakt.lastPercent = str(myMedia.oStatus.percent)
-        pchtrakt.episode_numbers = myMedia.parsedInfo.episode_numbers 
-        pchtrakt.season_number = myMedia.parsedInfo.season_number
-        pchtrakt.currentTime = myMedia.oStatus.currentTime
-        myMedia.idxEpisode = 0
         if pchtrakt.lastPath != '':
             #if myMedia.oStatus.percent > watched_percent:
             #    pchtrakt.watched  = 1
@@ -300,10 +292,17 @@ def videoStatusHandle(myMedia):
     #myMedia.parsedInfo.year = '0'
     if isinstance(myMedia.parsedInfo,mp.MediaParserResultTVShow):
         pchtrakt.isTvShow = 1
+        if pchtrakt.lastPath != myMedia.oStatus.fullPath:
+		    pchtrakt.watched = 0
+		    pchtrakt.lastPath = myMedia.oStatus.fullPath
+		    pchtrakt.lastName = myMedia.oStatus.fileName
+		    pchtrakt.lastPercent = str(myMedia.oStatus.percent)
+		    pchtrakt.episode_numbers = myMedia.parsedInfo.episode_numbers 
+		    pchtrakt.season_number = myMedia.parsedInfo.season_number
+		    pchtrakt.currentTime = myMedia.oStatus.currentTime
+		    myMedia.idxEpisode = 0
         if TraktScrobbleTvShow or BetaSeriesScrobbleTvShow:
             videoStatusHandleTVSeries(myMedia)
-        #pchtrakt.episode_numbers = myMedia.parsedInfo.episode_numbers#check if needed
-        #pchtrakt.season_number = myMedia.parsedInfo.season_number#check if needed
     elif isinstance(myMedia.parsedInfo,mp.MediaParserResultMovie):
         pchtrakt.isMovie = 1
         if TraktScrobbleMovie:
