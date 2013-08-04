@@ -92,7 +92,7 @@ class MediaParserResultMovie(MediaParserResult):
                 #if json.load(foResponse['0']['Error'] == 'Movie not found!':
                 #    print 'hello'
                 myMovieJson = json.loads(oResponse.read())
-                if "Title" in myMovieJson.keys():
+                if myMovieJson['Response'] == "True":#in myMovieJson.keys():
                     #print "added "+myMovieJson["Title"]
                     self.id = myMovieJson['imdbID']
                     Debug('[IMDB api] Movie match using: ' + ImdbAPIurl)
@@ -101,7 +101,7 @@ class MediaParserResultMovie(MediaParserResult):
                     Debug('[IMDB api] Trying search 2: ' + ImdbAPIurl)
                     oResponse = urlopen(ImdbAPIurl,None,5)
                     myMovieJson = json.loads(oResponse.read())
-                    if "Title" in myMovieJson.keys():
+                    if "title" in myMovieJson.keys():
                         self.id = myMovieJson['imdbid']
                         Debug('[IMDB api] Found Movie match using: ' + ImdbAPIurl)
                     else:

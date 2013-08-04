@@ -158,7 +158,7 @@ def traktJsonRequest(method, url, args = {}, passVersions=False):
         else:
             jdata = json.dumps(args)#jdata = urlencode(args)#was jdata = json.dumps(args)
 
-    Debug("[traktAPI] Starting lookup.")
+    #Debug("[traktAPI] Starting lookup.")
     
     # start retry loop (do we need retries?) remove breaks and use ?
     Debug("[traktAPI] Request URL '%s'" % (url))
