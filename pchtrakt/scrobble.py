@@ -109,7 +109,7 @@ def videoStopped():
             utilities.watched(pchtrakt)
     if (TraktScrobbleTvShow or TraktScrobbleMovie) and (not pchtrakt.online and pchtrakt.watched):
         pchtrakt.logger.info(' [Pchtrakt] saving off-line scrobble')
-        scrobbleMissed() 
+        scrobbleMissed()
     pchtrakt.logger.info(' [Pchtrakt] Waiting for a file to start.....')
 
 def showStillRunning(myMedia):
@@ -223,7 +223,7 @@ def videoStatusHandleMovie(myMedia):
         pchtrakt.lastName = myMedia.oStatus.fileName
         pchtrakt.lastPercent = str(myMedia.oStatus.percent)
         pchtrakt.currentTime = myMedia.oStatus.currentTime
-        if pchtrakt.lastPath != '' and TraktScrobbleMovie:#myMedia.oStatus.percent < watched_percent:
+        if TraktScrobbleMovie and pchtrakt.lastPath != '':
             #if myMedia.oStatus.percent > watched_percent:
             #    pchtrakt.watched  = 1
             #    pchtrakt.logger.info(' [Pchtrakt] Started at more than '+ str(watched_percent) + '%! I''m not doing anything!')
@@ -242,12 +242,11 @@ def videoStatusHandleMovie(myMedia):
         elif myMedia.oStatus.currentTime > pchtrakt.currentTime + int(TraktRefreshTime)*60:
             pchtrakt.currentTime = myMedia.oStatus.currentTime
             movieStillRunning(myMedia)
-    elif myMedia.oStatus.percent < 10 and myMedia.oStatus.status != EnumStatus.STOP:
+    elif myMedia.oStatus.percent < 10 and myMedia.oStatus.status != EnumStatus.STOP and TraktScrobbleMovie:
         pchtrakt.logger.info(' [Pchtrakt] It seems you came back at the begining of the video... so I say to trakt it\'s playing')
         pchtrakt.watched = 0
         pchtrakt.currentTime = myMedia.oStatus.currentTime
-        if TraktScrobbleMovie:
-            movieStarted(myMedia)
+        movieStarted(myMedia)
 
 def videoStatusHandleTVSeries(myMedia):
     if len(myMedia.parsedInfo.episode_numbers)>1:
@@ -263,18 +262,17 @@ def videoStatusHandleTVSeries(myMedia):
         pchtrakt.season_number = myMedia.parsedInfo.season_number
         pchtrakt.currentTime = myMedia.oStatus.currentTime
         myMedia.idxEpisode = 0
-        if pchtrakt.lastPath != '':
+        if pchtrakt.lastPath != '' and (TraktScrobbleTvShow or BetaSeriesScrobbleTvShow):
             #if myMedia.oStatus.percent > watched_percent:
             #    pchtrakt.watched  = 1
             #    pchtrakt.logger.info(' [Pchtrakt] Started at more than '+ str(watched_percent) + '%! I''m not doing anything!')
             if doubleEpisode:
                 while myMedia.oStatus.percent > (myMedia.idxEpisode + 1) * watched_percent/len(myMedia.parsedInfo.episode_numbers):
                     myMedia.idxEpisode += 1
-                if TraktScrobbleTvShow or BetaSeriesScrobbleTvShow:
-                    showStarted(myMedia)
-                    pchtrakt.currentTime = myMedia.oStatus.currentTime
-            elif TraktScrobbleTvShow or BetaSeriesScrobbleTvShow:
                 showStarted(myMedia)
+                pchtrakt.currentTime = myMedia.oStatus.currentTime
+            else:
+			    showStarted(myMedia)
     if not pchtrakt.watched and (TraktScrobbleTvShow or BetaSeriesScrobbleTvShow):
         if myMedia.oStatus.percent > watched_percent:
             pchtrakt.watched = showIsEnding(myMedia)
@@ -292,12 +290,11 @@ def videoStatusHandleTVSeries(myMedia):
             showIsEnding(myMedia)
             myMedia.idxEpisode += 1
             showStarted(myMedia)
-    elif myMedia.oStatus.percent < 10 and myMedia.oStatus.status != EnumStatus.STOP:
+    elif myMedia.oStatus.percent < 10 and myMedia.oStatus.status != EnumStatus.STOP and (TraktScrobbleTvShow or BetaSeriesScrobbleTvShow):
         pchtrakt.logger.info(' [Pchtrakt] It seems you came back at the begining of the video... so I say to trakt it\'s playing')
         pchtrakt.watched = 0
         pchtrakt.currentTime = myMedia.oStatus.currentTime
-        if TraktScrobbleTvShow or BetaSeriesScrobbleTvShow:
-            showStarted(myMedia)
+        showStarted(myMedia)
 
 def videoStatusHandle(myMedia):
     #myMedia.parsedInfo.id = '0'

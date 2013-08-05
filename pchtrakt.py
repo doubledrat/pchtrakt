@@ -231,20 +231,14 @@ def doWork():
             #Debug(myMedia.__str__())
         else:
             if pchtrakt.lastPath != '':# and myMedia.oStatus.status == EnumStatus.NOPLAY:
-                if not pchtrakt.watched and myMedia.oStatus.status != EnumStatus.PAUSE:
-                    #pchtrakt.logger.info(' [Pchtrakt] ' + myMedia.oStatus.fullPath)
-                    #pchtrakt.logger.info(' [Pchtrakt] ' + myMedia.oStatus.fileName)
-                    #pchtrakt.logger.info(' [Pchtrakt] ' + oldmyMedia.oStatus.fullPath)
-                    #pchtrakt.logger.info(' [Pchtrakt] ' + oldmyMedia.oStatus.fileName)
-                    #pchtrakt.logger.info(' [Pchtrakt] ' + pchtrakt.lastPath)
-                    #pchtrakt.logger.info(' [Pchtrakt] ' + myMedia.oStatus.status)
+                if not pchtrakt.watched:# and myMedia.oStatus.status != EnumStatus.PAUSE:
                     pchtrakt.logger.info(' [Pchtrakt] video Stopped')
                     #if pchtrakt.online:
                     videoStopped()
                     #elif myMedia.oStatus.percent > watched_percent and (TraktScrobbleTvShow or TraktScrobbleMovie):
                     #    pchtrakt.logger.info(' [Pchtrakt] saving off-line scrobble')
                     #    scrobbleMissed() 
-                if pchtrakt.allowedPauseTime <= 0:
+                if pchtrakt.allowedPauseTime <= 0 and not pchtrakt.watched:
                     pchtrakt.logger.info(' [Pchtrakt] It seems you paused ' \
                                          'the video for more than {0} minutes: ' \
                                          'I say to trakt you stopped watching ' \
