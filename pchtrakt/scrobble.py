@@ -3,7 +3,7 @@ from os.path import isfile
 from xml.etree import ElementTree
 from lib import utilities
 from lib.utilities import Debug
-import pchtrakt, glob, os, re, urllib
+import pchtrakt, glob, os, re, urllib, sys, fileinput
 from pchtrakt.exception import BetaSerieAuthenticationException
 from pchtrakt import mediaparser as mp
 from pchtrakt import betaseries as bs
@@ -31,6 +31,19 @@ class OutToMainLoop(Exception):
 #  'database': dbname,
 #  'raise_on_warnings': True,
 #}
+				
+def Oversightwatched(searchValue):
+    addValue = "\t_w\t1\t"
+    replacevalue = "\t_w\t0\t"
+    for line in fileinput.input("/share/Apps/oversight/index.db", inplace=1):
+        if searchValue in line:
+            if replacevalue in line:
+                line = line.replace(replacevalue, addValue)
+                pchtrakt.logger.info('[Oversight] Updating ' + searchValue)
+            elif not addValue in line:
+                line = line.replace(searchValue+"\t", searchValue+addValue)
+                pchtrakt.logger.info('[Oversight] Updating ' + searchValue)
+        sys.stdout.write(line)
 
 def scrobbleMissed():
     #pchtrakt.logger.info('started TEST ' + pchtrakt.lastpath)
@@ -107,6 +120,8 @@ def videoStopped():
             UpdateXMLFiles(pchtrakt)
         if apiurl != "":
             utilities.watched(pchtrakt)
+    if markOversight and pchtrakt.lastPercent > watched_percent:
+	    Oversightwatched(pchtrakt.lastName)
     if (TraktScrobbleTvShow or TraktScrobbleMovie) and (not pchtrakt.online and pchtrakt.watched):
         pchtrakt.logger.info(' [Pchtrakt] saving off-line scrobble')
         scrobbleMissed()
@@ -545,3 +560,4 @@ def UpdateXMLFiles(pchtrakt):
             #else:
                 #txt = name.replace(YamjPath, '') + ' has NOT been modified as watched for ' + matchthis
                 #pchtrakt.logger.info(txt)
+	

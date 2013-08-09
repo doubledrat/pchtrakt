@@ -89,6 +89,11 @@ def newConfig():
     if not config.has_option('YAMJ3','API url'):
         config.set('YAMJ3', 'API url', '')
 
+    if not config.has_section('Oversight'):
+        config.add_section('Oversight')
+    if not config.has_option('Oversight','mark watched'):
+        config.set('Oversight', 'mark watched', 'False')
+
     if not config.has_section('XML/HTML Update'):
         config.add_section('XML/HTML Update')
     if not config.has_option('XML/HTML Update','rutabaga_mod_watched'):
