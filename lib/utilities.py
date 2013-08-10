@@ -623,7 +623,7 @@ def getgenres(yamjname):
 # get genres of file from YAMJ3 API
 def watched(pchtrakt):
     yamjname = pchtrakt.lastName.encode('utf-8', 'replace')
-    responce = yamj3JsonRequest('api/watched?filename={0}?watched={1}'.format(quote_plus(yamjname), pchtrakt.lastPercent))
+    responce = yamj3JsonRequest('api/watched?filename={0}?watched={1}'.format(quote_plus(yamjname), str(pchtrakt.lastPercent)))
     #Debug('[YAMJ3API] ' + str(responce))
     if responce == None:
         Debug("[YAMJ3API] Error in request from 'scrobbleEpisodeOnTrakt()'")

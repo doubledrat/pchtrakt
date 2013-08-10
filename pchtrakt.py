@@ -185,15 +185,15 @@ def daemonize():
 
 def doWork():
     myMedia.ScrobResult = 0
-    pchtrakt.StopTrying = 0
+    #pchtrakt.StopTrying = 0
     myMedia.oStatus = pchtrakt.oPchRequestor.getStatus(ipPch, 10)
-    if pchtrakt.lastPath != myMedia.oStatus.fullPath and myMedia.oStatus.status == EnumStatus.PLAY:
+    #if pchtrakt.lastPath != myMedia.oStatus.fullPath:# and myMedia.oStatus.status == EnumStatus.PLAY:
+    if pchtrakt.lastPath != myMedia.oStatus.fullPath and pchtrakt.StopTrying == 0:
         if isIgnored(myMedia) == True:
             while myMedia.oStatus.status == EnumStatus.PLAY:
                 sleep(sleepTime)
                 myMedia.oStatus = pchtrakt.oPchRequestor.getStatus(ipPch, 10)
                 pchtrakt.StopTrying = 1
-    if pchtrakt.lastPath != myMedia.oStatus.fullPath and pchtrakt.StopTrying == 0:
         myMedia.parsedInfo = None
         with open('cache.json','w') as f:
             json.dump(pchtrakt.dictSerie, f, separators=(',',':'), indent=4)
@@ -202,12 +202,12 @@ def doWork():
     #    with open('cache.json','w') as f:
     #        json.dump(pchtrakt.dictSerie, f, separators=(',',':'), indent=4)
     if YamjWatched == True and not pchtrakt.watched and myMedia.oStatus.percent > watched_percent and pchtrakt.CreatedFile == 0:
-        try:
+        #try:
             watchedFileCreation(myMedia)
-        except BaseException as e:
+        #except BaseException as e:
             #Debug('::: {0} :::'.format(pchtrakt.lastPath))
             #Debug('::: {0} :::'.format(e))
-            pchtrakt.logger.error(e)
+            #pchtrakt.logger.error(e)
     if not pchtrakt.StopTrying:
         if myMedia.oStatus.status not in [EnumStatus.NOPLAY,
                                           EnumStatus.UNKNOWN,
@@ -219,8 +219,8 @@ def doWork():
                     Debug('[Pchtrakt] full path: ' + myMedia.oStatus.fullPath)
                     msg = u' [Pchtrakt] File: {0}'.format(myMedia.oStatus.fileName)
                     pchtrakt.logger.info(msg)
-                    pchtrakt.CreatedFile = 0
-                    myMedia.parsedInfo = pchtrakt.mediaparser.parse(myMedia.oStatus.fileName)
+                    myMedia.parsedInfo = pchtrakt.mediaparser.parse(
+                                            myMedia.oStatus.fileName)
                     pchtrakt.Ttime = myMedia.oStatus.totalTime
                 videoStatusHandle(myMedia)
                     #else:
@@ -233,7 +233,6 @@ def doWork():
             if pchtrakt.lastPath != '':# and myMedia.oStatus.status == EnumStatus.NOPLAY:
                 if not pchtrakt.watched:# and myMedia.oStatus.status != EnumStatus.PAUSE:
                     pchtrakt.logger.info(' [Pchtrakt] video Stopped')
-                    #if pchtrakt.online:
                     videoStopped()
                     #elif myMedia.oStatus.percent > watched_percent and (TraktScrobbleTvShow or TraktScrobbleMovie):
                     #    pchtrakt.logger.info(' [Pchtrakt] saving off-line scrobble')
@@ -243,8 +242,8 @@ def doWork():
                                          'the video for more than {0} minutes: ' \
                                          'I say to trakt you stopped watching ' \
                                          'your video'.format(TraktMaxPauseTime/60))
-                    pchtrakt.logger.info(' [Pchtrakt] video Stopped')
-                    videoStopped()
+                    #pchtrakt.logger.info(' [Pchtrakt] video Stopped')
+                    #videoStopped()
                 pchtrakt.watched = 0
                 pchtrakt.lastPath = ''
                 pchtrakt.lastName = ''
@@ -252,6 +251,9 @@ def doWork():
                 pchtrakt.isTvShow = 0
                 pchtrakt.Check = 0
                 pchtrakt.Ttime = 0
+                pchtrakt.CreatedFile = 0
+
+
 
 def stopTrying():
     try:
@@ -264,7 +266,7 @@ def stopTrying():
 
 def startWait():
 	pchtrakt.StopTrying = 1#pchtrakt.StopTrying = 0
-	while myMedia.oStatus.status == EnumStatus.PLAY:
+	while myMedia.oStatus.status != EnumStatus.STOP:
 		sleep(sleepTime)
 		myMedia.oStatus = pchtrakt.oPchRequestor.getStatus(ipPch, 10)
 		#pchtrakt.StopTrying = 1
@@ -279,7 +281,7 @@ def starttvdbWait():
     if pchtrakt.online:
         while urllib.urlopen("http://thetvdb.com").getcode() != 200:
             pchtrakt.StopTrying = 1#pchtrakt.StopTrying = 0
-            while myMedia.oStatus.status == EnumStatus.PLAY:
+            while myMedia.oStatus.status != EnumStatus.STOP:
                 sleep(sleepTime)
                 myMedia.oStatus = pchtrakt.oPchRequestor.getStatus(ipPch, 10)
                 #pchtrakt.StopTrying = 1
@@ -288,7 +290,7 @@ def starttvdbWait():
                         watchedFileCreation(myMedia)
                     except BaseException as e:
                         pchtrakt.logger.error(e)
-            videoStopped()
+            #videoStopped()
 
 if __name__ == '__main__':
     getParams()

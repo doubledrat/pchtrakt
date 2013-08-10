@@ -23,7 +23,7 @@ from os.path import isfile
 from commands import getoutput
 import socket
 pchtrakt.online = 1
-pchtrakt.CreatedFile = 1
+pchtrakt.CreatedFile = 0
 pchtrakt.Ttime = 0
 try:
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)

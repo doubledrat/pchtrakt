@@ -31,7 +31,7 @@ class OutToMainLoop(Exception):
 #  'database': dbname,
 #  'raise_on_warnings': True,
 #}
-				
+
 def Oversightwatched(searchValue):
     addValue = "\t_w\t1\t"
     replacevalue = "\t_w\t0\t"
@@ -121,7 +121,7 @@ def videoStopped():
         if apiurl != "":
             utilities.watched(pchtrakt)
     if markOversight and pchtrakt.lastPercent > watched_percent:
-	    Oversightwatched(pchtrakt.lastName)
+        Oversightwatched(pchtrakt.lastName)
     if (TraktScrobbleTvShow or TraktScrobbleMovie) and (not pchtrakt.online and pchtrakt.watched):
         pchtrakt.logger.info(' [Pchtrakt] saving off-line scrobble')
         scrobbleMissed()
@@ -233,10 +233,10 @@ def showIsSeen(myMedia, SeenTime):
 
 def videoStatusHandleMovie(myMedia):
     if pchtrakt.lastPath != myMedia.oStatus.fullPath:
-        pchtrakt.watched = 0
+        #pchtrakt.watched = 0
         pchtrakt.lastPath = myMedia.oStatus.fullPath
         pchtrakt.lastName = myMedia.oStatus.fileName
-        pchtrakt.lastPercent = str(myMedia.oStatus.percent)
+        pchtrakt.lastPercent = myMedia.oStatus.percent
         pchtrakt.currentTime = myMedia.oStatus.currentTime
         if TraktScrobbleMovie and pchtrakt.lastPath != '':
             #if myMedia.oStatus.percent > watched_percent:
@@ -249,11 +249,11 @@ def videoStatusHandleMovie(myMedia):
             pchtrakt.watched = movieIsEnding(myMedia)
             if pchtrakt.watched:
                 pchtrakt.StopTrying = 0
-                while myMedia.oStatus.status == EnumStatus.PLAY:
+                while myMedia.oStatus.status != EnumStatus.STOP:
                     sleep(sleepTime)
                     myMedia.oStatus = pchtrakt.oPchRequestor.getStatus(ipPch, 10)
                     pchtrakt.StopTrying = 1
-                videoStopped()
+                #videoStopped()
         elif myMedia.oStatus.currentTime > pchtrakt.currentTime + int(TraktRefreshTime)*60:
             pchtrakt.currentTime = myMedia.oStatus.currentTime
             movieStillRunning(myMedia)
@@ -269,10 +269,10 @@ def videoStatusHandleTVSeries(myMedia):
     else:
         doubleEpisode = 0
     if pchtrakt.lastPath != myMedia.oStatus.fullPath:
-        pchtrakt.watched = 0
+        #pchtrakt.watched = 0
         pchtrakt.lastPath = myMedia.oStatus.fullPath
         pchtrakt.lastName = myMedia.oStatus.fileName
-        pchtrakt.lastPercent = str(myMedia.oStatus.percent)
+        pchtrakt.lastPercent = myMedia.oStatus.percent
         pchtrakt.episode_numbers = myMedia.parsedInfo.episode_numbers 
         pchtrakt.season_number = myMedia.parsedInfo.season_number
         pchtrakt.currentTime = myMedia.oStatus.currentTime
@@ -287,17 +287,17 @@ def videoStatusHandleTVSeries(myMedia):
                 showStarted(myMedia)
                 pchtrakt.currentTime = myMedia.oStatus.currentTime
             else:
-			    showStarted(myMedia)
+                showStarted(myMedia)
     if not pchtrakt.watched and (TraktScrobbleTvShow or BetaSeriesScrobbleTvShow):
         if myMedia.oStatus.percent > watched_percent:
             pchtrakt.watched = showIsEnding(myMedia)
             if pchtrakt.watched:
                 pchtrakt.StopTrying = 0
-                while myMedia.oStatus.status == EnumStatus.PLAY:
+                while myMedia.oStatus.status != EnumStatus.STOP:
                     sleep(sleepTime)
                     myMedia.oStatus = pchtrakt.oPchRequestor.getStatus(ipPch, 10)
                     pchtrakt.StopTrying = 1
-                videoStopped()
+                #videoStopped()
         elif myMedia.oStatus.currentTime > pchtrakt.currentTime + int(TraktRefreshTime)*60:
             pchtrakt.currentTime = myMedia.oStatus.currentTime
             showStillRunning(myMedia)
@@ -326,7 +326,7 @@ def videoStatusHandle(myMedia):
         pchtrakt.StopTrying = 1
     pchtrakt.lastPath = myMedia.oStatus.fullPath#check if needed
     pchtrakt.lastName = myMedia.oStatus.fileName#check if needed
-    pchtrakt.lastPercent = str(myMedia.oStatus.percent)
+    pchtrakt.lastPercent = myMedia.oStatus.percent
 
 def isIgnored(myMedia):
     ignored = False
