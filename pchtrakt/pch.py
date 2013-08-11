@@ -66,7 +66,7 @@ class PchRequestor:
                         if (oPchStatus.fullPath == "/iso"):#Change path if iso file
                             newpath = glob.glob("/isolink/*.iso")
                             oPchStatus.fullPath = unicode(newpath)[2:-2]#oPchStatus.fullPath = toUnicode(newpath)[2:-2]
-                        if(self.mediaType == "BD"): # Blu-ray Disc are not handle like .mkv or .avi files
+                        if(self.mediaType == "BluRay"): # Blu-ray Disc are not handle like .mkv or .avi files
                             oPchStatus.fileName = oPchStatus.fullPath.split('/')[::-1][1]# add a / on last position when ISO
                             if oPchStatus.totalTime!=0:
                                 oPchStatus.percent = int(math.ceil(float(oPchStatus.currentChapter) / float(oPchStatus.totalChapter) * 100.0)) # approximation because chapters are differents

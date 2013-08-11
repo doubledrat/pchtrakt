@@ -231,7 +231,7 @@ def doWork():
             #Debug(myMedia.__str__())
         else:
             if pchtrakt.lastPath != '':# and myMedia.oStatus.status == EnumStatus.NOPLAY:
-                if not pchtrakt.watched:# and myMedia.oStatus.status != EnumStatus.PAUSE:
+                if myMedia.oStatus.status == EnumStatus.NOPLAY:#if pchtrakt.watched:# and myMedia.oStatus.status != EnumStatus.PAUSE:
                     pchtrakt.logger.info(' [Pchtrakt] video Stopped')
                     videoStopped()
                     #elif myMedia.oStatus.percent > watched_percent and (TraktScrobbleTvShow or TraktScrobbleMovie):
@@ -266,7 +266,7 @@ def stopTrying():
 
 def startWait():
 	pchtrakt.StopTrying = 1#pchtrakt.StopTrying = 0
-	while myMedia.oStatus.status != EnumStatus.STOP:
+	while myMedia.oStatus.status != EnumStatus.NOPLAY:
 		sleep(sleepTime)
 		myMedia.oStatus = pchtrakt.oPchRequestor.getStatus(ipPch, 10)
 		#pchtrakt.StopTrying = 1
@@ -281,7 +281,7 @@ def starttvdbWait():
     if pchtrakt.online:
         while urllib.urlopen("http://thetvdb.com").getcode() != 200:
             pchtrakt.StopTrying = 1#pchtrakt.StopTrying = 0
-            while myMedia.oStatus.status != EnumStatus.STOP:
+            while myMedia.oStatus.status != EnumStatus.NOPLAY:
                 sleep(sleepTime)
                 myMedia.oStatus = pchtrakt.oPchRequestor.getStatus(ipPch, 10)
                 #pchtrakt.StopTrying = 1
@@ -485,10 +485,10 @@ while not pchtrakt.stop:
                 pchtrakt.logger.warning(msg)
                 startWait()
                 #pass
-            elif e.message == "global name 'MaxScrobbleError' is not defined":
-                pchtrakt.logger.warning('[traktAPI] ScrobbleError to many scrobbles in an hour')
-                startWait()
-                #passMaxScrobbleError
+            #elif e.message == "global name 'MaxScrobbleError' is not defined":
+            #    pchtrakt.logger.warning('[traktAPI] ScrobbleError to many scrobbles in an hour')
+            #    startWait()
+            #    #passMaxScrobbleError
             else:
                 stopTrying()
                 #Debug(u'::: {0} :::'.format(pchtrakt.lastPath))

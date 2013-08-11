@@ -16,7 +16,7 @@ import pchtrakt
 import re
 from urllib2 import Request, urlopen, HTTPError, URLError
 from urllib import urlencode, quote_plus
-#import os
+import os
 #import sys
 #import socket
 #try:
@@ -36,6 +36,19 @@ username = TraktUsername
 apikey = 'def6943c09e19dccb4df715bd4c9c6c74bc3b6d7'
 pwdsha1 = sha1(TraktPwd).hexdigest()
 headers = {"Accept": "*/*", "User-Agent": "Mozilla/4.0 (compatible; MSIE 5.5; Windows NT)",}
+
+def scrobbleMissed():
+    pchtrakt.logger.info('started TEST ' + pchtrakt.lastpath)
+    #self.path = pchtrakt.lastpath
+    ctime = time()
+    pchtrakt.missed = {}
+    #if pchtrakt.online:
+    if os.path.isfile('missed.scrobbles'):
+        with open('missed.scrobbles','r+') as f:
+            pchtrakt.missed = json.load(f)
+    pchtrakt.missed[pchtrakt.lastPath]={"Totaltime": int(pchtrakt.Ttime), "Totallength": int(ctime)}
+    with open('missed.scrobbles','w') as f:
+        json.dump(pchtrakt.missed, f, separators=(',',':'), indent=4)
 
 def Debug(myMsg):#, force=use_debug):
     if use_debug:# or force):
@@ -200,7 +213,14 @@ def traktJsonRequest(method, url, args = {}, passVersions=False):
             if data['error'] == 'failed authentication':
                 raise AuthenticationTraktError()
             if data['error'] == 'shows per hour limit reached':
-                raise MaxScrobbleError()
+                #scrobbleMissed()
+                data = {'status': 'success', 'message': 'shows per hour limit reached - added item to off-line list'}
+                return data#raise MaxScrobbleError()
+            if data['error'] == 'movies per hour limit reached':
+                #scrobbleMissed()
+                data = {'status': 'success', 'message': 'movies per hour limit reached - added item to off-line list'}
+                return data
+            #raise MaxScrobbleError()
             #if returnStatus:#do something with this?#Error: scrobbled White House Down (2013) already
             #    return data;
             return None
@@ -230,7 +250,15 @@ def yamj3JsonRequest(url):
             if data['error'] == 'failed authentication':
                 raise AuthenticationTraktError()
             if data['error'] == 'shows per hour limit reached':
-                raise MaxScrobbleError()
+                #scrobbleMissed()
+                data = {'status': 'success', 'message': 'shows per hour limit reached - added item to off-line list'}
+                return data#raise MaxScrobbleError()
+            if data['error'] == 'movies per hour limit reached':
+                #scrobbleMissed()
+                data = {'status': 'success', 'message': 'movies per hour limit reached - added item to off-line list'}
+                #{u'status': u'success', u'movie': {u'year': u'1998', u'tmdb_id': u'12229', u'imdb_id': u'tt0122515', u'title': u'The Acid House'}, u'twitter': False, u'tumblr': False, u'facebook': False, u'message': u'watching The Acid House (1998)'}
+                return data
+            #raise MaxScrobbleError()
             return None
     return data
 

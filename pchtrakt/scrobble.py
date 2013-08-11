@@ -45,6 +45,38 @@ def Oversightwatched(searchValue):
                 pchtrakt.logger.info('[Oversight] Updating ' + searchValue)
         sys.stdout.write(line)
 
+def Oversightwatchednew(searchValue):
+    addValue = "\t_w\t1\t"
+    replacevalue = "\t_w\t0\t"
+    for line in fileinput.FileInput("/share/Apps/oversight/index.db", inplace=1):
+        if searchValue in line:
+            if replacevalue in line:
+                line = line.replace(replacevalue, addValue)
+                pchtrakt.logger.info('[Oversight] Updating ' + searchValue)
+            elif not addValue in line:
+                line = line.replace(searchValue+"\t", searchValue+addValue)
+                pchtrakt.logger.info('[Oversight] Updating ' + searchValue)
+        sys.stdout.write(line)
+    #fileinput.close()
+
+def Oversightwatchedcrap(searchValue):
+	addValue = "\t_w\t1\t"
+	replacevalue = "\t_w\t0\t"
+	newList = []
+	myfile_list = open("/share/Apps/oversight/index.db").readlines()
+	for line in myfile_list:
+	    if searchValue in line:
+	        if replacevalue in line:
+	            line = line.replace(replacevalue, addValue)
+	            pchtrakt.logger.info('[Oversight] Updating ' + searchValue)
+	        elif not addValue in line:
+	            line = line.replace(searchValue+"\t", searchValue+addValue)
+	            pchtrakt.logger.info('[Oversight] Updating ' + searchValue)
+	    newList.append(line)
+	outref = open("/share/Apps/oversight/index.db",'w')
+	outref.writelines(newList)
+	outref.close()        
+		
 def scrobbleMissed():
     #pchtrakt.logger.info('started TEST ' + pchtrakt.lastpath)
     #self.path = pchtrakt.lastpath
@@ -233,7 +265,7 @@ def showIsSeen(myMedia, SeenTime):
 
 def videoStatusHandleMovie(myMedia):
     if pchtrakt.lastPath != myMedia.oStatus.fullPath:
-        #pchtrakt.watched = 0
+        pchtrakt.watched = 0
         pchtrakt.lastPath = myMedia.oStatus.fullPath
         pchtrakt.lastName = myMedia.oStatus.fileName
         pchtrakt.lastPercent = myMedia.oStatus.percent
@@ -249,15 +281,15 @@ def videoStatusHandleMovie(myMedia):
             pchtrakt.watched = movieIsEnding(myMedia)
             if pchtrakt.watched:
                 pchtrakt.StopTrying = 0
-                while myMedia.oStatus.status != EnumStatus.STOP:
-                    sleep(sleepTime)
-                    myMedia.oStatus = pchtrakt.oPchRequestor.getStatus(ipPch, 10)
-                    pchtrakt.StopTrying = 1
-                #videoStopped()
+            #    while myMedia.oStatus.status != EnumStatus.NOPLAY:
+            #        sleep(sleepTime)
+            #        myMedia.oStatus = pchtrakt.oPchRequestor.getStatus(ipPch, 10)
+            #        pchtrakt.StopTrying = 1
+            #    #videoStopped()
         elif myMedia.oStatus.currentTime > pchtrakt.currentTime + int(TraktRefreshTime)*60:
             pchtrakt.currentTime = myMedia.oStatus.currentTime
             movieStillRunning(myMedia)
-    elif myMedia.oStatus.percent < 10 and myMedia.oStatus.status != EnumStatus.STOP and TraktScrobbleMovie:
+    elif myMedia.oStatus.percent < 10 and myMedia.oStatus.status != EnumStatus.NOPLAY and TraktScrobbleMovie:
         pchtrakt.logger.info(' [Pchtrakt] It seems you came back at the begining of the video... so I say to trakt it\'s playing')
         pchtrakt.watched = 0
         pchtrakt.currentTime = myMedia.oStatus.currentTime
@@ -269,7 +301,7 @@ def videoStatusHandleTVSeries(myMedia):
     else:
         doubleEpisode = 0
     if pchtrakt.lastPath != myMedia.oStatus.fullPath:
-        #pchtrakt.watched = 0
+        pchtrakt.watched = 0
         pchtrakt.lastPath = myMedia.oStatus.fullPath
         pchtrakt.lastName = myMedia.oStatus.fileName
         pchtrakt.lastPercent = myMedia.oStatus.percent
@@ -291,13 +323,13 @@ def videoStatusHandleTVSeries(myMedia):
     if not pchtrakt.watched and (TraktScrobbleTvShow or BetaSeriesScrobbleTvShow):
         if myMedia.oStatus.percent > watched_percent:
             pchtrakt.watched = showIsEnding(myMedia)
-            if pchtrakt.watched:
-                pchtrakt.StopTrying = 0
-                while myMedia.oStatus.status != EnumStatus.STOP:
-                    sleep(sleepTime)
-                    myMedia.oStatus = pchtrakt.oPchRequestor.getStatus(ipPch, 10)
-                    pchtrakt.StopTrying = 1
-                #videoStopped()
+            #if pchtrakt.watched:
+            #    pchtrakt.StopTrying = 0
+            #    while myMedia.oStatus.status != EnumStatus.NOPLAY:
+            #        sleep(sleepTime)
+            #        myMedia.oStatus = pchtrakt.oPchRequestor.getStatus(ipPch, 10)
+            #        pchtrakt.StopTrying = 1
+            #    #videoStopped()
         elif myMedia.oStatus.currentTime > pchtrakt.currentTime + int(TraktRefreshTime)*60:
             pchtrakt.currentTime = myMedia.oStatus.currentTime
             showStillRunning(myMedia)
@@ -305,7 +337,7 @@ def videoStatusHandleTVSeries(myMedia):
             showIsEnding(myMedia)
             myMedia.idxEpisode += 1
             showStarted(myMedia)
-    elif myMedia.oStatus.percent < 10 and myMedia.oStatus.status != EnumStatus.STOP and (TraktScrobbleTvShow or BetaSeriesScrobbleTvShow):
+    elif myMedia.oStatus.percent < 10 and myMedia.oStatus.status != EnumStatus.NOPLAY and (TraktScrobbleTvShow or BetaSeriesScrobbleTvShow):
         pchtrakt.logger.info(' [Pchtrakt] It seems you came back at the begining of the video... so I say to trakt it\'s playing')
         pchtrakt.watched = 0
         pchtrakt.currentTime = myMedia.oStatus.currentTime
