@@ -507,3 +507,4 @@ while not pchtrakt.stop:
             startWait()
             #pass
 pchtrakt.logger.info(' [Pchtrakt]  STOP')
+#fix Bad Gateway error, where it stays in loop

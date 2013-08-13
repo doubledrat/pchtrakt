@@ -104,10 +104,10 @@ if not YamjPath.endswith('/'):
     YamjPath += '/'
 
 #YAMJ3
-apiurl = config.get('YAMJ3', 'API url')
+apiurl = config.get('YAMJ3', 'API_url')
 
 #Oversight
-markOversight = config.get('Oversight', 'mark watched')
+markOversight = config.get('Oversight', 'mark_watched')
 
 #Auto Watched
 RutabagaModwatched = config.getboolean('XML/HTML Update', 'rutabaga_mod_watched')

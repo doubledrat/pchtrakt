@@ -3,13 +3,15 @@ from os.path import isfile
 from xml.etree import ElementTree
 from lib import utilities
 from lib.utilities import Debug
-import pchtrakt, glob, os, re, urllib, sys, fileinput
+import pchtrakt, glob, os, re, urllib
+#, sys
 from pchtrakt.exception import BetaSerieAuthenticationException
 from pchtrakt import mediaparser as mp
 from pchtrakt import betaseries as bs
 from pchtrakt.config import *
 from time import sleep, time
 from pchtrakt.pch import EnumStatus
+#import codecs
 #import lib.connector
 #from time import time
 #import json
@@ -33,17 +35,31 @@ class OutToMainLoop(Exception):
 #}
 
 def Oversightwatched(searchValue):
-    addValue = "\t_w\t1\t"
-    replacevalue = "\t_w\t0\t"
-    for line in fileinput.input("/share/Apps/oversight/index.db", inplace=1):
-        if searchValue in line:
-            if replacevalue in line:
-                line = line.replace(replacevalue, addValue)
-                pchtrakt.logger.info('[Oversight] Updating ' + searchValue)
-            elif not addValue in line:
-                line = line.replace(searchValue+"\t", searchValue+addValue)
-                pchtrakt.logger.info('[Oversight] Updating ' + searchValue)
-        sys.stdout.write(line)
+    if os.path.isfile("/share/Apps/oversight/index.db"):
+        newfile = ""
+        pchtrakt.logger.info('[Oversight] Doing update...')
+        addValue = "\t_w\t1\t"
+        replacevalue = "\t_w\t0\t"
+        file = open("/share/Apps/oversight/index.db", "r")
+        for line in file:
+            line = line.decode('utf8', 'replace')
+            if searchValue in line:
+                if replacevalue in line:
+                    line = line.replace(replacevalue, addValue)
+                    pchtrakt.logger.info('[Oversight] Updating ' + searchValue)
+                elif not addValue in line:
+                    line = line.replace(searchValue+"	", searchValue+addValue)
+                    pchtrakt.logger.info('[Oversight] Updating ' + searchValue)
+                else:
+                    pchtrakt.logger.info('[Oversight] ' + searchValue + ' was already marked')
+            newfile = newfile + line.encode('utf8', 'replace')
+        file.close()
+        file = open("/share/Apps/oversight/index.db", "w")
+        file.write(newfile)
+        file.close()
+        newfile = ""
+    else:
+        pchtrakt.logger.info('[Oversight] Could not find your Oversight database file.')
 
 def Oversightwatchednew(searchValue):
     addValue = "\t_w\t1\t"

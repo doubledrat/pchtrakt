@@ -86,13 +86,17 @@ def newConfig():
 
     if not config.has_section('YAMJ3'):
         config.add_section('YAMJ3')
-    if not config.has_option('YAMJ3','API url'):
-        config.set('YAMJ3', 'API url', '')
+    if not config.has_option('YAMJ3','API_url'):
+        config.set('YAMJ3', 'API_url', '')
+    if config.has_option('YAMJ3','API url'):
+        config.remove_option('YAMJ3', 'API url')
 
     if not config.has_section('Oversight'):
         config.add_section('Oversight')
-    if not config.has_option('Oversight','mark watched'):
-        config.set('Oversight', 'mark watched', 'False')
+    if not config.has_option('Oversight','mark_watched'):
+        config.set('Oversight', 'mark_watched', 'False')
+    if config.has_option('Oversight','mark watched'):
+        config.remove_option('Oversight', 'mark watched')
 
     if not config.has_section('XML/HTML Update'):
         config.add_section('XML/HTML Update')
