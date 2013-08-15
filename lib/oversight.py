@@ -324,11 +324,6 @@ def trakt_movies_watched_to_Oversight():
 
 def get_Oversight_shows():
     print '\nGetting TV shows from Oversight'
-    #trakt_show = {'episodes': []}
-    #Oversight_show = {}
-    #shows = {}
-    #if type(episode) == type(dict()):
-    #if type(episode) == type(str()):
     f=open(OversightFile, 'r')
     for movie in f:
         if "_C	T" in movie:
@@ -352,7 +347,6 @@ def get_Oversight_shows():
                 continue
             if "imdb:" in movie:
                 imdb_id = re.search("(tt\d{7})", movie).group(1)
-                #trakt_movie['imdb_id'] = "tt" + movie[movie.find("\t_U\t imdb:")+len("\t_U\t imdb:"):movie.find(" themoviedb:")+len(" themoviedb:")].strip(" themoviedb:")
             else:
                 imdb_id = "0"
             if "thetvdb:" in movie:
@@ -363,6 +357,7 @@ def get_Oversight_shows():
                 played = 1
             else:
                 played = 0
+            ids = re.search("_id\t(\d{4})\t", movie).group(1)
 
             if title not in Oversight_shows:
                 shows = Oversight_shows[title] = {'episodes': []}  # new show dictionary
@@ -370,16 +365,17 @@ def get_Oversight_shows():
                 shows = Oversight_shows[title]
             if 'title' in shows and title in shows['title']:
                 if "," in episode:
-                    for x in episode.split(","):# == "1,2" or episode == "23,24" or episode == "7,8":
+                    for x in episode.split(","):
                         ep = {'episode': int(x), 'season': season}
                         ep['playcount'] = played
-                        ep['double'] = "True"
+                        ep['double'] = "True",
+                        ep['ids'] = ids
                         shows['episodes'].append(ep)
-                        #continue#episode = 1
                 else:
                     ep = {'episode': int(episode), 'season': season}
                     ep['playcount'] = played
-                    ep['double'] = "False"
+                    ep['double'] = "False",
+                    ep['ids'] = ids
                     shows['episodes'].append(ep)
             else:
                 if imdb_id and imdb_id.startswith('tt'):
@@ -390,59 +386,19 @@ def get_Oversight_shows():
                 if title:
                     shows['title'] = title
                     if "," in episode:
-                        for x in episode.split(","):# == "1,2" or episode == "23,24" or episode == "7,8":
+                        for x in episode.split(","):
                             ep = {'episode': int(x), 'season': season}
                             ep['playcount'] = played
-                            ep['double'] = "True"
+                            ep['double'] = "True",
+                            ep['ids'] = ids
                             shows['episodes'].append(ep)
-                            #continue#episode = 1
                     else:
                         ep = {'episode': int(episode), 'season': season}
                         ep['playcount'] = played
-                        ep['double'] = "False"
+                        ep['double'] = "False",
+                        ep['ids'] = ids
                         shows = shows['episodes'].append(ep)
                 
-            #episodes = title, properties=['season', 'episode', 'playcount']
-            #Oversight_shows[1] = {'episodes':
-            #                  [{'season': season,
-            #                    'playcount': played,
-            #                    'episode': episode}],
-            #                    'imdbnumber': imdb_id,
-            #                    'tvdb_id': thetvdb,
-            #                    'title': title}
-
-
-
-
-
-            #Oversight_show = {
-            #'title': title,
-            #'episodes': int(episode),
-            #'seasons': int(season),
-            #'imdb_id': imdb_id,
-            #'tvdb_id': thetvdb,
-            #'playcount': played
-            #}
-            #Oversight_shows.append(Oversight_show)
-
-
-    #newshows = []
-    #for show in Oversight_shows.values():
-        #show['episodes'] = []
-
-
-        #episodes = show, properties=['season', 'episode', 'plays']
-
-    #    if 'episodes' in episodes:
-    #        episodes = episodes['episodes']
-
-    #    for episode in episodes:
-    #        if type(episode) == type(dict()):
-    #            show['episodes'].append(episode)
-
-    #    if show['episodes']:
-    #        Oversight_shows.append(show)
-    #Oversight_shows = Oversight_show.values()
     f.close()
 
 def get_trakt_shows():
@@ -763,7 +719,8 @@ def trakt_shows_watched_to_Oversight():
                                                     'season': Oversight_ep['season'],
                                                     'playcount': Oversight_ep['playcount'],
                                                     'episode': Oversight_ep['episode'],
-                                                    'double': Oversight_ep['double']
+                                                    'double': Oversight_ep['double'],
+                                                    'ids': Oversight_ep['ids']
                                                 }
                                             )
 
@@ -787,7 +744,8 @@ def trakt_shows_watched_to_Oversight():
                                                     'season': Oversight_ep['season'],
                                                     'playcount': Oversight_ep['playcount'],
                                                     'episode': Oversight_ep['episode'],
-                                                    'double': Oversight_ep['double']
+                                                    'double': Oversight_ep['double'],
+                                                    'ids': Oversight_ep['ids']
                                                 }
                                             )
 
@@ -800,83 +758,26 @@ def trakt_shows_watched_to_Oversight():
         if trakt_shows_seen:
             print '  %s TV shows episodes watched status will be updated in Oversight' % len(trakt_shows_seen)
             data = "*("
-            ids = 0
-            addValue = "\t_w\t1\t"
-            #replacevalue = "\t_w\t0\t"
-            #outfile1 = open(OversightFile, 'r')
-            #for change_this in outfile1:
-            #        line = change_this.decode('utf8', 'replace')
-            #        if not replacevalue in line and not addValue in line:
-            #            line = line.replace("\t\n", replacevalue+"\n")
-            #        newfile = newfile + line.encode('utf8', 'replace')
-            #outfile1.close()
-            #file = open("X:\Apps\oversight\index.tmp", "w")
-            #file.write(newfile)
-            #file.close()
-            #newfile = ""
             with open(OversightFile, 'r') as infile:
-                p = '\t_C\tT\t'
-                for line in infile:
-                    if p in line:
-                        tv_offset = infile.tell() - len(line) - 1#Find first TV in file, search from here
-                        break
-
-                lines_of_interest = set()
                 for show_dict in trakt_shows_seen:
                     print '    --> ' + show_dict["title"].encode('utf-8')
-                    if "(" in show_dict["title"]:
-                        regex = re.compile('\(.+?\)')
-                        show_dict["title"] = regex.sub('', show_dict["title"]) +".*"
-
                     for episode in show_dict['episodes']:
-                        if episode['double'] == "True":
-                            episode['episode'] = str(episode['episode'])+","+str(int(episode['episode']+1))
-
-
-                        p = re.compile(r'\t_s\t('+str(episode["season"])+')\t.*?_T\t('+show_dict["title"]+')\t.*?_e\t('+str(episode["episode"])+')\t')
-                        q = re.compile(r'\t_e\t('+str(episode["episode"])+')\t.*?_s\t('+str(episode["season"])+')\t.*?_T\t('+show_dict["title"]+')\t')
-                        infile.seek(tv_offset)#search from first Tv show
-                        for line in infile:
-                            if p.findall(line) or q.findall(line):
-                                if not addValue in line:
-                                    #continue
-                                    m = re.search("_id\t(.*?)\t", line).group(1)#title = re.search("_T\t(.*?)\t", movie).group(1)
-                                    if data == "*(":
-                                        data = data + m
-                                    else:
-                                        data = data  + "|" + m
-                                    ids = ids+1
-                                    #if ids == 15:
-                                    #    WatchedOversight(data+")")
-                                    #    ids = 0
-                                    #break
-                                #print '      Season %i - Episode %i' % (episode['season'], episode['episode'])
-                                #request = urllib2.Request("http://192.168.123.154:8883/oversight/oversight.cgi?select=Mark&action=watch&actionids=*("+m+")")
-                                #try:
-                                #    response = urllib2.urlopen(request).read()
-                                #except urllib2.URLError, e:
-                                #    quit(e.reason)
-                                
-                                #search_offset = infile.tell() - len(line) - 1
-                                #lines_of_interest.add(search_offset)#all lines that need to be changedcb_*(2293)
-            WatchedOversight(data+")")
-            #request = urllib2.Request("http://192.168.123.154:8883/oversight/oversight.cgi?_wf=1&action=watch&actionids="+data)
-            #try:
-            #    response = urllib2.urlopen(request).read()
-            #except urllib2.URLError, e:
-            #    quit(e.reason)
-            data = ""
-
-
+                        print '      Season %i - Episode %i' % (episode['season'], episode['episode'])
+                        m = episode['ids']#re.search("_id\t(.*?)\t", line).group(1)#title = re.search("_T\t(.*?)\t", movie).group(1)
                         
-            
+                        if data == "*(":
+                            data = data + m
+                        else:
+                            data = data  + "|" + m
+            WatchedOversight(data)
+            data = ""
         else:
             print '  Watched TV shows on Oversight are up to date'
 
 def WatchedOversight(data):
     print "sending to Oversight"
     url = data + '"'
-    os.system('wget -O /dev/null "http://127.0.0.1:8883/oversight/oversight.cgi?action=watch&actionids=%s' % url)
+    data = os.system('wget -O /dev/null "http://127.0.0.1:8883/oversight/oversight.cgi?action=watch&actionids=%s' % url)
     #request = urllib2.Request("http://127.0.0.1:8883/oversight/oversight.cgi?action=watch&actionids="+data)
     #try:
     #    response = urllib2.urlopen(request).read()
