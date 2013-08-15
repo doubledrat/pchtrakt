@@ -168,7 +168,7 @@ def videoStopped():
             UpdateXMLFiles(pchtrakt)
         if apiurl != "":
             utilities.watched(pchtrakt)
-    if markOversight == True and pchtrakt.lastPercent > watched_percent:
+    if markOversight and pchtrakt.lastPercent > watched_percent:
         Oversightwatched(pchtrakt.lastName)
     if (TraktScrobbleTvShow or TraktScrobbleMovie) and (not pchtrakt.online and pchtrakt.watched):
         pchtrakt.logger.info(' [Pchtrakt] saving off-line scrobble')

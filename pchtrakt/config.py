@@ -107,7 +107,7 @@ if not YamjPath.endswith('/'):
 apiurl = config.get('YAMJ3', 'API_url')
 
 #Oversight
-markOversight = config.get('Oversight', 'mark_watched')
+markOversight = config.getboolean('Oversight', 'mark_watched')
 
 #Auto Watched
 RutabagaModwatched = config.getboolean('XML/HTML Update', 'rutabaga_mod_watched')

@@ -357,7 +357,7 @@ def get_Oversight_shows():
                 played = 1
             else:
                 played = 0
-            ids = re.search("_id\t(\d{4})\t", movie).group(1)
+            ids = re.search("_id\t(.*?)\t", movie).group(1)
 
             if title not in Oversight_shows:
                 shows = Oversight_shows[title] = {'episodes': []}  # new show dictionary
