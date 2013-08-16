@@ -80,6 +80,7 @@ use_debug = config.getboolean('PCHtrakt', 'use_debug')
 #Trakt
 TraktUsername = config.get('Trakt', 'login')
 TraktPwd = config.get('Trakt', 'password')
+TraktAPI = config.get('Trakt','api_key')
 TraktScrobbleTvShow = config.getboolean('Trakt', 'enable_tvshow_scrobbling')
 TraktScrobbleMovie = config.getboolean('Trakt', 'enable_movie_scrobbling')
 TraktRefreshTime = config.get('Trakt', 'refresh_time')
@@ -108,6 +109,13 @@ apiurl = config.get('YAMJ3', 'API_url')
 
 #Oversight
 markOversight = config.getboolean('Oversight', 'mark_watched')
+SyncCheck = float(config.get('Oversight', 'boot_time_sync'))
+if SyncCheck > 0:
+    SyncCheck = SyncCheck*60*60
+Oversightumc = config.getboolean('Oversight', 'update_movie_collection')
+Oversightusc = config.getboolean('Oversight', 'update_show_collection')
+Oversightumw = config.getboolean('Oversight', 'update_movie_watched')
+Oversightusw = config.getboolean('Oversight', 'update_show_watched')
 
 #Auto Watched
 RutabagaModwatched = config.getboolean('XML/HTML Update', 'rutabaga_mod_watched')

@@ -4,7 +4,6 @@ from xml.etree import ElementTree
 from lib import utilities
 from lib.utilities import Debug
 import pchtrakt, glob, os, re, urllib
-#, sys
 from pchtrakt.exception import BetaSerieAuthenticationException
 from pchtrakt import mediaparser as mp
 from pchtrakt import betaseries as bs
@@ -25,14 +24,6 @@ class EnumScrobbleResult:
 
 class OutToMainLoop(Exception):
     pass
-
-#config = {
-#  'user': dbusername,
-#  'password': dbpassword,
-#  'host': dbaddress,
-#  'database': dbname,
-#  'raise_on_warnings': True,
-#}
 
 def Oversightwatched(searchValue):
     if os.path.isfile("/share/Apps/oversight/index.db"):
@@ -61,38 +52,6 @@ def Oversightwatched(searchValue):
     else:
         pchtrakt.logger.info('[Oversight] Could not find your Oversight database file.')
 
-def Oversightwatchednew(searchValue):
-    addValue = "\t_w\t1\t"
-    replacevalue = "\t_w\t0\t"
-    for line in fileinput.FileInput("/share/Apps/oversight/index.db", inplace=1):
-        if searchValue in line:
-            if replacevalue in line:
-                line = line.replace(replacevalue, addValue)
-                pchtrakt.logger.info('[Oversight] Updating ' + searchValue)
-            elif not addValue in line:
-                line = line.replace(searchValue+"\t", searchValue+addValue)
-                pchtrakt.logger.info('[Oversight] Updating ' + searchValue)
-        sys.stdout.write(line)
-    #fileinput.close()
-
-def Oversightwatchedcrap(searchValue):
-	addValue = "\t_w\t1\t"
-	replacevalue = "\t_w\t0\t"
-	newList = []
-	myfile_list = open("/share/Apps/oversight/index.db").readlines()
-	for line in myfile_list:
-	    if searchValue in line:
-	        if replacevalue in line:
-	            line = line.replace(replacevalue, addValue)
-	            pchtrakt.logger.info('[Oversight] Updating ' + searchValue)
-	        elif not addValue in line:
-	            line = line.replace(searchValue+"\t", searchValue+addValue)
-	            pchtrakt.logger.info('[Oversight] Updating ' + searchValue)
-	    newList.append(line)
-	outref = open("/share/Apps/oversight/index.db",'w')
-	outref.writelines(newList)
-	outref.close()        
-		
 def scrobbleMissed():
     #pchtrakt.logger.info('started TEST ' + pchtrakt.lastpath)
     #self.path = pchtrakt.lastpath

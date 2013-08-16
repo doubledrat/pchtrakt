@@ -45,7 +45,7 @@ from pchtrakt import mediaparser as mp
 from time import sleep, time
 from lib.tvdb_api import tvdb_api
 from lib.tvdb_api import tvdb_exceptions
-from lib.utilities import Debug, checkSettings#, AuthenticationTraktError
+from lib.utilities import *#Debug, checkSettings#, AuthenticationTraktError
 from xml.etree import ElementTree
 #from urllib2 import URLError, HTTPError#Request, urlopen, URLError, HTTPError
 #from datetime import date
@@ -67,6 +67,7 @@ class PchTraktException(Exception):
 tvdb = tvdb_api.Tvdb()
 pchtrakt.oPchRequestor = PchRequestor()
 pchtrakt.mediaparser = mp.MediaParser()
+
 
 class media():
     def __str__(self):
@@ -151,6 +152,24 @@ def checkUpdate(when):
                 pchtrakt.logger.info(' [Pchtrakt] Starting Pchtrakt version = ' + PchTraktVersion[-4:] + ' Millers Mods (' + pchtrakt.chip + ' version)')
                 pchtrakt.logger.info(' [Pchtrakt] A new version is online. For manual install, download from https://github.com/cptjhmiller/pchtrakt/archive/dvp.zip')
 
+def OversightSync():
+    if SyncCheck >= 0:
+        if Oversightumc or Oversightumw:
+            get_Oversight_movies()
+            get_trakt_movies()
+            if Oversightumc:
+                Oversight_movies_to_trakt()
+            if Oversightumw:
+                Oversight_movies_watched_to_trakt()
+                trakt_movies_watched_to_Oversight()
+        if Oversightusc or Oversightusw:
+            get_Oversight_shows()
+            get_trakt_shows()
+            if Oversightusc:
+                Oversight_shows_to_trakt()
+            if Oversightusw:
+                Oversight_shows_watched_to_trakt()
+                trakt_shows_watched_to_Oversight()
 
 def daemonize():
     """
@@ -253,8 +272,6 @@ def doWork():
                 pchtrakt.Ttime = 0
                 pchtrakt.CreatedFile = 0
 
-
-
 def stopTrying():
     try:
         pchtrakt.StopTrying = 1
@@ -319,6 +336,7 @@ if __name__ == '__main__':
     #(stdout, stderr) = gitproc.communicate()
     if pchtrakt.online:
         checkUpdate('first')
+        OversightSync()
         if os.path.isfile('missed.scrobbles'):
             pchtrakt.logger.info(' [Pchtrakt] Found missed scrobbles, updating trakt.tv')
             with open('missed.scrobbles','r+') as f:
@@ -351,15 +369,20 @@ if __name__ == '__main__':
         pchtrakt.logger.info(' [Pchtrakt] track.tv scrobbles will be saved and processed when next on-line.')
     pchtrakt.logger.info(' [Pchtrakt] Waiting for a file to start.....')
     pchtrakt.Started = time()
+    pchtrakt.Started2 = pchtrakt.Started
     
 #Main routine
 while not pchtrakt.stop:
     try:
         doWork()
         sleep(sleepTime)
-        if myMedia.oStatus.status == EnumStatus.NOPLAY and float(time()) > float(pchtrakt.Started+AutoUpdate) and AutoUpdate > 0:
-            checkUpdate('no')
-            pchtrakt.Started = time()
+        if myMedia.oStatus.status == EnumStatus.NOPLAY:
+            if float(time()) > float(pchtrakt.Started+AutoUpdate) and AutoUpdate > 0:
+                checkUpdate('no')
+                pchtrakt.Started = time()
+            if float(time()) > float(pchtrakt.Started2+SyncCheck) and SyncCheck > 0:
+                OversightSync()
+                pchtrakt.Started2 = time()
 
     #Error routine
     except BadStatusLine, e:

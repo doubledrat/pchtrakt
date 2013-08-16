@@ -13,11 +13,11 @@ try:
 except ImportError:
     import simplejson as json
 import urllib2, base64, hashlib, copy, re
-import fileinput
 import sys
-import csv
-import codecs
 import os
+#import fileinput
+#import csv
+#import codecs
 Oversight_movies = []
 Oversight_movies_seen = []
 Oversight_movies_unseen = []
@@ -42,23 +42,17 @@ def trakt_api(url, params={}):
 
 def get_Oversight_movies():
     print '\nGetting movies from Oversight'
-    #movies = Oversight.VideoLibrary.GetMovies(properties=['title', 'imdbnumber', 'year', 'playcount'])['movies']
     f=open(OversightFile, 'r')
-    #'\t_F\t/share/Storage/NAS/Men In Black II (2002) -1080p.BluRay.x264 [SET Men in black -2].mp4\t_rt\t88\t_r\t5.9\t_v\tc0=h264,f0=24,h0=1080,w0=1920\t_IT\t717ac9d\t_id\t51\t_DT\t713dd5f\t_FT\t713dd5f\t_A\t382,411,407,347\t_C\tM\t_G\ta|c|s\t_R\tGB:PG\t_T\tMen in Black II\t_U\t imdb:tt0120912 themoviedb:608\t_V\tBluRay\t_W\t412,518\t_Y\t66\t_a\tthemoviedb:086055\t_d\t538\t_m\t194\t\n'    #tthemoviedb:086055\t_d
     for movie in f:
         if "_C	M" in movie:
             if "\t_T\t" in movie:
-                #title = movie[movie.find("\t_T\t")+len("\t_T\t"):movie.find("\t_U")+len("\t_U")].strip("\t_U")
                 title = re.search("_T\t(.*?)\t", movie).group(1)
             if "\t_Y\t" in movie:
-                #year = movie[movie.find("\t_Y\t")+len("\t_Y\t"):movie.find("\t_d")+len("\t_d")].strip("\t_d")
-                    try:
-                        year = re.search("_Y\t(.*?)\t", movie).group(1)
-                        #return exec("sed -r 's/(.*)(\t"fieldId"\t[^\t]*)(.*)/\\2\\1\\3/' "qa(file_in)" | sort > "qa(file_out)) == 0;
-                        #year = re.sub(r'_Y\t(.*)/\\2\\1\\3', r'\1', movie)
-                        if year != "":
-                            year = int(year)+1942
-                    except:
+                try:
+                    year = re.search("_Y\t(.*?)\t", movie).group(1)
+                    if year != "":
+                        year = int(year)+1942
+                except:
                         year = 1900
             else:
                 year = 1900
@@ -70,30 +64,24 @@ def get_Oversight_movies():
 
             if '\t_U\t imdb:' in movie:
                 Oversight_movie['imdbnumber'] = re.search("(tt\d{7})", movie).group(1)
-                #trakt_movie['imdb_id'] = "tt" + movie[movie.find("\t_U\t imdb:")+len("\t_U\t imdb:"):movie.find(" themoviedb:")+len(" themoviedb:")].strip(" themoviedb:")
             else:
                 Oversight_movie['imdbnumber'] = "0"
             if "themoviedb:" in movie:
                 Oversight_movie['tmdb_id'] = re.search("themoviedb:(.*?)\t", movie).group(1)
-                #trakt_movie['tmdb_id'] = movie[movie.find("\t_a\tthemoviedb:")+len("\t_a\tthemoviedb:"):movie.find("\t_d\t")+len("\t_d\t")].strip("\t_d\t")
-
             else:
                 Oversight_movie['tmdb_id'] = "0"
             if "\t_w\t1\t" in movie:
                 Oversight_movie['playcount'] = 1
             else:
                 Oversight_movie['playcount'] = 0
-
-
-
-
-
+            
             Oversight_movies.append(Oversight_movie)
+
+
             if "\t_w\t1\t" in movie:
                 Oversight_movies_seen.append(Oversight_movie)
             else:
                 Oversight_movies_unseen.append(Oversight_movie)
-                #mySubString=myString[myString.find(startString)+len(startString):myString.find(endString)+len(endString)]
     f.close()
 
 def get_trakt_movies():
@@ -101,11 +89,8 @@ def get_trakt_movies():
 
     # Collection
     url = 'http://api.trakt.tv/user/library/movies/collection.json/%s/%s' % (trakt_apikey, trakt_username)
-    try:
-        movies = trakt_api(url)
-    except Exception as e:
-        quit(e)
-
+    movies = trakt_api(url)
+    
     for movie in movies:
         trakt_movie = {
             'title': movie['title'],
@@ -121,11 +106,8 @@ def get_trakt_movies():
 
     # Seen
     url = 'http://api.trakt.tv/user/library/movies/watched.json/%s/%s' % (trakt_apikey, trakt_username)
-    try:
-        seen_movies = trakt_api(url)
-    except Exception as e:
-        quit(e)
-
+    seen_movies = trakt_api(url)
+    
     # Add playcounts to trakt collection
     for seen in seen_movies:
         if 'imdb_id' in seen:
@@ -219,7 +201,7 @@ def Oversight_movies_to_trakt():
             print '    Adding movies to trakt.tv collection...'
             trakt_api(url, params)
             for movie in Oversight_movies_to_trakt:
-                print '    --> ' + movie['title']#.encode('utf-8', 'replace')
+                print '    --> ' + movie['title'].encode('utf-8', 'replace')
         except Exception, e:
             print 'Failed to add movies to trakt.tv collection'
             print e
@@ -406,11 +388,8 @@ def get_trakt_shows():
 
     # Collection
     url = 'http://api.trakt.tv/user/library/shows/collection.json/%s/%s' % (trakt_apikey, trakt_username)
-    try:
-        collection_shows = trakt_api(url)
-    except Exception as e:
-        quit(e)
-
+    collection_shows = trakt_api(url)
+    
     for show in collection_shows:
         trakt_show = {
             'title': show['title'],
@@ -432,11 +411,8 @@ def get_trakt_shows():
 
     # Seen
     url = 'http://api.trakt.tv/user/library/shows/watched.json/%s/%s' % (trakt_apikey, trakt_username)
-    try:
-        seen_shows = trakt_api(url)
-    except Exception as e:
-        quit(e)
-
+    seen_shows = trakt_api(url)
+    
     for show in seen_shows:
         for season in show['seasons']:
             for episode in season['episodes']:
@@ -763,7 +739,7 @@ def trakt_shows_watched_to_Oversight():
                     print '    --> ' + show_dict["title"].encode('utf-8')
                     for episode in show_dict['episodes']:
                         print '      Season %i - Episode %i' % (episode['season'], episode['episode'])
-                        m = episode['ids']#re.search("_id\t(.*?)\t", line).group(1)#title = re.search("_T\t(.*?)\t", movie).group(1)
+                        m = episode['ids']
                         
                         if data == "*(":
                             data = data + m
@@ -777,14 +753,15 @@ def trakt_shows_watched_to_Oversight():
 def WatchedOversight(data):
     print "sending to Oversight"
     url = data + '"'
-    data = os.system('wget -O /dev/null "http://127.0.0.1:8883/oversight/oversight.cgi?action=watch&actionids=%s' % url)
+    os.system('wget -O /dev/null "http://127.0.0.1:8883/oversight/oversight.cgi?action=watch&actionids=%s' % url)
     #request = urllib2.Request("http://127.0.0.1:8883/oversight/oversight.cgi?action=watch&actionids="+data)
     #try:
     #    response = urllib2.urlopen(request).read()
     #except urllib2.URLError, e:
     #    quit(e.reason)
-    data = "*("	
-	
+    data = ""	
+
+
 if __name__ == '__main__':
     #get_Test()
     get_Oversight_movies()

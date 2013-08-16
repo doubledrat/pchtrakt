@@ -56,6 +56,8 @@ def newConfig():
         config.set('Trakt', 'login', 'your_trakt_login')
     if not config.has_option('Trakt','password'):
         config.set('Trakt', 'password', 'your_password')
+    if not config.has_option('Trakt','api_key'):
+        config.set('Trakt', 'api_key', 'your_api_key')
     if not config.has_option('Trakt','refresh_time'):
         config.set('Trakt', 'refresh_time', '15')
 
@@ -93,6 +95,16 @@ def newConfig():
 
     if not config.has_section('Oversight'):
         config.add_section('Oversight')
+    if not config.has_option('Oversight','boot_time_sync'):
+        config.set('Oversight', 'boot_time_sync', '-1')
+    if not config.has_option('Oversight','update_movie_collection'):
+        config.set('Oversight', 'update_movie_collection', 'False')
+    if not config.has_option('Oversight','update_movie_watched'):
+        config.set('Oversight', 'update_movie_watched', 'False')		
+    if not config.has_option('Oversight','update_show_collection'):
+        config.set('Oversight', 'update_show_collection', 'False')	
+    if not config.has_option('Oversight','update_show_watched'):
+        config.set('Oversight', 'update_show_watched', 'False')			
     if not config.has_option('Oversight','mark_watched'):
         config.set('Oversight', 'mark_watched', 'False')
     if config.has_option('Oversight','mark watched'):

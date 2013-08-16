@@ -17,6 +17,7 @@ import re
 from urllib2 import Request, urlopen, HTTPError, URLError
 from urllib import urlencode, quote_plus
 import os
+import base64, copy
 #import sys
 #import socket
 #try:
@@ -32,6 +33,13 @@ __maintainer__ = "Ralph-Gordon Paul"
 __email__ = "ralph-gordon.paul@uni-duesseldorf.de"
 __status__ = "Production"
 
+OversightFile = '/share/Apps/oversight/index.db'
+Oversight_movies = []
+Oversight_movies_seen = []
+Oversight_movies_unseen = []
+trakt_movies = []
+Oversight_shows = {}
+trakt_shows = []
 username = TraktUsername
 apikey = 'def6943c09e19dccb4df715bd4c9c6c74bc3b6d7'
 pwdsha1 = sha1(TraktPwd).hexdigest()
@@ -63,14 +71,741 @@ def checkSettings(daemon=False):
         data = traktJsonRequest('POST', '/account/test/%%API_KEY%%')#data = traktJsonRequest('POST', '/account/test/%%API_KEY%%', silent=True)
         if data == None:  # Incorrect trakt login details
             return False
-        print('True')  
+        #print('True')  
         return True
 
 # SQL string quote escaper
 def xcp(s):
     return re.sub('''(['])''', r"''", str(s))
 
-# get a connection to trakt
+def get_Oversight_movies():
+    pchtrakt.logger.info('[Oversight] Getting movies from Oversight')
+    f=open(OversightFile, 'r')
+    for movie in f:
+        if "_C	M" in movie:
+            if "\t_T\t" in movie:
+                title = re.search("_T\t(.*?)\t", movie).group(1)
+            if "\t_Y\t" in movie:
+                try:
+                    year = re.search("_Y\t(.*?)\t", movie).group(1)
+                    if year != "":
+                        year = int(year)+1942
+                except:
+                        year = 1900
+            else:
+                year = 1900
+
+            Oversight_movie = {
+               'title': title,
+               'year': str(year)
+            }
+
+            if '\t_U\t imdb:' in movie:
+                Oversight_movie['imdbnumber'] = re.search("(tt\d{7})", movie).group(1)
+            else:
+                Oversight_movie['imdbnumber'] = "0"
+            if "themoviedb:" in movie:
+                Oversight_movie['tmdb_id'] = re.search("themoviedb:(.*?)\t", movie).group(1)
+            else:
+                Oversight_movie['tmdb_id'] = "0"
+            if "\t_w\t1\t" in movie:
+                Oversight_movie['playcount'] = 1
+            else:
+                Oversight_movie['playcount'] = 0
+            
+            Oversight_movies.append(Oversight_movie)
+
+            if "\t_w\t1\t" in movie:
+                Oversight_movies_seen.append(Oversight_movie)
+            else:
+                Oversight_movies_unseen.append(Oversight_movie)
+    f.close()
+
+def get_trakt_movies():
+    pchtrakt.logger.info('[Oversight] Getting movies from trakt.tv')
+
+    # Collection
+    url = 'http://api.trakt.tv/user/library/movies/collection.json/%s/%s' % (TraktAPI, TraktUsername)
+    movies = trakt_api(url)
+    
+    for movie in movies:
+        trakt_movie = {
+            'title': movie['title'],
+            'year': movie['year'],
+        }
+
+        if 'imdb_id' in movie:
+            trakt_movie['imdb_id'] = movie['imdb_id']
+        if 'tmdb_id' in movie:
+            trakt_movie['tmdb_id'] = movie['tmdb_id']
+
+        trakt_movies.append(trakt_movie)
+
+    # Seen
+    url = 'http://api.trakt.tv/user/library/movies/watched.json/%s/%s' % (TraktAPI, TraktUsername)
+    seen_movies = trakt_api(url)
+    
+    # Add playcounts to trakt collection
+    for seen in seen_movies:
+        if 'imdb_id' in seen:
+            for movie in trakt_movies:
+                if 'imdb_id' in movie:
+                    if seen['imdb_id'] == movie['imdb_id']:
+                        movie['plays'] = seen['plays']
+        elif 'tmdb_id' in seen:
+            for movie in trakt_movies:
+                if 'tmdb_id' in movie:
+                    if seen['tmdb_id'] == movie['tmdb_id']:
+                        movie['plays'] = seen['plays']
+
+        elif 'title' in seen:
+            for movie in trakt_movies:
+                if 'title' in movie:
+                    if seen['title'] == movie['title']:
+                        movie['plays'] = seen['plays']
+
+    for movie in trakt_movies:
+        if not 'plays' in movie:
+            movie['plays'] = 0
+
+def convert_Oversight_movie_to_trakt(movie):
+    trakt_movie = {}
+
+    if 'imdbnumber' in movie:
+        if movie['imdbnumber'].startswith('tt'):
+            trakt_movie['imdb_id'] = movie['imdbnumber']
+        else:
+            trakt_movie['tmdb_id'] = movie['imdbnumber']
+
+    if 'title' in movie:
+        trakt_movie['title'] = movie['title']
+
+    if 'year' in movie:
+        trakt_movie['year'] = movie['year']
+
+    if 'playcount' in movie:
+        trakt_movie['plays'] = movie['playcount']
+
+    return trakt_movie
+
+def Oversight_movies_to_trakt():
+    pchtrakt.logger.info('[Oversight] Checking for Oversight movies that are not in trakt.tv collection')
+    Oversight_movies_to_trakt = []
+
+    if trakt_movies and Oversight_movies:
+        imdb_ids = [x['imdb_id'] for x in trakt_movies if 'imdb_id' in x]
+        tmdb_ids = [x['tmdb_id'] for x in trakt_movies if 'tmdb_id' in x]
+        titles = [x['title'] for x in trakt_movies if 'title' in x]
+
+        if Oversight_movies:
+            for movie in Oversight_movies:
+                if 'imdbnumber' in movie:
+                    if movie['imdbnumber'].startswith('tt'):
+                        if not movie['imdbnumber'] in imdb_ids:
+                            Oversight_movies_to_trakt.append(movie)
+
+                            trakt_movie = convert_Oversight_movie_to_trakt(movie)
+                            trakt_movie['plays'] = 0
+                            trakt_movies.append(trakt_movie)
+
+                    else:
+                        if not movie['tmdb_id'] in tmdb_ids:
+                            Oversight_movies_to_trakt.append(movie)
+
+                            trakt_movie = convert_Oversight_movie_to_trakt(movie)
+                            trakt_movie['plays'] = 0
+                            trakt_movies.append(trakt_movie)
+
+                elif not movie['title'] in titles and not movie in Oversight_movies_to_trakt:
+                    Oversight_movies_to_trakt.append(movie)
+
+                    trakt_movie = convert_Oversight_movie_to_trakt(movie)
+                    trakt_movie['plays'] = 0
+                    trakt_movies.append(trakt_movie)
+
+    if Oversight_movies_to_trakt:
+        pchtrakt.logger.info('[Oversight] Checking for %s movies will be added to trakt.tv collection' % len(Oversight_movies_to_trakt))
+
+        for i in range(len(Oversight_movies_to_trakt)):
+            #convert Oversight movie into something trakt will understand
+            Oversight_movies_to_trakt[i] = convert_Oversight_movie_to_trakt(Oversight_movies_to_trakt[i])
+
+        # Send request to add movies to trakt.tv
+        url = 'http://api.trakt.tv/movie/library/' + TraktAPI
+        params = {'movies': Oversight_movies_to_trakt}
+
+        try:
+            pchtrakt.logger.info('[Oversight] Adding movies to trakt.tv collection...')
+            trakt_api(url, params)
+            for movie in Oversight_movies_to_trakt:
+                pchtrakt.logger.info('[Oversight]    -->%s' % movie['title'].encode('utf-8', 'replace'))
+        except Exception, e:
+            pchtrakt.logger.info('[Oversight] Failed to add movies to trakt.tv collection')
+            pchtrakt.logger.info(e)
+            
+    else:
+        pchtrakt.logger.info('[Oversight] trakt.tv movie collection is up to date')
+
+def Oversight_movies_watched_to_trakt():
+    pchtrakt.logger.info('[Oversight] Comparing Oversight watched movies against trakt.tv')
+    Oversight_movies_to_trakt = []
+
+    if trakt_movies and Oversight_movies:
+
+        for i in range(len(trakt_movies)):
+            for movie in Oversight_movies:
+                if movie['playcount'] != 0:
+
+                    if 'imdb_id' in trakt_movies[i]:
+                        if movie['imdbnumber'] == trakt_movies[i]['imdb_id']:
+                            if trakt_movies[i]['plays'] < movie['playcount']:
+                                Oversight_movies_to_trakt.append(convert_Oversight_movie_to_trakt(movie))
+
+                    elif 'tmdb_id' in trakt_movies[i]:
+                        if movie['imdbnumber'] == trakt_movies[i]['tmdb_id']:
+                            if trakt_movies[i]['plays'] < movie['playcount']:
+                                Oversight_movies_to_trakt.append(convert_Oversight_movie_to_trakt(movie))
+
+                    elif movie['title'] == trakt_movies[i]['title']:
+                        if trakt_movies[i]['plays'] < movie['playcount']:
+                            Oversight_movies_to_trakt.append(convert_Oversight_movie_to_trakt(movie))
+
+    if Oversight_movies_to_trakt:
+        pchtrakt.logger.info('[Oversight] %s movies playcount will be updated on trakt.tv' % len(Oversight_movies_to_trakt))
+
+        # Send request to update playcounts on trakt.tv
+        url = 'http://api.trakt.tv/movie/seen/' + TraktAPI
+        params = {'movies': Oversight_movies_to_trakt}
+
+        try:
+            pchtrakt.logger.info('[Oversight] Updating playcount for movies on trakt.tv...')
+            trakt_api(url, params)
+            for movie in Oversight_movies_to_trakt:
+                pchtrakt.logger.info('[Oversight]     -->%s' % movie['title'].encode('utf-8'))
+
+        except Exception, e:
+            pchtrakt.logger.info('[Oversight] Failed to update playcount for movies on trakt.tv')
+            pchtrakt.logger.info(e)
+    else:
+        pchtrakt.logger.info('[Oversight] trakt.tv movie playcount is up to date')
+
+def trakt_movies_watched_to_Oversight():
+    pchtrakt.logger.info('[Oversight] Comparing trakt.tv watched movies against Oversight')
+
+    trakt_movies_seen = []
+
+    if trakt_movies and Oversight_movies_unseen:#Oversight_movies:
+        for i in range(len(trakt_movies)):
+            for movie in Oversight_movies_unseen:#Oversight_movies:
+                if movie['playcount'] == 0 and trakt_movies[i]['plays'] != 0:
+
+                    if 'imdb_id' in trakt_movies[i]:
+                        if movie['imdbnumber'] == trakt_movies[i]['imdb_id']:
+                            trakt_movies[i]['movieid'] = movie['imdbnumber']
+
+                    elif 'tmdb_id' in trakt_movies[i]:
+                        if movie['tmdb_id'] == trakt_movies[i]['tmdb_id']:
+                            trakt_movies[i]['movieid'] = movie['tmdb_id']
+
+                    elif movie['title'] == trakt_movies[i]['title']:
+                        trakt_movies[i]['movieid'] = movie['title']
+
+    # Remove movies without a movieid
+    if trakt_movies:
+
+        for movie in trakt_movies:
+            if 'movieid' in movie:
+                trakt_movies_seen.append(movie)
+
+    if trakt_movies_seen:
+        pchtrakt.logger.info('[Oversight] %s movies playcount will be updated on Oversight' % len(trakt_movies_seen))
+        addValue = "\t_w\t1\t"
+        checkvalue = "\t_w\t0\t"
+        myfile_list = open(OversightFile).readlines()
+        newList = []
+        for line in myfile_list:
+            for movie in trakt_movies_seen:
+                #searchValue = movie['movieid']#"\t/share/Storage/NAS/Videos/FILMS/Absence.(2013)/Absence.(2013).mkv\t"
+                #print '    --> ' + movie['title'].encode('utf-8')
+                #for line in fileinput.input("X:\Apps\oversight\index.db", inplace=1):
+                if movie['movieid'] in line:
+                    pchtrakt.logger.info('[Oversight]     -->%s' % movie['title'].encode('utf-8'))
+                    if checkvalue in line:
+                        line = line.replace(checkvalue, addValue)
+                    elif not addValue in line:
+                        line = line.replace('\n', addValue+'\n')
+            newList.append(line)
+        outref = open(OversightFile,'w')
+        outref.writelines(newList)
+        outref.close()
+    else:
+        pchtrakt.logger.info('[Oversight] Watched movies on Oversight are up to date')
+
+def get_Oversight_shows():
+    pchtrakt.logger.info('[Oversight] Getting TV shows from Oversight')
+    f=open(OversightFile, 'r')
+    for movie in f:
+        if "_C	T" in movie:
+            if "\t_e\t"in movie:
+                try:
+                    episode = re.search("\t_e\t(.*?)\t_", movie).group(1)
+                    
+                    if episode == "FILE":
+                        continue
+                except:
+                    continue
+            else:
+                continue
+            if "_s\t" in movie:
+                season = int(re.search("\t_s\t(.*?)\t_", movie).group(1))
+            else:
+                continue
+            if "_T\t" in movie:
+                title = re.search("\t_T\t(.*?)\t", movie).group(1)
+            else:
+                continue
+            if "imdb:" in movie:
+                imdb_id = re.search("(tt\d{7})", movie).group(1)
+            else:
+                imdb_id = "0"
+            if "thetvdb:" in movie:
+                thetvdb = re.search("thetvdb:(.*?)[\t| imdb:]", movie).group(1)
+            else:
+                thetvdb = "0"
+            if "\t_w\t1\t" in movie:
+                played = 1
+            else:
+                played = 0
+            ids = re.search("_id\t(.*?)\t", movie).group(1)
+
+            if title not in Oversight_shows:
+                shows = Oversight_shows[title] = {'episodes': []}  # new show dictionary
+            else:
+                shows = Oversight_shows[title]
+            if 'title' in shows and title in shows['title']:
+                if "," in episode:
+                    for x in episode.split(","):
+                        ep = {'episode': int(x), 'season': season}
+                        ep['playcount'] = played
+                        ep['double'] = "True",
+                        ep['ids'] = ids
+                        shows['episodes'].append(ep)
+                else:
+                    ep = {'episode': int(episode), 'season': season}
+                    ep['playcount'] = played
+                    ep['double'] = "False",
+                    ep['ids'] = ids
+                    shows['episodes'].append(ep)
+            else:
+                if imdb_id and imdb_id.startswith('tt'):
+                    shows['imdbnumber'] = imdb_id
+                elif thetvdb != "0":
+                    shows['imdbnumber'] = thetvdb
+
+                if title:
+                    shows['title'] = title
+                    if "," in episode:
+                        for x in episode.split(","):
+                            ep = {'episode': int(x), 'season': season}
+                            ep['playcount'] = played
+                            ep['double'] = "True",
+                            ep['ids'] = ids
+                            shows['episodes'].append(ep)
+                    else:
+                        ep = {'episode': int(episode), 'season': season}
+                        ep['playcount'] = played
+                        ep['double'] = "False",
+                        ep['ids'] = ids
+                        shows = shows['episodes'].append(ep)
+                
+    f.close()
+
+def get_trakt_shows():
+    pchtrakt.logger.info('[Oversight] Getting TV shows from trakt')
+
+    # Collection
+    url = 'http://api.trakt.tv/user/library/shows/collection.json/%s/%s' % (TraktAPI, TraktUsername)
+    collection_shows = trakt_api(url)
+    
+    for show in collection_shows:
+        trakt_show = {
+            'title': show['title'],
+            'episodes': []
+        }
+
+        if 'imdb_id' in show:
+            trakt_show['imdb_id'] = show['imdb_id']
+        if 'tvdb_id' in show:
+            trakt_show['tvdb_id'] = show['tvdb_id']
+
+        for season in show['seasons']:
+            for episode in season['episodes']:
+                ep = {'season': season['season'], 'episode': episode, 'plays': 0}
+                trakt_show['episodes'].append(ep)
+
+
+        trakt_shows.append(trakt_show)
+
+    # Seen
+    url = 'http://api.trakt.tv/user/library/shows/watched.json/%s/%s' % (TraktAPI, TraktUsername)
+    seen_shows = trakt_api(url)
+    
+    for show in seen_shows:
+        for season in show['seasons']:
+            for episode in season['episodes']:
+                for trakt_show in trakt_shows:
+                    if 'imdb_id' in show and 'imdb_id' in trakt_show and show['imdb_id'] == trakt_show['imdb_id']:
+                        for trakt_episode in trakt_show['episodes']:
+                            if trakt_episode['season'] == season['season'] and trakt_episode['episode'] == episode:
+                                trakt_episode['plays'] = 1
+
+                    elif 'tvdb_id' in show and 'tvdb_id' in trakt_show and show['tvdb_id'] == trakt_show['tvdb_id']:
+                        for trakt_episode in trakt_show['episodes']:
+                            if trakt_episode['season'] == season['season'] and trakt_episode['episode'] == episode:
+                                trakt_episode['plays'] = 1
+
+                    elif show['title'] == trakt_show['title']:
+                        for trakt_episode in trakt_show['episodes']:
+                            if trakt_episode['season'] == season['season'] and trakt_episode['episode'] == episode:
+                                trakt_episode['plays'] = 1
+
+def convert_Oversight_show_to_trakt(show):
+    trakt_show = {'episodes': []}
+
+    if 'imdbnumber' in show:
+        if show['imdbnumber'].startswith('tt'):
+            trakt_show['imdb_id'] = show['imdbnumber']
+        else:
+            trakt_show['tvdb_id'] = show['imdbnumber']
+
+    if 'title' in show:
+        trakt_show['title'] = show['title']
+
+    if 'episodes' in show and show['episodes']:
+        for episode in show['episodes']:
+            ep = {'episode': episode['episode'], 'season': episode['season']}
+
+            if 'playcount' in episode:
+                 ep['plays'] = episode['playcount']
+
+            trakt_show['episodes'].append(ep)
+
+    return trakt_show
+
+def Oversight_shows_to_trakt():
+    pchtrakt.logger.info('[Oversight] Checking for Oversight episodes that are not in trakt.tv collection')
+    Oversight_shows_to_trakt = []
+
+    def clean_episodes(shows):
+        if shows:
+            for show in shows:
+                episodes = []
+                for episode in show['episodes']:
+                    episodes.append({'season': episode['season'], 'episode': episode['episode']})
+                show['episodes'] = episodes
+
+        return shows
+
+    if trakt_shows and Oversight_shows:
+
+        t_shows = copy.deepcopy(trakt_shows)
+        t_shows = clean_episodes(t_shows)
+        x_shows = copy.deepcopy(Oversight_shows.values())
+        x_shows = clean_episodes(x_shows)
+
+        tvdb_ids = {}
+        imdb_ids = {}
+
+        for i in range(len(t_shows)):
+            if 'tvdb_id' in t_shows[i]:
+                tvdb_ids[t_shows[i]['tvdb_id']] = i
+
+            if 'imdb_id' in t_shows[i]:
+                imdb_ids[t_shows[i]['imdb_id']] = i
+
+        for show in x_shows:
+            if 'imdbnumber' in show:
+                if show['imdbnumber'].startswith('tt'):
+                    if not show['imdbnumber'] in imdb_ids.keys():
+                        Oversight_shows_to_trakt.append(show)
+
+                        trakt_show = convert_Oversight_show_to_trakt(show)
+                        for episode in trakt_show['episodes']:
+                            episode['plays'] = 0
+
+                        trakt_shows.append(trakt_show)
+
+                    else:
+                        t_index = imdb_ids[show['imdbnumber']]
+
+                        Oversight_show = {
+                            'title': show['title'],
+                            'imdbnumber': show['imdbnumber'],
+                            'episodes': []
+                        }
+
+                        for episode in show['episodes']:
+                            if episode not in t_shows[t_index]['episodes']:
+                                Oversight_show['episodes'].append(episode)
+
+                                trakt_shows[t_index]['episodes'].append(episode)
+                                trakt_shows[t_index]['episodes'][-1]['plays'] = 0
+
+                        if Oversight_show['episodes']:
+                            Oversight_shows_to_trakt.append(Oversight_show)
+
+                else:
+                    if not show['imdbnumber'] in tvdb_ids.keys():
+                        Oversight_shows_to_trakt.append(show)
+
+                        trakt_show = convert_Oversight_show_to_trakt(show)
+                        for episode in trakt_show['episodes']:
+                            episode['plays'] = 0
+
+                        trakt_shows.append(trakt_show)
+
+                    else:
+                        t_index = tvdb_ids[show['imdbnumber']]
+
+                        Oversight_show = {
+                            'title': show['title'],
+                            'imdbnumber': show['imdbnumber'],
+                            'episodes': []
+                        }
+
+                        for episode in show['episodes']:
+                            if episode not in t_shows[t_index]['episodes']:
+                                Oversight_show['episodes'].append(episode)
+
+                                trakt_shows[t_index]['episodes'].append(episode)
+                                trakt_shows[t_index]['episodes'][-1]['plays'] = 0
+
+                        if Oversight_show['episodes']:
+                            Oversight_shows_to_trakt.append(Oversight_show)
+
+        if Oversight_shows_to_trakt:
+            pchtrakt.logger.info('[Oversight] %s TV shows have episodes missing from trakt.tv collection' % len(Oversight_shows_to_trakt))
+
+            for i in range(len(Oversight_shows_to_trakt)):
+                #convert Oversight show into something trakt will understand
+                Oversight_shows_to_trakt[i] = convert_Oversight_show_to_trakt(Oversight_shows_to_trakt[i])
+
+            # Send request to add TV shows to trakt.tv
+            url = 'http://api.trakt.tv/show/episode/library/' + TraktAPI
+
+            for show in Oversight_shows_to_trakt:
+                try:
+                    pchtrakt.logger.info('[Oversight]     -->%s' % show['title'].encode('utf-8'))
+                    trakt = trakt_api(url, show)
+                    pchtrakt.logger.info('[Oversight]       %s' % trakt['message'])
+                except Exception, e:
+                    pchtrakt.logger.info('[Oversight] Failed to add %s\'s new episodes to trakt.tv collection' % show['title'].encode('utf-8'))
+                    pchtrakt.logger.info(e)
+
+        else:
+            pchtrakt.logger.info('[Oversight] trakt.tv TV show collection is up to date')
+
+def Oversight_shows_watched_to_trakt():
+    pchtrakt.logger.info('[Oversight] Comparing Oversight watched TV shows against trakt.tv')
+    Oversight_shows_to_trakt = []
+
+    if Oversight_shows and trakt_shows:
+
+        tvdb_ids = {}
+        imdb_ids = {}
+
+        for i in range(len(trakt_shows)):
+            if 'tvdb_id' in trakt_shows[i]:
+                tvdb_ids[trakt_shows[i]['tvdb_id']] = i
+
+            if 'imdb_id' in trakt_shows[i]:
+                imdb_ids[trakt_shows[i]['imdb_id']] = i
+
+        for show in Oversight_shows.values():
+            if 'imdbnumber' in show:
+                if show['imdbnumber'].startswith('tt'):
+                    if show['imdbnumber'] in imdb_ids.keys():
+                        trakt_show = trakt_shows[imdb_ids[show['imdbnumber']]]
+
+                        trakt_show_watched = {
+                            'title': show['title'],
+                            'imdb_id': show['imdbnumber'],
+                            'episodes': []
+                        }
+
+                        for Oversight_ep in show['episodes']:
+                            for trakt_ep in trakt_show['episodes']:
+                                if trakt_ep['season'] == Oversight_ep['season']:
+                                    if trakt_ep['episode'] == Oversight_ep['episode']:
+                                        if trakt_ep['plays'] == 0 and Oversight_ep['playcount'] >= 1:
+
+                                            trakt_show_watched['episodes'].append(
+                                                {
+                                                    'season': Oversight_ep['season'],
+                                                    'episode': Oversight_ep['episode']
+                                                }
+                                            )
+
+                        if trakt_show_watched['episodes']:
+                            Oversight_shows_to_trakt.append(trakt_show_watched)
+
+                else:
+                    if show['imdbnumber'] in tvdb_ids.keys():
+                        trakt_show = trakt_shows[tvdb_ids[show['imdbnumber']]]
+
+                        trakt_show_watched = {
+                            'title': show['title'],
+                            'tvdb_id': show['imdbnumber'],
+                            'episodes': []
+                        }
+
+                        for Oversight_ep in show['episodes']:
+                            for trakt_ep in trakt_show['episodes']:
+                                if trakt_ep['season'] == Oversight_ep['season']:
+                                    if trakt_ep['episode'] == Oversight_ep['episode']:
+                                        if trakt_ep['plays'] == 0 and Oversight_ep['playcount'] >= 1:
+
+                                            trakt_show_watched['episodes'].append(
+                                                {
+                                                    'season': Oversight_ep['season'],
+                                                    'episode': Oversight_ep['episode']
+                                                }
+                                            )
+
+                        if trakt_show_watched['episodes']:
+                            Oversight_shows_to_trakt.append(trakt_show_watched)
+
+        if Oversight_shows_to_trakt:
+            pchtrakt.logger.info('[Oversight] %s TV shows have episodes that will be marked as watched in trakt.tv collection' % len(Oversight_shows_to_trakt))
+
+            for i in range(len(Oversight_shows_to_trakt)):
+                #convert Oversight show into something trakt will understand
+                Oversight_shows_to_trakt[i] = convert_Oversight_show_to_trakt(Oversight_shows_to_trakt[i])
+
+            # Send request to add TV shows to trakt.tv
+            url = 'http://api.trakt.tv/show/episode/seen/' + TraktAPI
+
+            for show in Oversight_shows_to_trakt:
+                try:
+                    pchtrakt.logger.info('[Oversight]     -->%s' % show['title'].encode('utf-8'))
+                    trakt = trakt_api(url, show)
+                    pchtrakt.logger.info('[Oversight]       %s' % trakt['message'])
+                except Exception, e:
+                    pchtrakt.logger.info('[Oversight] Failed to mark %s\'s episodes as watched in trakt.tv collection' % show['title'].encode('utf-8'))
+                    pchtrakt.logger.info(e)
+
+        else:
+            pchtrakt.logger.info('[Oversight] trakt.tv TV show watched status is up to date')
+
+def trakt_shows_watched_to_Oversight():
+    pchtrakt.logger.info('[Oversight] Comparing trakt.tv watched TV shows against Oversight')
+    trakt_shows_seen = []
+
+    if Oversight_shows and trakt_shows:
+
+        tvdb_ids = {}
+        imdb_ids = {}
+
+        for i in range(len(trakt_shows)):
+            if 'tvdb_id' in trakt_shows[i]:
+                tvdb_ids[trakt_shows[i]['tvdb_id']] = i
+
+            if 'imdb_id' in trakt_shows[i]:
+                imdb_ids[trakt_shows[i]['imdb_id']] = i
+
+        for show in Oversight_shows.values():
+            if 'imdbnumber' in show:
+                if show['imdbnumber'].startswith('tt'):
+                    if show['imdbnumber'] in imdb_ids.keys():
+                        trakt_show = trakt_shows[imdb_ids[show['imdbnumber']]]
+
+                        Oversight_show = {'title': show['title'], 'episodes': []}
+
+                        for Oversight_ep in show['episodes']:
+                            for trakt_ep in trakt_show['episodes']:
+                                if trakt_ep['season'] == Oversight_ep['season']:
+                                    if trakt_ep['episode'] == Oversight_ep['episode']:
+                                        if trakt_ep['plays'] == 1 > Oversight_ep['playcount']:
+
+                                            Oversight_show['episodes'].append(
+                                                {
+                                                    'season': Oversight_ep['season'],
+                                                    'playcount': Oversight_ep['playcount'],
+                                                    'episode': Oversight_ep['episode'],
+                                                    'double': Oversight_ep['double'],
+                                                    'ids': Oversight_ep['ids']
+                                                }
+                                            )
+
+                        if Oversight_show['episodes']:
+                            trakt_shows_seen.append(Oversight_show)
+
+                else:
+                    if show['imdbnumber'] in tvdb_ids.keys():
+                        trakt_show = trakt_shows[tvdb_ids[show['imdbnumber']]]
+
+                        Oversight_show = {'title': show['title'], 'episodes': []}
+
+                        for Oversight_ep in show['episodes']:
+                            for trakt_ep in trakt_show['episodes']:
+                                if trakt_ep['season'] == Oversight_ep['season']:
+                                    if trakt_ep['episode'] == Oversight_ep['episode']:
+                                        if trakt_ep['plays'] == 1 > Oversight_ep['playcount']:
+
+                                            Oversight_show['episodes'].append(
+                                                {
+                                                    'season': Oversight_ep['season'],
+                                                    'playcount': Oversight_ep['playcount'],
+                                                    'episode': Oversight_ep['episode'],
+                                                    'double': Oversight_ep['double'],
+                                                    'ids': Oversight_ep['ids']
+                                                }
+                                            )
+
+                        if Oversight_show['episodes']:
+                            trakt_shows_seen.append(Oversight_show)
+
+
+
+        #http://192.168.123.154:8883/oversight/oversight.cgi?select=Mark&action=watch&actionids=*(90)
+        if trakt_shows_seen:
+            pchtrakt.logger.info('[Oversight] %s TV shows episodes watched status will be updated in Oversight' % len(trakt_shows_seen))
+            data = "*("
+            with open(OversightFile, 'r') as infile:
+                for show_dict in trakt_shows_seen:
+                    pchtrakt.logger.info('[Oversight]     -->%s' % show_dict["title"].encode('utf-8'))
+                    for episode in show_dict['episodes']:
+                        pchtrakt.logger.info('[Oversight]       Season %i - Episode %i' % (episode['season'], episode['episode']))
+                        m = episode['ids']
+                        
+                        if data == "*(":
+                            data = data + m
+                        else:
+                            data = data  + "|" + m
+            WatchedOversight(data)
+            data = ""
+        else:
+            pchtrakt.logger.info('[Oversight] Watched TV shows on Oversight are up to date')
+
+def WatchedOversight(data):
+    pchtrakt.logger.info('[Oversight] sending to Oversight')
+    url = data + '"'
+    os.system('wget -O /dev/null "http://127.0.0.1:8883/oversight/oversight.cgi?action=watch&actionids=%s' % url)
+    #request = urllib2.Request("http://127.0.0.1:8883/oversight/oversight.cgi?action=watch&actionids="+data)
+    #try:
+    #    response = urllib2.urlopen(request).read()
+    #except urllib2.URLError, e:
+    #    quit(e.reason)
+    data = ""
+    Oversight_shows = {}
+    trakt_shows = []
+    Oversight_movies = []
+    Oversight_movies_seen = []
+    Oversight_movies_unseen = []
+    trakt_movies = []
+
+
+# get a connection to YAMJ3
 def getYamj3Connection(url, timeout = 60):
     data = None
     args = None
@@ -225,6 +960,20 @@ def traktJsonRequest(method, url, args = {}, passVersions=False):
             #    return data;
             return None
     return data
+
+def trakt_api(url, params={}):
+    #username = TraktUsername
+    #password = hashlib.sha1(trakt_password).hexdigest()
+
+    params = json.JSONEncoder().encode(params)
+    request = Request(url, params)
+    base64string = base64.encodestring('%s:%s' % (username, pwdsha1)).replace('\n', '')
+    request.add_header("Authorization", "Basic %s" % base64string)
+
+    response = urlopen(request).read()
+    response = json.JSONDecoder().decode(response)
+
+    return response
 
 def yamj3JsonRequest(url):
     raw = None
