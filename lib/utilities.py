@@ -38,13 +38,41 @@ Oversight_movies = []
 Oversight_movies_seen = []
 Oversight_movies_unseen = []
 trakt_movies = []
-Oversight_shows = {}
 trakt_shows = []
 username = TraktUsername
 apikey = 'def6943c09e19dccb4df715bd4c9c6c74bc3b6d7'
 pwdsha1 = sha1(TraktPwd).hexdigest()
 headers = {"Accept": "*/*", "User-Agent": "Mozilla/4.0 (compatible; MSIE 5.5; Windows NT)",}
 
+def OversightSync():
+    if SyncCheck >= 0:
+        if Oversightumc or Oversightumw:
+            get_Oversight_movies()
+            get_trakt_movies()
+            if Oversightumc:
+                Oversight_movies_to_trakt()
+            if Oversightumw:
+                Oversight_movies_watched_to_trakt()
+                trakt_movies_watched_to_Oversight()
+        if Oversightusc or Oversightusw:
+            global Oversight_shows
+            Oversight_shows = {}
+            get_Oversight_shows()
+            get_trakt_shows()
+            if Oversightusc:
+                Oversight_shows_to_trakt()
+            if Oversightusw:
+                Oversight_shows_watched_to_trakt()
+                trakt_shows_watched_to_Oversight()
+    #clear globals
+    del Oversight_movies[:]
+    del Oversight_movies_seen[:]
+    del Oversight_movies_unseen[:]
+    del trakt_movies[:]
+    del trakt_shows[:]
+    del Oversight_shows
+    pchtrakt.logger.info(' [Pchtrakt] Waiting for a file to start.....')
+    
 def scrobbleMissed():
     pchtrakt.logger.info('started TEST ' + pchtrakt.lastpath)
     #self.path = pchtrakt.lastpath
@@ -82,7 +110,7 @@ def get_Oversight_movies():
     pchtrakt.logger.info('[Oversight] Getting movies from Oversight')
     f=open(OversightFile, 'r')
     for movie in f:
-        if "_C	M" in movie:
+        if "\t_C\tM\t" in movie:
             if "\t_T\t" in movie:
                 title = re.search("_T\t(.*?)\t", movie).group(1)
             if "\t_Y\t" in movie:
@@ -100,10 +128,12 @@ def get_Oversight_movies():
                'year': str(year)
             }
 
-            if '\t_U\t imdb:' in movie:
+            if "\t_U\t imdb:" in movie:
                 Oversight_movie['imdbnumber'] = re.search("(tt\d{7})", movie).group(1)
             else:
                 Oversight_movie['imdbnumber'] = "0"
+            if "\t_id\t" in movie:
+                Oversight_movie['id'] = re.search("_id\t(.*?)\t", movie).group(1)
             if "themoviedb:" in movie:
                 Oversight_movie['tmdb_id'] = re.search("themoviedb:(.*?)\t", movie).group(1)
             else:
@@ -138,6 +168,7 @@ def get_trakt_movies():
             trakt_movie['imdb_id'] = movie['imdb_id']
         if 'tmdb_id' in movie:
             trakt_movie['tmdb_id'] = movie['tmdb_id']
+        trakt_movie['id'] = ""
 
         trakt_movies.append(trakt_movie)
 
@@ -302,13 +333,16 @@ def trakt_movies_watched_to_Oversight():
                     if 'imdb_id' in trakt_movies[i]:
                         if movie['imdbnumber'] == trakt_movies[i]['imdb_id']:
                             trakt_movies[i]['movieid'] = movie['imdbnumber']
+                            trakt_movies[i]['id'] = movie['id']
 
                     elif 'tmdb_id' in trakt_movies[i]:
                         if movie['tmdb_id'] == trakt_movies[i]['tmdb_id']:
                             trakt_movies[i]['movieid'] = movie['tmdb_id']
+                            trakt_movies[i]['id'] = movie['id']
 
                     elif movie['title'] == trakt_movies[i]['title']:
                         trakt_movies[i]['movieid'] = movie['title']
+                        trakt_movies[i]['id'] = movie['id']
 
     # Remove movies without a movieid
     if trakt_movies:
@@ -318,26 +352,22 @@ def trakt_movies_watched_to_Oversight():
                 trakt_movies_seen.append(movie)
 
     if trakt_movies_seen:
+        data = "*("
         pchtrakt.logger.info('[Oversight] %s movies playcount will be updated on Oversight' % len(trakt_movies_seen))
-        addValue = "\t_w\t1\t"
-        checkvalue = "\t_w\t0\t"
-        myfile_list = open(OversightFile).readlines()
-        newList = []
-        for line in myfile_list:
-            for movie in trakt_movies_seen:
-                #searchValue = movie['movieid']#"\t/share/Storage/NAS/Videos/FILMS/Absence.(2013)/Absence.(2013).mkv\t"
-                #print '    --> ' + movie['title'].encode('utf-8')
-                #for line in fileinput.input("X:\Apps\oversight\index.db", inplace=1):
-                if movie['movieid'] in line:
-                    pchtrakt.logger.info('[Oversight]     -->%s' % movie['title'].encode('utf-8'))
-                    if checkvalue in line:
-                        line = line.replace(checkvalue, addValue)
-                    elif not addValue in line:
-                        line = line.replace('\n', addValue+'\n')
-            newList.append(line)
-        outref = open(OversightFile,'w')
-        outref.writelines(newList)
-        outref.close()
+        #addValue = "\t_w\t1\t"
+        #checkvalue = "\t_w\t0\t"
+        #myfile_list = open(OversightFile).readlines()
+        #newList = []
+        for movie in trakt_movies_seen:
+            if movie['id']:# in movie:
+                pchtrakt.logger.info('[Oversight]     -->%s' % movie['title'].encode('utf-8'))
+                m = movie['id']
+                if data == "*(":
+                    data = data + m
+                else:
+                    data = data  + "|" + m
+        WatchedOversight(data+")")
+        data = ""
     else:
         pchtrakt.logger.info('[Oversight] Watched movies on Oversight are up to date')
 
@@ -397,10 +427,10 @@ def get_Oversight_shows():
                     ep['ids'] = ids
                     shows['episodes'].append(ep)
             else:
-                if imdb_id and imdb_id.startswith('tt'):
-                    shows['imdbnumber'] = imdb_id
-                elif thetvdb != "0":
+                if thetvdb != "0":
                     shows['imdbnumber'] = thetvdb
+                elif imdb_id and imdb_id.startswith('tt'):
+                    shows['imdbnumber'] = imdb_id
 
                 if title:
                     shows['title'] = title
@@ -782,7 +812,7 @@ def trakt_shows_watched_to_Oversight():
                             data = data + m
                         else:
                             data = data  + "|" + m
-            WatchedOversight(data)
+            WatchedOversight(data+")")
             data = ""
         else:
             pchtrakt.logger.info('[Oversight] Watched TV shows on Oversight are up to date')
@@ -790,19 +820,13 @@ def trakt_shows_watched_to_Oversight():
 def WatchedOversight(data):
     pchtrakt.logger.info('[Oversight] sending to Oversight')
     url = data + '"'
-    os.system('wget -O /dev/null "http://127.0.0.1:8883/oversight/oversight.cgi?action=watch&actionids=%s' % url)
+    os.system('wget "http://127.0.0.1:8883/oversight/oversight.cgi?action=watch&actionids=%s > /dev/null 2>&1' % url)
     #request = urllib2.Request("http://127.0.0.1:8883/oversight/oversight.cgi?action=watch&actionids="+data)
     #try:
     #    response = urllib2.urlopen(request).read()
     #except urllib2.URLError, e:
     #    quit(e.reason)
     data = ""
-    Oversight_shows = {}
-    trakt_shows = []
-    Oversight_movies = []
-    Oversight_movies_seen = []
-    Oversight_movies_unseen = []
-    trakt_movies = []
 
 
 # get a connection to YAMJ3

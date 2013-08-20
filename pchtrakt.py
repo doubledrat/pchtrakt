@@ -45,7 +45,7 @@ from pchtrakt import mediaparser as mp
 from time import sleep, time
 from lib.tvdb_api import tvdb_api
 from lib.tvdb_api import tvdb_exceptions
-from lib.utilities import *#Debug, checkSettings#, AuthenticationTraktError
+from lib.utilities import Debug, checkSettings, OversightSync
 from xml.etree import ElementTree
 #from urllib2 import URLError, HTTPError#Request, urlopen, URLError, HTTPError
 #from datetime import date
@@ -151,25 +151,6 @@ def checkUpdate(when):
             if when == "first":
                 pchtrakt.logger.info(' [Pchtrakt] Starting Pchtrakt version = ' + PchTraktVersion[-4:] + ' Millers Mods (' + pchtrakt.chip + ' version)')
                 pchtrakt.logger.info(' [Pchtrakt] A new version is online. For manual install, download from https://github.com/cptjhmiller/pchtrakt/archive/dvp.zip')
-
-def OversightSync():
-    if SyncCheck >= 0:
-        if Oversightumc or Oversightumw:
-            get_Oversight_movies()
-            get_trakt_movies()
-            if Oversightumc:
-                Oversight_movies_to_trakt()
-            if Oversightumw:
-                Oversight_movies_watched_to_trakt()
-                trakt_movies_watched_to_Oversight()
-        if Oversightusc or Oversightusw:
-            get_Oversight_shows()
-            get_trakt_shows()
-            if Oversightusc:
-                Oversight_shows_to_trakt()
-            if Oversightusw:
-                Oversight_shows_watched_to_trakt()
-                trakt_shows_watched_to_Oversight()
 
 def daemonize():
     """
