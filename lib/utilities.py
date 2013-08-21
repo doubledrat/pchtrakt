@@ -64,13 +64,13 @@ def OversightSync():
             if Oversightusw:
                 Oversight_shows_watched_to_trakt()
                 trakt_shows_watched_to_Oversight()
+            del Oversight_shows
     #clear globals
     del Oversight_movies[:]
     del Oversight_movies_seen[:]
     del Oversight_movies_unseen[:]
     del trakt_movies[:]
     del trakt_shows[:]
-    del Oversight_shows
     pchtrakt.logger.info(' [Pchtrakt] Waiting for a file to start.....')
     
 def scrobbleMissed():
