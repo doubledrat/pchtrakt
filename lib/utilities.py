@@ -865,13 +865,16 @@ def getTraktConnection(url, args, timeout = 60):
         req = Request(url, headers = headers)
         #req.add_header('Accept', '*/*')
     else:
-        req = Request(url, args, headers = headers)
+        args = json.JSONEncoder().encode(args)
+        req = Request(url, args)#, headers = headers)
         #Debug('[traktAPI] getTraktConnection(): urllib2.urlopen()' + urlopen(req).read())
         #req.add_header('Accept', '*/*')
         #Debug('[traktAPI] getTraktConnection(): urllib2.urlopen()' + urlopen(req).read())
+        base64string = base64.encodestring('%s:%s' % (username, pwdsha1)).replace('\n', '')
+        req.add_header("Authorization", "Basic %s" % base64string)
         if use_debug:
             t1 = time()
-        response = urlopen(req, timeout = timeout)
+        response = urlopen(req).read()
         #pchtrakt.online = 1
         #except URLError:# needs better except error
         #    pchtrakt.online = 0
@@ -879,7 +882,7 @@ def getTraktConnection(url, args, timeout = 60):
             t2 = time()
             #Debug("[traktAPI] getTraktConnection(): response.read()")
         if pchtrakt.online == 1:
-            data = response.read()
+            data = json.JSONDecoder().decode(response)
             if use_debug:
                 Debug("[traktAPI] Response Code: %i" % response.getcode())
                 Debug("[traktAPI] Response Time: %0.2f ms" % ((t2 - t1) * 1000))
@@ -903,14 +906,6 @@ def traktJsonRequest(method, url, args = {}, passVersions=False):
     data = None
     jdata = {}
     url = 'https://api.trakt.tv' + url
-    #retries = 3
-    #if args is None:
-    #    args = {}
-
-    #if not (method == 'POST' or method == 'GET'):
-    #    Debug("[traktAPI] traktJsonRequest(): Unknown method '%s'." % method)
-    #    return None
-
     if method == 'POST':
         # debug log before username and sha1hash are injected
         Debug("[traktAPI] Request data: '%s'" % str(json.dumps(args)))
@@ -925,10 +920,10 @@ def traktJsonRequest(method, url, args = {}, passVersions=False):
             args['media_center'] = 'Popcorn Hour ' + pchtrakt.chip# Todo get pch version
             args['media_center_version'] = 0
             args['media_center_date'] = '10/01/2012' 
-            jdata = urlencode(args)
+            #jdata = urlencode(args)
         # convert to json data/or maybe urlencode?
-        else:
-            jdata = json.dumps(args)#jdata = urlencode(args)#was jdata = json.dumps(args)
+        #else:
+        #    jdata = json.dumps(args)#jdata = urlencode(args)#was jdata = json.dumps(args)
 
     #Debug("[traktAPI] Starting lookup.")
     
@@ -936,11 +931,11 @@ def traktJsonRequest(method, url, args = {}, passVersions=False):
     Debug("[traktAPI] Request URL '%s'" % (url))
     url = url.replace("%%API_KEY%%", apikey)
     url = url.replace("%%USERNAME%%", username)
-    raw = getTraktConnection(url, jdata)
-    if not raw:
+    data = getTraktConnection(url, args)
+    if not data:
         Debug("[traktAPI] JSON Response empty")
         return None
-    data = json.loads(raw)
+    #data = raw
     Debug("[traktAPI] JSON response: '%s'" % (str(data)))
         
     # check for the status variable in JSON data
@@ -986,9 +981,6 @@ def traktJsonRequest(method, url, args = {}, passVersions=False):
     return data
 
 def trakt_api(url, params={}):
-    #username = TraktUsername
-    #password = hashlib.sha1(trakt_password).hexdigest()
-
     params = json.JSONEncoder().encode(params)
     request = Request(url, params)
     base64string = base64.encodestring('%s:%s' % (username, pwdsha1)).replace('\n', '')

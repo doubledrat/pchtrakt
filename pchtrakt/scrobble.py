@@ -341,7 +341,7 @@ def isIgnored(myMedia):
     if not ignored and ignored_repertory[0] != '':
         for el in myMedia.oStatus.fullPath.split('/'):
             Debug("[Pchtrakt] Checking if " + el + " is an ignored folder")
-            if el != '' and el in ignored_repertory:
+            if el != '' and el.lower() in ignored_repertory.lower():
                 msg = ' [Pchtrakt] This video is in a ignored repertory: {0}'.format(el) + ' Waiting for next file to start.'
                 pchtrakt.logger.info(msg)
                 ignored = True
