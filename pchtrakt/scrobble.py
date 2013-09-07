@@ -567,4 +567,3 @@ def UpdateXMLFiles(pchtrakt):
             #else:
                 #txt = name.replace(YamjPath, '') + ' has NOT been modified as watched for ' + matchthis
                 #pchtrakt.logger.info(txt)
-	

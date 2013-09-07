@@ -850,45 +850,45 @@ def getYamj3Connection(url, timeout = 60):
         else:
             data = response.read()
         if use_debug:
-            Debug("[traktAPI] Response Code: %i" % response.getcode())
+            #Debug("[traktAPI] Response Code: %i" % response.getcode())
             Debug("[traktAPI] Response Time: %0.2f ms" % ((t2 - t1) * 1000))
-            Debug("[traktAPI] Response Headers: %s" % str(response.info().dict))
+            #Debug("[traktAPI] Response Headers: %s" % str(response.info().dict))
     else:
         data = '{"status": "success", "message": "fake scrobble"}'
     return data
 
 # get a connection to trakt
 def getTraktConnection(url, args, timeout = 60):
-    data = None
-    #Debug("[traktAPI] urllib2.Request(%s)" % url)
-    if args == None:
-        req = Request(url, headers = headers)
-        #req.add_header('Accept', '*/*')
-    else:
-        args = json.JSONEncoder().encode(args)
-        req = Request(url, args)#, headers = headers)
-        #Debug('[traktAPI] getTraktConnection(): urllib2.urlopen()' + urlopen(req).read())
-        #req.add_header('Accept', '*/*')
-        #Debug('[traktAPI] getTraktConnection(): urllib2.urlopen()' + urlopen(req).read())
-        base64string = base64.encodestring('%s:%s' % (username, pwdsha1)).replace('\n', '')
-        req.add_header("Authorization", "Basic %s" % base64string)
-        if use_debug:
-            t1 = time()
-        response = urlopen(req).read()
-        #pchtrakt.online = 1
-        #except URLError:# needs better except error
-        #    pchtrakt.online = 0
-        if use_debug:
-            t2 = time()
+    if pchtrakt.online == 1:
+        data = None
+        #Debug("[traktAPI] urllib2.Request(%s)" % url)
+        if args == None:
+            req = Request(url, headers = headers)
+            #req.add_header('Accept', '*/*')
+        else:
+            args = json.JSONEncoder().encode(args)
+            req = Request(url, args)#, headers = headers)
+            #Debug('[traktAPI] getTraktConnection(): urllib2.urlopen()' + urlopen(req).read())
+            #req.add_header('Accept', '*/*')
+            #Debug('[traktAPI] getTraktConnection(): urllib2.urlopen()' + urlopen(req).read())
+            base64string = base64.encodestring('%s:%s' % (username, pwdsha1)).replace('\n', '')
+            req.add_header("Authorization", "Basic %s" % base64string)
+            if use_debug:
+                t1 = time()
+            response = urlopen(req).read()
+            #pchtrakt.online = 1
+            #except URLError:# needs better except error
+            #    pchtrakt.online = 0
+            if use_debug:
+                t2 = time()
             #Debug("[traktAPI] getTraktConnection(): response.read()")
-        if pchtrakt.online == 1:
             data = json.JSONDecoder().decode(response)
             if use_debug:
-                Debug("[traktAPI] Response Code: %i" % response.getcode())
+                #Debug("[traktAPI] Response Code: %i" % response.getcode())
                 Debug("[traktAPI] Response Time: %0.2f ms" % ((t2 - t1) * 1000))
-                Debug("[traktAPI] Response Headers: %s" % str(response.info().dict))
-        else:
-            data = '{"status": "success", "message": "fake scrobble"}'
+                #Debug("[traktAPI] Response Headers: %s" % str(response.info().dict))
+    else:
+        data = '{"status": "success", "message": "fake scrobble"}'
     return data
 
 # make a JSON api request to trakt

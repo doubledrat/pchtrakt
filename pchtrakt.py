@@ -382,10 +382,11 @@ while not pchtrakt.stop:
                 sleep(sleepTime)
                 startWait()
             elif e.code == 503:  # server busy problem
-                stopTrying()
+                #stopTrying()
                 pchtrakt.logger.error('[traktAPI] trakt.tv server is busy')
                 sleep(sleepTime)
-                startWait()
+                #startWait()
+                pchtrakt.online = 0
             elif e.code == 404:  # Not found on trakt.tv
                 stopTrying()
                 pchtrakt.logger.error('[traktAPI] Item not found on trakt.tv')
@@ -398,14 +399,14 @@ while not pchtrakt.stop:
                 startWait()
             elif e.code == 502:  # Bad Gateway
                 stopTrying()
-                pchtrakt.logger.error('[traktAPI] Bad Gateway')
+                pchtrakt.logger.warning('[traktAPI] Bad Gateway')
                 sleep(sleepTime)
-                startWait()
-        stopTrying()
-        msg = ('[The TvDB] Show not found ' \
-        '{0} '.format(pchtrakt.lastPath))
-        pchtrakt.logger.warning(msg)
-        startWait()
+                os.system("./daemon.sh restart")
+        #stopTrying()
+        #msg = ('[The TvDB] Show not found ' \
+        #'{0} '.format(pchtrakt.lastPath))
+        #pchtrakt.logger.warning(msg)
+        #startWait()
     except tvdb_exceptions.tvdb_shownotfound as e:
         stopTrying()
         msg = ('[The TvDB] Show not found ' \
