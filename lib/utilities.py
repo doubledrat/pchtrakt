@@ -2,8 +2,9 @@
 # From https://github.com/Manromen/script.TraktUtilities
 
 from pchtrakt.config import *
-if use_debug:
-    from time import time
+#if use_debug:
+#    from time import time
+from time import sleep, time
 try:
     # Python 3.0 +
     from http.client import HTTPException, BadStatusLine
@@ -34,6 +35,7 @@ __email__ = "ralph-gordon.paul@uni-duesseldorf.de"
 __status__ = "Production"
 
 OversightFile = '/share/Apps/oversight/index.db'
+#OversightFile = 'D:\index.db'
 Oversight_movies = []
 Oversight_movies_seen = []
 Oversight_movies_unseen = []
@@ -71,7 +73,6 @@ def OversightSync():
     del Oversight_movies_unseen[:]
     del trakt_movies[:]
     del trakt_shows[:]
-    #pchtrakt.logger.info(' [Pchtrakt] Waiting for a file to start.....')
     
 def scrobbleMissed():
     pchtrakt.logger.info('started TEST ' + pchtrakt.lastpath)
@@ -102,8 +103,8 @@ def checkSettings(daemon=False):
         #print('True')  
         return True
 
-# SQL string quote escaper
 def xcp(s):
+    # SQL string quote escaper
     return re.sub('''(['])''', r"''", str(s))
 
 def get_Oversight_movies():
@@ -155,8 +156,8 @@ def get_trakt_movies():
     pchtrakt.logger.info('[Oversight] Getting movies from trakt.tv')
 
     # Collection
-    url = 'https://api.trakt.tv/user/library/movies/collection.json/%s/%s' % (TraktAPI, TraktUsername)
-    movies = trakt_api(url)
+    url = '/user/library/movies/collection.json/%s/%s' % (TraktAPI, TraktUsername)
+    movies = trakt_api('POST', url)
     
     for movie in movies:
         trakt_movie = {
@@ -177,8 +178,8 @@ def get_trakt_movies():
     #params = {'movies': trakt_movies}
     #response = trakt_api(url, params)
     # Seen
-    url = 'https://api.trakt.tv/user/library/movies/watched.json/%s/%s' % (TraktAPI, TraktUsername)
-    seen_movies = trakt_api(url)
+    url = '/user/library/movies/watched.json/%s/%s' % (TraktAPI, TraktUsername)
+    seen_movies = trakt_api('POST', url)
     
     # Add playcounts to trakt collection
     for seen in seen_movies:
@@ -273,12 +274,12 @@ def Oversight_movies_to_trakt():
             Oversight_movies_to_trakt[i] = convert_Oversight_movie_to_trakt(Oversight_movies_to_trakt[i])
 
         # Send request to add movies to trakt.tv
-        url = 'https://api.trakt.tv/movie/library/' + TraktAPI
+        url = '/movie/library/' + TraktAPI
         params = {'movies': Oversight_movies_to_trakt}
 
         try:
             pchtrakt.logger.info('[Oversight] Adding movies to trakt.tv collection...')
-            response = trakt_api(url, params)
+            response = trakt_api('POST', url, params)
             if response['inserted'] != 0:
                 pchtrakt.logger.info('[Oversight] Successfully added %s out of %s to your collection' % (response['inserted'], response['inserted'] + response['skipped']))
             if response['skipped'] != 0:
@@ -320,12 +321,12 @@ def Oversight_movies_watched_to_trakt():
         pchtrakt.logger.info('[Oversight] %s movies playcount will be updated on trakt.tv' % len(Oversight_movies_to_trakt))
 
         # Send request to update playcounts on trakt.tv
-        url = 'https://api.trakt.tv/movie/seen/' + TraktAPI
+        url = '/movie/seen/' + TraktAPI
         params = {'movies': Oversight_movies_to_trakt}
 
         try:
             pchtrakt.logger.info('[Oversight] Updating playcount for movies on trakt.tv...')
-            trakt_api(url, params)
+            trakt_api('POST', url, params)
             for movie in Oversight_movies_to_trakt:
                 pchtrakt.logger.info('[Oversight]     -->%s' % movie['title'].encode('utf-8'))
 
@@ -469,8 +470,8 @@ def get_trakt_shows():
     pchtrakt.logger.info('[Oversight] Getting TV shows from trakt')
 
     # Collection
-    url = 'https://api.trakt.tv/user/library/shows/collection.json/%s/%s' % (TraktAPI, TraktUsername)
-    collection_shows = trakt_api(url)
+    url = '/user/library/shows/collection.json/%s/%s' % (TraktAPI, TraktUsername)
+    collection_shows = trakt_api('POST', url)
     
     for show in collection_shows:
         trakt_show = {
@@ -495,8 +496,8 @@ def get_trakt_shows():
         trakt_shows.append(trakt_show)
 
     # Seen
-    url = 'https://api.trakt.tv/user/library/shows/watched.json/%s/%s' % (TraktAPI, TraktUsername)
-    seen_shows = trakt_api(url)
+    url = '/user/library/shows/watched.json/%s/%s' % (TraktAPI, TraktUsername)
+    seen_shows = trakt_api('POST', url)
     
     for show in seen_shows:
         for season in show['seasons']:
@@ -641,12 +642,12 @@ def Oversight_shows_to_trakt():
                 Oversight_shows_to_trakt[i] = convert_Oversight_show_to_trakt(Oversight_shows_to_trakt[i])
 
             # Send request to add TV shows to trakt.tv
-            url = 'https://api.trakt.tv/show/episode/library/' + TraktAPI
+            url = '/show/episode/library/' + TraktAPI
 
             for show in Oversight_shows_to_trakt:
                 try:
                     pchtrakt.logger.info('[Oversight]     -->%s' % show['title'].encode('utf-8'))
-                    trakt = trakt_api(url, show)
+                    trakt = trakt_api('POST', url, show)
                     pchtrakt.logger.info('[Oversight]       %s' % trakt['message'])
                 except Exception, e:
                     pchtrakt.logger.info('[Oversight] Failed to add %s\'s new episodes to trakt.tv collection' % show['title'].encode('utf-8'))
@@ -733,12 +734,12 @@ def Oversight_shows_watched_to_trakt():
                 Oversight_shows_to_trakt[i] = convert_Oversight_show_to_trakt(Oversight_shows_to_trakt[i])
 
             # Send request to add TV shows to trakt.tv
-            url = 'https://api.trakt.tv/show/episode/seen/' + TraktAPI
+            url = '/show/episode/seen/' + TraktAPI
 
             for show in Oversight_shows_to_trakt:
                 try:
                     pchtrakt.logger.info('[Oversight]     -->%s' % show['title'].encode('utf-8'))
-                    trakt = trakt_api(url, show)
+                    trakt = trakt_api('POST', url, show)
                     pchtrakt.logger.info('[Oversight]       %s' % trakt['message'])
                 except Exception, e:
                     pchtrakt.logger.info('[Oversight] Failed to mark %s\'s episodes as watched in trakt.tv collection' % show['title'].encode('utf-8'))
@@ -848,9 +849,8 @@ def WatchedOversight(data):
     #    quit(e.reason)
     data = ""
 
-
-# get a connection to YAMJ3
 def getYamj3Connection(url, timeout = 60):
+    # get a connection to YAMJ3
     data = None
     args = None
     req = Request(url, headers = headers)
@@ -877,8 +877,8 @@ def getYamj3Connection(url, timeout = 60):
         data = '{"status": "success", "message": "fake scrobble"}'
     return data
 
-# get a connection to trakt
 def getTraktConnection(url, args, timeout = 60):
+    # get a connection to trakt
     if pchtrakt.online == 1:
         data = None
         #Debug("[traktAPI] urllib2.Request(%s)" % url)
@@ -911,6 +911,7 @@ def getTraktConnection(url, args, timeout = 60):
         data = '{"status": "success", "message": "fake scrobble"}'
     return data
 
+def traktJsonRequest(method, url, args = {}, passVersions=False):
 # make a JSON api request to trakt
 # method: http method (GET or POST)
 # req: REST request (ie '/user/library/movies/all.json/%%API_KEY%%/%%USERNAME%%')
@@ -921,7 +922,6 @@ def getTraktConnection(url, args, timeout = 60):
 # silent: default is True, when true it disable any error notifications (but not debug messages)
 # passVersions: default is False, when true it passes extra version information to trakt to help debug problems
 # hideResponse: used to not output the json response to the log
-def traktJsonRequest(method, url, args = {}, passVersions=False):
     raw = None
     data = None
     jdata = {}
@@ -1000,15 +1000,99 @@ def traktJsonRequest(method, url, args = {}, passVersions=False):
             return None
     return data
 
-def trakt_api(url, params={}):
+def trakt_api(method, url, params={}, passVersions=False):
+    url = 'https://api.trakt.tv' + url
+    #url = 'http://httpstat.us/502' #use to test error codes
+    Debug("[traktAPI] Request URL '%s'" % (url))
+    url = url.replace("%%API_KEY%%", apikey)
+    if passVersions:
+            # check if plugin version needs to be passed
+            params['plugin_version'] = PchTraktVersion[-4:]#0  # __settings__.getAddonInfo("version")
+            params['media_center'] = 'Popcorn Hour ' + pchtrakt.chip
+            params['media_center_version'] = 0
+            params['media_center_date'] = '10/01/2012' 
     params = json.JSONEncoder().encode(params)
     request = Request(url, params)
+    Debug("[traktAPI] Request URL '%s'" % (url+params))
     base64string = base64.encodestring('%s:%s' % (username, pwdsha1)).replace('\n', '')
     request.add_header("Authorization", "Basic %s" % base64string)
-
-    response = urlopen(request).read()
+    retries = 0
+    while True:
+        try:
+            response = urlopen(request).read()
+        except BadStatusLine, e:
+            if retries <= 10:
+                pchtrakt.logger.warning('[traktAPI] BadStatusLine retries failed, switching to off-line mode.')
+                pchtrakt.online = 0
+                break
+            else:
+                msg = ('[BadStatusLine] ' \
+                '{0} '.format(pchtrakt.lastPath))
+                pchtrakt.logger.warning(msg)
+                pchtrakt.logger.warning('[traktAPI] BadStatusLine')
+                retries =+ 1
+                sleep(60)
+                continue
+        except HTTPError as e:
+            if retries <= 10:
+                pchtrakt.logger.warning('[traktAPI] BadStatusLine retries failed, switching to off-line mode.')
+                pchtrakt.online = 0
+                break
+            if hasattr(e, 'code'):  # error 401 or 503, possibly others
+                # read the error document, strip newlines, this will make an html page 1 line
+                error_data = e.read().replace("\n", "").replace("\r", "")
+                retries =+ 1
+                if e.code == 401:  # authentication problem
+                    #stopTrying()
+                    pchtrakt.logger.error('[traktAPI] Login or password incorrect')
+                    sleep(60)
+                    #startWait()
+                elif e.code == 503:  # server busy problem
+                    #stopTrying()
+                    pchtrakt.logger.error('[traktAPI] trakt.tv server is busy')
+                    sleep(60)
+                    continue
+                elif e.code == 404:  # Not found on trakt.tv
+                    #stopTrying()
+                    pchtrakt.logger.error('[traktAPI] Item not found on trakt.tv')
+                    sleep(60)
+                    #startWait()
+                elif e.code == 403:  # Forbidden on trakt.tv
+                    #stopTrying()
+                    pchtrakt.logger.error('[traktAPI] Item not found on trakt.tv')
+                    sleep(60)
+                    #startWait()
+                elif e.code == 502:  # Bad Gateway
+                    #stopTrying()
+                    pchtrakt.logger.warning('[traktAPI] Bad Gateway')
+                    sleep(60)
+                    continue
+                    #pass
+        break
     response = json.JSONDecoder().decode(response)
-
+    if response is None:
+        Debug("[traktAPI] JSON Request failed, data is empty.")
+        return None
+    
+    if 'status' in response:
+        if response['status'] == 'failure':
+            Debug("[traktAPI] Error: " + str(response['error']))
+            if response['error'] == 'episode not found':
+                raise NotFoundError()
+            if response['error'] == 'failed authentication':
+                raise AuthenticationTraktError()
+            if response['error'] == 'shows per hour limit reached':
+                #scrobbleMissed()
+                response = {'status': 'success', 'message': 'shows per hour limit reached - added item to off-line list'}
+                return data#raise MaxScrobbleError()
+            if response['error'] == 'movies per hour limit reached':
+                #scrobbleMissed()
+                response = {'status': 'success', 'message': 'movies per hour limit reached - added item to off-line list'}
+                return response
+            #raise MaxScrobbleError()
+            #if returnStatus:#do something with this?#Error: scrobbled White House Down (2013) already
+            #    return data;
+            return None
     return response
 
 def yamj3JsonRequest(url):
@@ -1089,7 +1173,7 @@ def getWatchedTVShowsFromTrakt(daemon=False):
 
 # set episodes seen on trakt
 def setEpisodesSeenOnTrakt(tvdb_id, title, year, season, episode, SeenTime):
-    responce = traktJsonRequest('POST', '/show/episode/seen/%%API_KEY%%', {'tvdb_id': tvdb_id, 'title': title, 'year': year, 'episodes':[{'episode': episode, 'season': season, 'last_played': SeenTime}]})
+    responce = trakt_api('POST', '/show/episode/seen/%%API_KEY%%', {'tvdb_id': tvdb_id, 'title': title, 'year': year, 'episodes':[{'episode': episode, 'season': season, 'last_played': SeenTime}]})
     if responce == None:
         Debug("Error in request from 'setEpisodeSeenOnTrakt()'")
     return responce
@@ -1111,7 +1195,7 @@ def setEpisodesUnseenOnTrakt(tvdb_id, title, year, episodes):
 # set movies seen on trakt
 #  - movies, required fields are 'plays', 'last_played' and 'title', 'year' or optionally 'imdb_id'
 def setMoviesSeenOnTrakt(imdb_id, title, year, SeenTime):
-    responce = traktJsonRequest('POST', '/movie/seen/%%API_KEY%%', {'movies': [{'imdb_id': imdb_id, 'title': title, 'year': year, 'plays': '1', 'last_played': SeenTime}]})#, passVersions=True
+    responce = trakt_api('POST', '/movie/seen/%%API_KEY%%', {'movies': [{'imdb_id': imdb_id, 'title': title, 'year': year, 'plays': '1', 'last_played': SeenTime}]})#, passVersions=True
     if responce == None:
         Debug("Error in request from 'setMoviesSeenOnTrakt()'")
     return responce
@@ -1375,7 +1459,7 @@ def getWatchingFromTraktForUser(name):
 
 # tell trakt that the user is watching a movie
 def watchingMovieOnTrakt(imdb_id, title, year, duration, percent):
-    responce = traktJsonRequest('POST', '/movie/watching/%%API_KEY%%', {'imdb_id': imdb_id, 'title': title, 'year': year, 'duration': duration, 'progress': percent}, passVersions=True)
+    responce = trakt_api('POST', '/movie/watching/%%API_KEY%%', {'imdb_id': imdb_id, 'title': title, 'year': year, 'duration': duration, 'progress': percent}, passVersions=True)
     #Debug('[traktAPI] ' + str(responce))
     if responce == None:
         Debug("[traktAPI] Error in request from 'watchingMovieOnTrakt()'")
@@ -1383,7 +1467,7 @@ def watchingMovieOnTrakt(imdb_id, title, year, duration, percent):
 
 # tell trakt that the user is watching an episode
 def watchingEpisodeOnTrakt(tvdb_id, title, year, season, episode, duration, percent):
-    responce = traktJsonRequest('POST', '/show/watching/%%API_KEY%%', {'tvdb_id': tvdb_id, 'title': title, 'year': year, 'season': season, 'episode': episode, 'duration': duration, 'progress': percent}, passVersions=True)
+    responce = trakt_api('POST', '/show/watching/%%API_KEY%%', {'tvdb_id': tvdb_id, 'title': title, 'year': year, 'season': season, 'episode': episode, 'duration': duration, 'progress': percent}, passVersions=True)
     #Debug('[traktAPI] ' + str(responce))
     if responce == None:
         Debug("[traktAPI] Error in request from 'watchingEpisodeOnTrakt()'")
@@ -1391,7 +1475,7 @@ def watchingEpisodeOnTrakt(tvdb_id, title, year, season, episode, duration, perc
 
 # tell trakt that the user has stopped watching a movie
 def cancelWatchingMovieOnTrakt():
-    responce = traktJsonRequest('POST', '/movie/cancelwatching/%%API_KEY%%')
+    responce = trakt_api('POST', '/movie/cancelwatching/%%API_KEY%%')
     #Debug('[traktAPI] ' + str(responce))
     if responce == None:
         Debug("[traktAPI] Error in request from 'cancelWatchingMovieOnTrakt()'")
@@ -1399,7 +1483,7 @@ def cancelWatchingMovieOnTrakt():
 
 # tell trakt that the user has stopped an episode
 def cancelWatchingEpisodeOnTrakt():
-    responce = traktJsonRequest('POST', '/show/cancelwatching/%%API_KEY%%')
+    responce = trakt_api('POST', '/show/cancelwatching/%%API_KEY%%')
     #Debug('[traktAPI] ' + str(responce))
     if responce == None:
         Debug("[traktAPI] Error in request from 'cancelWatchingEpisodeOnTrakt()'")
@@ -1407,7 +1491,7 @@ def cancelWatchingEpisodeOnTrakt():
 
 # tell trakt that the user has finished watching an movie
 def scrobbleMovieOnTrakt(imdb_id, title, year, duration, percent):
-    responce = traktJsonRequest('POST', '/movie/scrobble/%%API_KEY%%', {'imdb_id': imdb_id, 'title': title, 'year': year, 'duration': duration, 'progress': percent}, passVersions=True)
+    responce = trakt_api('POST', '/movie/scrobble/%%API_KEY%%', {'imdb_id': imdb_id, 'title': title, 'year': year, 'duration': duration, 'progress': percent}, passVersions=True)
     #Debug('[traktAPI] ' + str(responce))
     if responce == None:
         Debug("[traktAPI] Error in request from 'scrobbleMovieOnTrakt()'")
@@ -1415,7 +1499,7 @@ def scrobbleMovieOnTrakt(imdb_id, title, year, duration, percent):
 
 # tell trakt that the user has finished watching an episode
 def scrobbleEpisodeOnTrakt(tvdb_id, title, year, season, episode, duration, percent):
-    responce = traktJsonRequest('POST', '/show/scrobble/%%API_KEY%%', {'tvdb_id': tvdb_id, 'title': title, 'year': year, 'season': season, 'episode': episode, 'duration': duration, 'progress': percent}, passVersions=True)
+    responce = trakt_api('POST', '/show/scrobble/%%API_KEY%%', {'tvdb_id': tvdb_id, 'title': title, 'year': year, 'season': season, 'episode': episode, 'duration': duration, 'progress': percent}, passVersions=True)
     #Debug('[traktAPI] ' + str(responce))
     if responce == None:
         Debug("[traktAPI] Error in request from 'scrobbleEpisodeOnTrakt()'")

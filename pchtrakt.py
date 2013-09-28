@@ -312,58 +312,58 @@ if __name__ == '__main__':
         pchtrakt.chip = "100 series"#do we want/need this?
     else:
         pchtrakt.chip = ""
-    #Check version and update if needed
-    #gitproc = Popen(['git', 'ls-remote'], stdout = PIPE)
-    #(stdout, stderr) = gitproc.communicate()
-    if pchtrakt.online:
-        checkUpdate('first')
-        OversightSync()
-        if os.path.isfile('missed.scrobbles'):
-            pchtrakt.logger.info(' [Pchtrakt] Found missed scrobbles, updating trakt.tv')
-            with open('missed.scrobbles','r+') as f:
-                pchtrakt.missed = json.load(f)
-            new_list = {}
-            for xname in pchtrakt.missed:
-                pchtrakt.logger.info(u' [Pchtrakt] marking %s watched on trakt.tv' % xname.split('/')[::-1][0])
-                myMedia.parsedInfo = pchtrakt.mediaparser.parse(xname.split('/')[::-1][0])
-                myMedia.idxEpisode = 0
-                myMedia.ScrobResult = 0
-                myMedia.oStatus = PchStatus()
-                myMedia.oStatus.totalTime = pchtrakt.missed[xname]['Totaltime']
-                myMedia.oStatus.percent = 100
-                if isinstance(myMedia.parsedInfo,mp.MediaParserResultTVShow):
-                    pchtrakt.watched = showIsSeen(myMedia, pchtrakt.missed[xname]['Totallength'])
-                elif isinstance(myMedia.parsedInfo,mp.MediaParserResultMovie):
-                    pchtrakt.watched = movieIsSeen(myMedia, pchtrakt.missed[xname]['Totallength'])#movieIsEnding(myMedia)
-                if not pchtrakt.watched:
-                    pchtrakt.logger.info(u' [traktAPI]  %s was NOT marked as watched on trakt.tv' % xname.split('/')[::-1][0])
-                    new_list[xname]={"Totaltime": int(pchtrakt.missed[xname]['Totaltime']), "Totallength": int(pchtrakt.missed[xname]['Totallength'])}
-            if new_list != {}:
-                with open('missed.scrobbles','w') as f:
-                    json.dump(new_list, f, separators=(',',':'), indent=4)
-            else:
-                os.remove('missed.scrobbles')
-    else:
-        pchtrakt.logger.info(' [Pchtrakt] Pchtrakt START version = ' + PchTraktVersion[-4:] + ' Millers Mods (' + pchtrakt.chip + ' version)')
-        pchtrakt.logger.info(' [Pchtrakt] No internet - can not check for updates')
-        pchtrakt.logger.info(' [Pchtrakt] .watched files will be created but no xml updating or track.tv scrobbles will happen.')
-        pchtrakt.logger.info(' [Pchtrakt] track.tv scrobbles will be saved and processed when next on-line.')
-    pchtrakt.logger.info(' [Pchtrakt] Waiting for a file to start.....')
-    pchtrakt.Started = time()
-    pchtrakt.Started2 = pchtrakt.Started
-    
-#Main routine
-while not pchtrakt.stop:
+        #Check version and update if needed
+        #gitproc = Popen(['git', 'ls-remote'], stdout = PIPE)
+        #(stdout, stderr) = gitproc.communicate()
     try:
-        doWork()
-        sleep(sleepTime)
-        if myMedia.oStatus.status == EnumStatus.NOPLAY:
-            if float(time()) > float(pchtrakt.Started+AutoUpdate) and AutoUpdate > 0:
-                checkUpdate('no')
-                pchtrakt.Started = time()
-            if float(time()) > float(pchtrakt.Started2+SyncCheck) and SyncCheck > 0:
-                OversightSync()
-                pchtrakt.Started2 = time()
+        if pchtrakt.online:
+            checkUpdate('first')
+            OversightSync()
+            if os.path.isfile('missed.scrobbles'):
+                pchtrakt.logger.info(' [Pchtrakt] Found missed scrobbles, updating trakt.tv')
+                with open('missed.scrobbles','r+') as f:
+                    pchtrakt.missed = json.load(f)
+                new_list = {}
+                for xname in pchtrakt.missed:
+                    pchtrakt.logger.info(u' [Pchtrakt] marking %s watched on trakt.tv' % xname.split('/')[::-1][0])
+                    myMedia.parsedInfo = pchtrakt.mediaparser.parse(xname.split('/')[::-1][0])
+                    myMedia.idxEpisode = 0
+                    myMedia.ScrobResult = 0
+                    myMedia.oStatus = PchStatus()
+                    myMedia.oStatus.totalTime = pchtrakt.missed[xname]['Totaltime']
+                    myMedia.oStatus.percent = 100
+                    if isinstance(myMedia.parsedInfo,mp.MediaParserResultTVShow):
+                        pchtrakt.watched = showIsSeen(myMedia, pchtrakt.missed[xname]['Totallength'])
+                    elif isinstance(myMedia.parsedInfo,mp.MediaParserResultMovie):
+                        pchtrakt.watched = movieIsSeen(myMedia, pchtrakt.missed[xname]['Totallength'])#movieIsEnding(myMedia)
+                    if not pchtrakt.watched:
+                        pchtrakt.logger.info(u' [traktAPI]  %s was NOT marked as watched on trakt.tv' % xname.split('/')[::-1][0])
+                        new_list[xname]={"Totaltime": int(pchtrakt.missed[xname]['Totaltime']), "Totallength": int(pchtrakt.missed[xname]['Totallength'])}
+                if new_list != {}:
+                    with open('missed.scrobbles','w') as f:
+                        json.dump(new_list, f, separators=(',',':'), indent=4)
+                else:
+                    os.remove('missed.scrobbles')
+        else:
+            pchtrakt.logger.info(' [Pchtrakt] Pchtrakt START version = ' + PchTraktVersion[-4:] + ' Millers Mods (' + pchtrakt.chip + ' version)')
+            pchtrakt.logger.info(' [Pchtrakt] No internet - can not check for updates')
+            pchtrakt.logger.info(' [Pchtrakt] .watched files will be created but no xml updating or track.tv scrobbles will happen.')
+            pchtrakt.logger.info(' [Pchtrakt] track.tv scrobbles will be saved and processed when next on-line.')
+        pchtrakt.logger.info(' [Pchtrakt] Waiting for a file to start.....')
+        pchtrakt.Started = time()
+        pchtrakt.Started2 = pchtrakt.Started
+    
+    #Main routine
+        while not pchtrakt.stop:
+            doWork()
+            sleep(sleepTime)
+            if myMedia.oStatus.status == EnumStatus.NOPLAY:
+                if float(time()) > float(pchtrakt.Started+AutoUpdate) and AutoUpdate > 0:
+                    checkUpdate('no')
+                    pchtrakt.Started = time()
+                if float(time()) > float(pchtrakt.Started2+SyncCheck) and SyncCheck > 0:
+                    OversightSync()
+                    pchtrakt.Started2 = time()
 
     #Error routine
     except BadStatusLine, e:
@@ -400,8 +400,13 @@ while not pchtrakt.stop:
             elif e.code == 502:  # Bad Gateway
                 stopTrying()
                 pchtrakt.logger.warning('[traktAPI] Bad Gateway')
-                sleep(sleepTime)
-                os.system("./daemon.sh restart")
+                #sleep(sleepTime)
+                #os.system("./daemon.sh restart")
+                os.system("rm /tmp/dns_cache")
+                sleep(60)
+                pass
+
+
         #stopTrying()
         #msg = ('[The TvDB] Show not found ' \
         #'{0} '.format(pchtrakt.lastPath))
@@ -511,5 +516,5 @@ while not pchtrakt.stop:
             pchtrakt.logger.exception(e)
             startWait()
             #pass
-pchtrakt.logger.info(' [Pchtrakt]  STOP')
-#fix Bad Gateway error, where it stays in loop
+    pchtrakt.logger.info(' [Pchtrakt]  STOP')
+    #fix Bad Gateway error, where it stays in loop

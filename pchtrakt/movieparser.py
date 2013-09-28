@@ -39,6 +39,8 @@ blackwords = [
               '720p', '720', '1080p', '1080',
               # video codec
               'XviD', 'DivX', 'x264', 'h264', 'Rv10',
+              # file extentions - find a better way
+              'mkv', 'mp4', 'avi', 'mpeg', 'mpg', 'm4v', 'mov',
               # audio codec
               'DTS-HD', 'AC3', 'DTS', 'He-AAC', 'AAC-He', 'AAC', '5.1',
               # ripper teams

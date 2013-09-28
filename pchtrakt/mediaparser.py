@@ -122,7 +122,10 @@ class MediaParserResultMoviebackup(MediaParserResult):
     def __init__(self,file_name,name,year,imdbid):
         self.file_name = file_name#check if needed all below
         self.name = name
-        self.year = year
+        if year == None:
+            self.year = ""
+        else:
+            self.year = year
         if pchtrakt.online:
             ImdbAPIurl = ('http://www.imdbapi.com/?t={0}&y={1}'.format(quote_plus(self.name.encode('utf-8', 'replace')), self.year))
             Debug('[IMDB api] Trying search 1: ' + ImdbAPIurl)
