@@ -1097,8 +1097,7 @@ def trakt_api(method, url, params={}, passVersions=False):
             #if returnStatus:#do something with this?#Error: scrobbled White House Down (2013) already
             #    return data;
             return None
-        return response
-    return None
+    return response
 
 def yamj3JsonRequest(url):
     raw = None
