@@ -1021,7 +1021,7 @@ def trakt_api(method, url, params={}, passVersions=False):
         try:
             response = urlopen(request).read()
         except BadStatusLine, e:
-            if retries <= 10:
+            if retries >= 10:
                 pchtrakt.logger.warning('[traktAPI] BadStatusLine retries failed, switching to off-line mode.')
                 pchtrakt.online = 0
                 break
@@ -1034,7 +1034,7 @@ def trakt_api(method, url, params={}, passVersions=False):
                 sleep(60)
                 continue
         except HTTPError as e:
-            if retries <= 10:
+            if retries >= 10:
                 pchtrakt.logger.warning('[traktAPI] BadStatusLine retries failed, switching to off-line mode.')
                 pchtrakt.online = 0
                 break
@@ -1069,7 +1069,11 @@ def trakt_api(method, url, params={}, passVersions=False):
                     continue
                     #pass
         break
-    response = json.JSONDecoder().decode(response)
+    if pchtrakt.online == 1:
+        response = json.JSONDecoder().decode(response)
+    else:
+        response = '{"status": "success", "message": "Off-line scrobble"}'
+    
     if response is None:
         Debug("[traktAPI] JSON Request failed, data is empty.")
         return None
@@ -1093,7 +1097,8 @@ def trakt_api(method, url, params={}, passVersions=False):
             #if returnStatus:#do something with this?#Error: scrobbled White House Down (2013) already
             #    return data;
             return None
-    return response
+        return response
+    return None
 
 def yamj3JsonRequest(url):
     raw = None
