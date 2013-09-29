@@ -145,8 +145,7 @@ def showIsEnding(myMedia):
         result = 0
         serieXml = bs.getSerieUrl(myMedia.parsedInfo.name)
         token = bs.getToken()
-        isWatched = bs.isEpisodeWatched(serieXml,token,myMedia.parsedInfo.season_number
-                                     ,myMedia.parsedInfo.episode_numbers[myMedia.idxEpisode])
+        isWatched = bs.isEpisodeWatched(serieXml,token,myMedia.parsedInfo.season_number,myMedia.parsedInfo.episode_numbers[myMedia.idxEpisode])
         Debug('(BetaSeries) Is episode watched: {0}'.format(isWatched))
         msg = '(BetaSeries) Video is '
         if not isWatched:

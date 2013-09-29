@@ -366,6 +366,8 @@ if __name__ == '__main__':
                     pchtrakt.Started2 = time()
 
     #Error routine
+    except BetaSerieAuthenticationException as e:
+        Debug(e)
     except BadStatusLine, e:
         msg = ('[BadStatusLine] ' \
         '{0} '.format(pchtrakt.lastPath))
