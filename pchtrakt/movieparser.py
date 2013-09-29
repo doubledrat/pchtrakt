@@ -65,7 +65,7 @@ class MovieParser():
 
     def parse(self,file_name):
         oResult = None
-        file_name = self.clean_movie_name(file_name)
+        file_name = self.clean_movie_name(file_name.split('/')[::-1][0])
         for (name,regex) in self.compiled_regexes:
             try:
                 match = regex.match(file_name)

@@ -220,7 +220,7 @@ def doWork():
                     msg = u' [Pchtrakt] File: {0}'.format(myMedia.oStatus.fileName)
                     pchtrakt.logger.info(msg)
                     myMedia.parsedInfo = pchtrakt.mediaparser.parse(
-                                            myMedia.oStatus.fileName)
+                                            myMedia.oStatus.fullPath)
                     pchtrakt.Ttime = myMedia.oStatus.totalTime
                 videoStatusHandle(myMedia)
                     #else:
