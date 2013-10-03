@@ -43,8 +43,8 @@ class MediaParserResultTVShow(MediaParserResult):
         #np = parser.NameParser()
         #parse_result = np.parse(self.file_name)
         if self.air_by_date:
-            if self.name in cacheSerie.dictSerie:
-                self.id = cacheSerie.dictSerie[self.name]['TvDbId']
+            if self.name in pchtrakt.dictSerie:
+                self.id = pchtrakt.dictSerie[self.name]['TvDbId']
             else:
                 self.id = tvdb[self.name]['id']
             season_number = -1
@@ -59,9 +59,9 @@ class MediaParserResultTVShow(MediaParserResult):
                 episode_numbers = movie.find('EpisodeNumber').text
         self.season_number = season_number
         self.episode_numbers = episode_numbers
-        if self.name in cacheSerie.dictSerie:
-            self.id = cacheSerie.dictSerie[self.name]['TvDbId']
-            self.year = cacheSerie.dictSerie[self.name]['Year']
+        if self.name in pchtrakt.dictSerie:
+            self.id = pchtrakt.dictSerie[self.name]['TvDbId']
+            self.year = pchtrakt.dictSerie[self.name]['Year']
         else:
             try:
                 self.id = tvdb[self.name]['id']
@@ -70,11 +70,11 @@ class MediaParserResultTVShow(MediaParserResult):
                     self.year = tvdb[self.name]['firstaired'].split('-')[0]
                 else:
                     self.year = None
-                cacheSerie.dictSerie[self.name]={'Year':self.year,
+                pchtrakt.dictSerie[self.name]={'Year':self.year,
                                                             'TvDbId':self.id}
 
                 with open('cache.json','w') as f:
-                    json.dump(cacheSerie.dictSerie, f, separators=(',',':'), indent=4)
+                    json.dump(pchtrakt.dictSerie, f, separators=(',',':'), indent=4)
             except tvdb_exceptions.tvdb_error, e:
                 pchtrakt.online = 0
 

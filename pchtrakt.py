@@ -195,8 +195,8 @@ def doWork():
                 myMedia.oStatus = pchtrakt.oPchRequestor.getStatus(ipPch, 10)
                 pchtrakt.StopTrying = 1
         myMedia.parsedInfo = None
-        with open('cache.json','w') as f:
-            json.dump(pchtrakt.dictSerie, f, separators=(',',':'), indent=4)
+        #with open('cache.json','w') as f:
+        #    json.dump(pchtrakt.dictSerie, f, separators=(',',':'), indent=4)
     #if pchtrakt.online and (myMedia.parsedInfo.id == '0' or myMedia.parsedInfo.year == '0'):
     #    myMedia.parsedInfo = None
     #    with open('cache.json','w') as f:
@@ -294,11 +294,11 @@ if __name__ == '__main__':
     getParams()
     if pchtrakt.DAEMON:
         daemonize()
-    if os.path.isfile('cache.json'):
-        with open('cache.json','r+') as f:
-            pchtrakt.dictSerie = json.load(f)
-    else:
-        pchtrakt.dictSerie = {}
+    #if os.path.isfile('cache.json'):
+    #    with open('cache.json','r+') as f:
+    #        pchtrakt.dictSerie = json.load(f)
+    #else:
+    #    pchtrakt.dictSerie = {}
 
     #Get model
     pchtrakt.chip = os.popen('gbus_read_uint32 0x0002fee8').read()[-5:-1]

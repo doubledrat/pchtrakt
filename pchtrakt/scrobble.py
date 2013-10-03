@@ -143,11 +143,11 @@ def movieStillRunning(myMedia):
 def showIsEnding(myMedia):
     if BetaSeriesScrobbleTvShow:
         result = 0
-        serieXml = bs.getSerieUrl(myMedia.parsedInfo.name)
+        serieXml = bs.getSerieUrl(myMedia.parsedInfo.id, myMedia.parsedInfo.name)
         token = bs.getToken()
         isWatched = bs.isEpisodeWatched(serieXml,token,myMedia.parsedInfo.season_number,myMedia.parsedInfo.episode_numbers[myMedia.idxEpisode])
-        Debug('(BetaSeries) Is episode watched: {0}'.format(isWatched))
-        msg = '(BetaSeries) Video is '
+        Debug('[BetaSAPI] Is episode watched: {0}'.format(isWatched))
+        msg = ' [BetaSAPI] Video is '
         if not isWatched:
             result = bs.scrobbleEpisode(serieXml
                                                 ,token,
@@ -167,10 +167,6 @@ def showIsEnding(myMedia):
 
         else:
             myMedia.ScrobResult |= EnumScrobbleResult.BETASERIESOK
-    #except BetaSerieAuthenticationException as e:
-    #    Debug(e)
-    #except Exception as e:
-    #   Debug(e)
     if TraktScrobbleTvShow:
         Debug("[traktAPI] Tv Show is ending")
         result = 0

@@ -12,7 +12,7 @@ login = BetaSeriesUsername
 pwdmd5 = md5(BetaSeriesPwd).hexdigest()
 
 BETASERIE_API = 'C244D9326837'
-BetaSerieUrl = 'http://api.betaseries.com/#path#?key={0}'.format(BETASERIE_API)
+BetaSerieUrl = 'http://api.betaseries.com/#path#?key={0}'.format(BETASERIE_API) + '&V=2.1'
 
 def getUrl(myPath):
     return BetaSerieUrl.replace('#path#', myPath)
@@ -26,21 +26,26 @@ def destroyToken(Token):
     else:
         return oXml.find('errors/error/content').text
 
-def getSerieUrl(SerieName):
-    if 'Betaseries' not in cacheSerie.dictSerie[SerieName].keys():
-        quotedSerieName = quote(SerieName)
-        url = getUrl('shows/search.json') + '&title={0}'.format(quotedSerieName)
-        oResponse = urlopen(url)
-        myJson = json.loads(oResponse.read())
-        myKey= '0'
-        for key, subdict in myJson['root']['shows'].iteritems():
-            if (subdict['title'] == SerieName):
-                myKey = key
-                break
-        myUrl = myJson['root']['shows'][myKey]['url']
+def getSerieUrl(id,SerieName):
+    if 'Betaseries' not in pchtrakt.dictSerie[SerieName].keys():
+        #quotedSerieName = quote(SerieName)
+        #url = getUrl('shows/search.json') + '&title={0}'.format(quotedSerieName)
+        #oResponse = urlopen(url)
+        #myJson = json.loads(oResponse.read())
+        #myKey= '0'
+        #for key, subdict in myJson['root']['shows'].iteritems():
+        #    if (subdict['title'] == SerieName):
+        #        myKey = key
+        #        break
+        searchurl = 'http://api.betaseries.com/shows/display/' + id + '.xml?key=' + BETASERIE_API
+        #dom = minidom.parse(urlopen(searchurl))
+        oXml = ElementTree.parse(urlopen(searchurl))
+        myUrl = oXml.find( 'show/url').text
+        #myUrl = url.nodeValue
+        #myUrl = myJson['root']['shows'][myKey]['url']
         pchtrakt.dictSerie[SerieName]['Betaseries'] = myUrl
         with open('cache.json','w') as f:
-            json.dump(cacheSerie.dictSerie, f, separators=(',',':'), indent=4)
+            json.dump(pchtrakt.dictSerie, f, separators=(',',':'), indent=4)
     else:
         myUrl = pchtrakt.dictSerie[SerieName]['Betaseries']
     return quote('{0}.xml'.format(myUrl))

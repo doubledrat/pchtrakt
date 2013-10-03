@@ -36,10 +36,10 @@ except socket.gaierror:
 
 config = ConfigParser.RawConfigParser()
 
-class cacheSerie: #Errkk... need to change this
-    pass
+#class cacheSerie: #Errkk... need to change this
+#    pass
+#pchtrakt.dictSerie = {}
 
-cacheSerie.dictSerie = {}
 if isfile('.git/ORIG_HEAD'):
     with open('.git/ORIG_HEAD', 'r') as f:
         PchTraktVersion = f.readline().split('\n', 1)[0]
@@ -53,11 +53,12 @@ else:
 if isfile('cache.json'):
     with open('cache.json','r+') as f:
         try:
-            cacheSerie.dictSerie = json.load(f)
+            pchtrakt.dictSerie = json.load(f)
         except:
+            pchtrakt.dictSerie = {}
             pass
 else:
-    cacheSerie.dictSerie = {}
+    pchtrakt.dictSerie = {}
 
 #PchTrakt
 config.read(pchtrakt.config_file)
