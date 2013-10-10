@@ -45,7 +45,7 @@ from pchtrakt import mediaparser as mp
 from time import sleep, time
 from lib.tvdb_api import tvdb_api
 from lib.tvdb_api import tvdb_exceptions
-from lib.utilities import Debug, checkSettings, OversightSync
+from lib.utilities import Debug, checkSettings, OversightSync, startWait
 from xml.etree import ElementTree
 #from urllib2 import URLError, HTTPError#Request, urlopen, URLError, HTTPError
 #from datetime import date

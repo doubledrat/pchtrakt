@@ -1046,7 +1046,7 @@ def trakt_api(method, url, params={}, passVersions=False):
                     #stopTrying()
                     pchtrakt.logger.error('[traktAPI] Login or password incorrect')
                     sleep(60)
-                    #startWait()
+                    startWait()
                 elif e.code == 503:  # server busy problem
                     #stopTrying()
                     pchtrakt.logger.error('[traktAPI] trakt.tv server is busy')
@@ -1056,12 +1056,12 @@ def trakt_api(method, url, params={}, passVersions=False):
                     #stopTrying()
                     pchtrakt.logger.error('[traktAPI] Item not found on trakt.tv')
                     sleep(60)
-                    #startWait()
+                    startWait()
                 elif e.code == 403:  # Forbidden on trakt.tv
                     #stopTrying()
                     pchtrakt.logger.error('[traktAPI] Item not found on trakt.tv')
                     sleep(60)
-                    #startWait()
+                    startWait()
                 elif e.code == 502:  # Bad Gateway
                     #stopTrying()
                     pchtrakt.logger.warning('[traktAPI] Bad Gateway')
@@ -1093,6 +1093,10 @@ def trakt_api(method, url, params={}, passVersions=False):
                 #scrobbleMissed()
                 response = {'status': 'success', 'message': 'movies per hour limit reached - added item to off-line list'}
                 return response
+            if response['error'] == 'episode must be > 0':
+                startWait(response['error'])
+                #response = {'status': 'success', 'message': 'episode must be > 0'}
+                exit
             #raise MaxScrobbleError()
             #if returnStatus:#do something with this?#Error: scrobbled White House Down (2013) already
             #    return data;
@@ -1134,6 +1138,23 @@ def yamj3JsonRequest(url):
             #raise MaxScrobbleError()
             return None
     return data
+
+def startWait(msg=''):
+    if msg != '':
+        pchtrakt.logger.info(' [Pchtrakt] waiting for file to stop as %s' % msg)
+    else:
+        pchtrakt.logger.info(' [Pchtrakt] waiting for file to stop as somthing is wrong with file name')
+    waitforstop = pchtrakt.oPchRequestor.getStatus(ipPch, 10)
+    pchtrakt.StopTrying = 1#pchtrakt.StopTrying = 0
+    while waitforstop.status != 'noplay':
+        sleep(sleepTime)
+        waitforstop = pchtrakt.oPchRequestor.getStatus(ipPch, 10)
+        #pchtrakt.StopTrying = 1
+        if YamjWatched == True and not pchtrakt.watched and waitforstop.percent > watched_percent and pchtrakt.CreatedFile == 0:
+            try:
+                watchedFileCreation(myMedia)
+            except BaseException as e:
+                pchtrakt.logger.error(e)
 
 # get movies from trakt server
 def getMoviesFromTrakt(daemon=False):
