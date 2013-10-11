@@ -1006,11 +1006,11 @@ def trakt_api(method, url, params={}, passVersions=False):
     Debug("[traktAPI] Request URL '%s'" % (url))
     url = url.replace("%%API_KEY%%", apikey)
     if passVersions:
-            # check if plugin version needs to be passed
-            params['plugin_version'] = PchTraktVersion[-4:]#0  # __settings__.getAddonInfo("version")
-            params['media_center'] = 'Popcorn Hour ' + pchtrakt.chip
-            params['media_center_version'] = 0
-            params['media_center_date'] = '10/01/2012' 
+        # check if plugin version needs to be passed
+        params['plugin_version'] = PchTraktVersion[-4:]#0  # __settings__.getAddonInfo("version")
+        params['media_center'] = 'Popcorn Hour ' + pchtrakt.chip
+        params['media_center_version'] = 0
+        params['media_center_date'] = '10/01/2012' 
     params = json.JSONEncoder().encode(params)
     request = Request(url, params)
     Debug("[traktAPI] Request URL '%s'" % (url+params))
@@ -1027,7 +1027,7 @@ def trakt_api(method, url, params={}, passVersions=False):
                 break
             else:
                 msg = ('[BadStatusLine] ' \
-                '{0} '.format(pchtrakt.lastPath))
+				'{0} '.format(pchtrakt.lastPath))
                 pchtrakt.logger.warning(msg)
                 pchtrakt.logger.warning('[traktAPI] BadStatusLine')
                 retries =+ 1
@@ -1069,14 +1069,15 @@ def trakt_api(method, url, params={}, passVersions=False):
                     continue
                     #pass
         break
+
+    if response is None:
+        Debug("[traktAPI] JSON Request failed, data is empty.")
+        return None
+
     if pchtrakt.online == 1:
         response = json.JSONDecoder().decode(response)
     else:
         response = '{"status": "success", "message": "Off-line scrobble"}'
-    
-    if response is None:
-        Debug("[traktAPI] JSON Request failed, data is empty.")
-        return None
     
     if 'status' in response:
         if response['status'] == 'failure':
@@ -1097,9 +1098,6 @@ def trakt_api(method, url, params={}, passVersions=False):
                 startWait(response['error'])
                 #response = {'status': 'success', 'message': 'episode must be > 0'}
                 exit
-            #raise MaxScrobbleError()
-            #if returnStatus:#do something with this?#Error: scrobbled White House Down (2013) already
-            #    return data;
             return None
     return response
 
