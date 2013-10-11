@@ -31,5 +31,4 @@ scripts_install/TEST
 Zip.sh
 
 appinfo.json
-daemon.sh
 setup.sh
