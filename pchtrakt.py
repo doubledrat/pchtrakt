@@ -262,18 +262,23 @@ def stopTrying():
     except Exception as e:
         pass
 
-def startWait():
-	pchtrakt.StopTrying = 1#pchtrakt.StopTrying = 0
-	while myMedia.oStatus.status != EnumStatus.NOPLAY:
-		sleep(sleepTime)
-		myMedia.oStatus = pchtrakt.oPchRequestor.getStatus(ipPch, 10)
-		#pchtrakt.StopTrying = 1
-		if YamjWatched == True and not pchtrakt.watched and myMedia.oStatus.percent > watched_percent and pchtrakt.CreatedFile == 0:
-			try:
-				watchedFileCreation(myMedia)
-			except BaseException as e:
-				pchtrakt.logger.error(e)
-	videoStopped()
+def startWait(msg=''):
+    if msg != '':
+        pchtrakt.logger.info(' [Pchtrakt] waiting for file to stop as %s' % msg)
+    else:
+        pchtrakt.logger.info(' [Pchtrakt] waiting for file to stop as somthing is wrong with file name')
+    waitforstop = pchtrakt.oPchRequestor.getStatus(ipPch, 10)
+    pchtrakt.StopTrying = 1#pchtrakt.StopTrying = 0
+    while waitforstop.status != 'noplay':
+        sleep(sleepTime)
+        waitforstop = pchtrakt.oPchRequestor.getStatus(ipPch, 10)
+        #pchtrakt.StopTrying = 1
+        if YamjWatched == True and not pchtrakt.watched and waitforstop.percent > watched_percent and pchtrakt.CreatedFile == 0:
+            try:
+                watchedFileCreation(myMedia)
+            except BaseException as e:
+                pchtrakt.logger.error(e)
+    videoStopped()
 
 def starttvdbWait():
     if pchtrakt.online:
@@ -289,6 +294,44 @@ def starttvdbWait():
                     except BaseException as e:
                         pchtrakt.logger.error(e)
             #videoStopped()
+
+def StartUP():
+    if pchtrakt.online:
+        checkUpdate('first')
+        OversightSync()
+        if os.path.isfile('missed.scrobbles'):
+            pchtrakt.logger.info(' [Pchtrakt] Found missed scrobbles, updating trakt.tv')
+            with open('missed.scrobbles','r+') as f:
+                pchtrakt.missed = json.load(f)
+            new_list = {}
+            for xname in pchtrakt.missed:
+                pchtrakt.logger.info(u' [Pchtrakt] marking %s watched on trakt.tv' % xname.split('/')[::-1][0])
+                myMedia.parsedInfo = pchtrakt.mediaparser.parse(xname.split('/')[::-1][0])
+                myMedia.idxEpisode = 0
+                myMedia.ScrobResult = 0
+                myMedia.oStatus = PchStatus()
+                myMedia.oStatus.totalTime = pchtrakt.missed[xname]['Totaltime']
+                myMedia.oStatus.percent = 100
+                if isinstance(myMedia.parsedInfo,mp.MediaParserResultTVShow):
+                    pchtrakt.watched = showIsSeen(myMedia, pchtrakt.missed[xname]['Totallength'])
+                elif isinstance(myMedia.parsedInfo,mp.MediaParserResultMovie):
+                    pchtrakt.watched = movieIsSeen(myMedia, pchtrakt.missed[xname]['Totallength'])#movieIsEnding(myMedia)
+                if not pchtrakt.watched:
+                    pchtrakt.logger.info(u' [traktAPI]  %s was NOT marked as watched on trakt.tv' % xname.split('/')[::-1][0])
+                    new_list[xname]={"Totaltime": int(pchtrakt.missed[xname]['Totaltime']), "Totallength": int(pchtrakt.missed[xname]['Totallength'])}
+            if new_list != {}:
+                with open('missed.scrobbles','w') as f:
+                    json.dump(new_list, f, separators=(',',':'), indent=4)
+            else:
+                os.remove('missed.scrobbles')
+    else:
+        pchtrakt.logger.info(' [Pchtrakt] Pchtrakt START version = ' + PchTraktVersion[-4:] + ' Millers Mods (' + pchtrakt.chip + ' version)')
+        pchtrakt.logger.info(' [Pchtrakt] No internet - can not check for updates')
+        pchtrakt.logger.info(' [Pchtrakt] .watched files will be created but no xml updating or track.tv scrobbles will happen.')
+        pchtrakt.logger.info(' [Pchtrakt] track.tv scrobbles will be saved and processed when next on-line.')
+    pchtrakt.logger.info(' [Pchtrakt] Waiting for a file to start.....')
+    pchtrakt.Started = time()
+    pchtrakt.Started2 = pchtrakt.Started
 
 if __name__ == '__main__':
     getParams()
@@ -315,154 +358,75 @@ if __name__ == '__main__':
         #Check version and update if needed
         #gitproc = Popen(['git', 'ls-remote'], stdout = PIPE)
         #(stdout, stderr) = gitproc.communicate()
-    try:
-        if pchtrakt.online:
-            checkUpdate('first')
-            OversightSync()
-            if os.path.isfile('missed.scrobbles'):
-                pchtrakt.logger.info(' [Pchtrakt] Found missed scrobbles, updating trakt.tv')
-                with open('missed.scrobbles','r+') as f:
-                    pchtrakt.missed = json.load(f)
-                new_list = {}
-                for xname in pchtrakt.missed:
-                    pchtrakt.logger.info(u' [Pchtrakt] marking %s watched on trakt.tv' % xname.split('/')[::-1][0])
-                    myMedia.parsedInfo = pchtrakt.mediaparser.parse(xname.split('/')[::-1][0])
-                    myMedia.idxEpisode = 0
-                    myMedia.ScrobResult = 0
-                    myMedia.oStatus = PchStatus()
-                    myMedia.oStatus.totalTime = pchtrakt.missed[xname]['Totaltime']
-                    myMedia.oStatus.percent = 100
-                    if isinstance(myMedia.parsedInfo,mp.MediaParserResultTVShow):
-                        pchtrakt.watched = showIsSeen(myMedia, pchtrakt.missed[xname]['Totallength'])
-                    elif isinstance(myMedia.parsedInfo,mp.MediaParserResultMovie):
-                        pchtrakt.watched = movieIsSeen(myMedia, pchtrakt.missed[xname]['Totallength'])#movieIsEnding(myMedia)
-                    if not pchtrakt.watched:
-                        pchtrakt.logger.info(u' [traktAPI]  %s was NOT marked as watched on trakt.tv' % xname.split('/')[::-1][0])
-                        new_list[xname]={"Totaltime": int(pchtrakt.missed[xname]['Totaltime']), "Totallength": int(pchtrakt.missed[xname]['Totallength'])}
-                if new_list != {}:
-                    with open('missed.scrobbles','w') as f:
-                        json.dump(new_list, f, separators=(',',':'), indent=4)
-                else:
-                    os.remove('missed.scrobbles')
-        else:
-            pchtrakt.logger.info(' [Pchtrakt] Pchtrakt START version = ' + PchTraktVersion[-4:] + ' Millers Mods (' + pchtrakt.chip + ' version)')
-            pchtrakt.logger.info(' [Pchtrakt] No internet - can not check for updates')
-            pchtrakt.logger.info(' [Pchtrakt] .watched files will be created but no xml updating or track.tv scrobbles will happen.')
-            pchtrakt.logger.info(' [Pchtrakt] track.tv scrobbles will be saved and processed when next on-line.')
-        pchtrakt.logger.info(' [Pchtrakt] Waiting for a file to start.....')
-        pchtrakt.Started = time()
-        pchtrakt.Started2 = pchtrakt.Started
     
-    #Main routine
-        while not pchtrakt.stop:
-            doWork()
+    #Main Routine
+    FirstRun = 0
+    while not pchtrakt.stop:
+        try:
+            if FirstRun == 0:
+                StartUP()
+                FirstRun = 1
+            else:
+                doWork()
+                sleep(sleepTime)
+                if myMedia.oStatus.status == EnumStatus.NOPLAY:
+                    if float(time()) > float(pchtrakt.Started+AutoUpdate) and AutoUpdate > 0:
+                        checkUpdate('no')
+                        pchtrakt.Started = time()
+                    if float(time()) > float(pchtrakt.Started2+SyncCheck) and SyncCheck > 0:
+                        OversightSync()
+                        pchtrakt.Started2 = time()
+        except tvdb_exceptions.tvdb_shownotfound as e:
+            stopTrying()
+            msg = ('[The TvDB] The show was not found ' \
+            '{0} '.format(pchtrakt.lastPath))
+            pchtrakt.logger.warning(msg)
+            startWait('The show was not found')
+            sys.exc_clear()
+            pass
+        except tvdb_exceptions.tvdb_error, e:
+            stopTrying()
+            pchtrakt.logger.error('[The TvDB] Site apears to be down')
+            starttvdbWait()
+        except MovieResultNotFound as e:
+            stopTrying()
+            msg = '[Pchtrakt] Unable to find match for file - {0}'.format(e.file_name)
+            pchtrakt.logger.warning(msg)
+            startWait()
+        except PchTraktException as e:
+            stopTrying()
+            msg = '[Pchtrakt] PchTraktException - {0}'.format(e)
+            pchtrakt.logger.error(msg)
             sleep(sleepTime)
-            if myMedia.oStatus.status == EnumStatus.NOPLAY:
-                if float(time()) > float(pchtrakt.Started+AutoUpdate) and AutoUpdate > 0:
-                    checkUpdate('no')
-                    pchtrakt.Started = time()
-                if float(time()) > float(pchtrakt.Started2+SyncCheck) and SyncCheck > 0:
-                    OversightSync()
-                    pchtrakt.Started2 = time()
-
-    #Error routine
-    except BetaSerieAuthenticationException as e:
-        Debug(e)
-    except BadStatusLine, e:
-        msg = ('[BadStatusLine] ' \
-        '{0} '.format(pchtrakt.lastPath))
-        pchtrakt.logger.warning(msg)
-        sleep(15)
-        os.system("./daemon.sh restart")
-    except HTTPError as e:
-        if hasattr(e, 'code'):  # error 401 or 503, possibly others
-            # read the error document, strip newlines, this will make an html page 1 line
-            error_data = e.read().replace("\n", "").replace("\r", "")
-            if e.code == 401:  # authentication problem
-                stopTrying()
-                pchtrakt.logger.error('[traktAPI] Login or password incorrect')
-                sleep(sleepTime)
-                startWait()
-            elif e.code == 503:  # server busy problem
-                #stopTrying()
-                pchtrakt.logger.error('[traktAPI] trakt.tv server is busy')
-                sleep(sleepTime)
-                #startWait()
-                pchtrakt.online = 0
-            elif e.code == 404:  # Not found on trakt.tv
-                stopTrying()
-                pchtrakt.logger.error('[traktAPI] Item not found on trakt.tv')
-                sleep(sleepTime)
-                startWait()
-            elif e.code == 403:  # Forbidden on trakt.tv
-                stopTrying()
-                pchtrakt.logger.error('[traktAPI] Item not found on trakt.tv')
-                sleep(sleepTime)
-                startWait()
-            elif e.code == 502:  # Bad Gateway
-                stopTrying()
-                pchtrakt.logger.warning('[traktAPI] Bad Gateway')
-                #sleep(sleepTime)
-                #os.system("./daemon.sh restart")
-                os.system("rm /tmp/dns_cache")
-                sleep(60)
-                pass
-
-
-        #stopTrying()
-        #msg = ('[The TvDB] Show not found ' \
-        #'{0} '.format(pchtrakt.lastPath))
-        #pchtrakt.logger.warning(msg)
-        #startWait()
-    except tvdb_exceptions.tvdb_shownotfound as e:
-        stopTrying()
-        msg = ('[The TvDB] Show not found ' \
-        '{0} '.format(pchtrakt.lastPath))
-        pchtrakt.logger.warning(msg)
-        startWait()
-    except tvdb_exceptions.tvdb_error, e:
-        stopTrying()
-        pchtrakt.logger.error('[The TvDB] Site apears to be down:::')
-        starttvdbWait()
-    except MovieResultNotFound as e:
-        stopTrying()
-        msg = '[Pchtrakt] Unable to find match for file - {0}'.format(e.file_name)
-        pchtrakt.logger.warning(msg)
-        startWait()
-    except PchTraktException as e:
-        stopTrying()
-        msg = '[Pchtrakt] PchTraktException - {0}'.format(e)
-        pchtrakt.logger.error(msg)
-        sleep(sleepTime)
-    except BetaSerieAuthenticationException as e:
-        pchtrakt.logger.error(e)
-    except IOError, e:
-         if hasattr(e, 'reason'):
-             if e.reason == 'Unauthorized':
-                stopTrying()
-                pchtrakt.logger.error('[traktAPI] Login or password incorrect')
-                #sleep(sleepTime)
-                startWait()
-             else:
-                pchtrakt.logger.error('Reason: %s ' % (e.reason))
-         elif hasattr(e, 'code'):
-             pchtrakt.logger.error('Error code: %s' % (e.code))
-    except ValueError as e:
-        pchtrakt.logger.error('[traktAPI] Problem with trakt.tv site  - {0}'.format(e))
-        #pchtrakt.stop = 1
-        #videoStopped()
-    except AttributeError as e:
-        if pchtrakt.online:
-            Debug('[Pchtrakt] ID not found will retry in 60 seconds  - {0}'.format(e))
-            while not (hasattr(myMedia.parsedInfo, 'id')) and myMedia.oStatus.status == EnumStatus.PLAY:
-                sleep(15)
-                myMedia.parsedInfo = pchtrakt.mediaparser.parse(myMedia.oStatus.fileName)
-                myMedia.oStatus = pchtrakt.oPchRequestor.getStatus(ipPch, 10)
-                Debug('[Pchtrakt] ID not found will retry in 60 seconds')
-            videoStatusHandleMovie(myMedia)
-        #else:
-        #    Debug('[Pchtrakt] not on-line bla bla bla')
-    except Exception as e:
+        except BetaSerieAuthenticationException as e:
+            pchtrakt.logger.error(e)
+        except IOError, e:
+             if hasattr(e, 'reason'):
+                 if e.reason == 'Unauthorized':
+                    stopTrying()
+                    pchtrakt.logger.error('[traktAPI] Login or password incorrect')
+                    #sleep(sleepTime)
+                    startWait()
+                 else:
+                    pchtrakt.logger.error('Reason: %s ' % (e.reason))
+             elif hasattr(e, 'code'):
+                 pchtrakt.logger.error('Error code: %s' % (e.code))
+        except ValueError as e:
+            pchtrakt.logger.error('[traktAPI] Problem with trakt.tv site  - {0}'.format(e))
+            #pchtrakt.stop = 1
+            #videoStopped()
+        except AttributeError as e:
+            if pchtrakt.online:
+                Debug('[Pchtrakt] ID not found will retry in 60 seconds  - {0}'.format(e))
+                while not (hasattr(myMedia.parsedInfo, 'id')) and myMedia.oStatus.status == EnumStatus.PLAY:
+                    sleep(15)
+                    myMedia.parsedInfo = pchtrakt.mediaparser.parse(myMedia.oStatus.fileName)
+                    myMedia.oStatus = pchtrakt.oPchRequestor.getStatus(ipPch, 10)
+                    Debug('[Pchtrakt] ID not found will retry in 60 seconds')
+                videoStatusHandleMovie(myMedia)
+            #else:
+            #    Debug('[Pchtrakt] not on-line bla bla bla')
+        except Exception as e:
     #    if hasattr(e, 'code'):  # error 401 or 503, possibly others
     #        # read the error document, strip newlines, this will make an html page 1 line
     #        error_data = e.read().replace("\n", "").replace("\r", "")
@@ -491,32 +455,33 @@ if __name__ == '__main__':
     #            pchtrakt.logger.error('[traktAPI] Bad Gateway')
     #            sleep(sleepTime)
     #            startWait()
-        if hasattr(e, 'message'):  # error 401 or 503, possibly others
-            if e.message == "global name 'NotFoundError' is not defined":
-                msg = '[traktAPI] Unable to find match for file - {0}'.format(pchtrakt.lastName)
-                pchtrakt.logger.warning(msg)
-                startWait()
-                #pass
+            if hasattr(e, 'message'):  # error 401 or 503, possibly others
+                if e.message == "global name 'NotFoundError' is not defined":
+                    msg = '[traktAPI] Unable to find match for file - {0}'.format(pchtrakt.lastName)
+                    pchtrakt.logger.warning(msg)
+                    startWait()
+                    #pass
             #elif e.message == "global name 'MaxScrobbleError' is not defined":
             #    pchtrakt.logger.warning('[traktAPI] ScrobbleError to many scrobbles in an hour')
             #    startWait()
             #    #passMaxScrobbleError
+                else:
+                   stopTrying()
+                   #Debug(u'::: {0} :::'.format(pchtrakt.lastPath))
+                   #Debug(u'::: {0} :::'.format(e))
+                   pchtrakt.logger.exception('This should never happend! Please contact me with the error if you read this')
+                   pchtrakt.logger.exception(pchtrakt.lastPath)
+                   pchtrakt.logger.exception(e.message)
+                   startWait()
             else:
                 stopTrying()
                 #Debug(u'::: {0} :::'.format(pchtrakt.lastPath))
                 #Debug(u'::: {0} :::'.format(e))
                 pchtrakt.logger.exception('This should never happend! Please contact me with the error if you read this')
                 pchtrakt.logger.exception(pchtrakt.lastPath)
-                pchtrakt.logger.exception(e.message)
+                pchtrakt.logger.exception(e)
                 startWait()
-        else:
-            stopTrying()
-            #Debug(u'::: {0} :::'.format(pchtrakt.lastPath))
-            #Debug(u'::: {0} :::'.format(e))
-            pchtrakt.logger.exception('This should never happend! Please contact me with the error if you read this')
-            pchtrakt.logger.exception(pchtrakt.lastPath)
-            pchtrakt.logger.exception(e)
-            startWait()
-            #pass
+                #pass
+
     pchtrakt.logger.info(' [Pchtrakt]  STOP')
     #fix Bad Gateway error, where it stays in loop

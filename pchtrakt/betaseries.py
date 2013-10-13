@@ -69,21 +69,26 @@ def scrobbleEpisode(SerieXml,Token,Saison,Episode):
                                                 Token)
     oResponse = urlopen(url)
     oXml = ElementTree.XML(oResponse.read())
-    
-    if oXml.find("code").text == '1':
-        return True
+    CheckErrors = oXml.find("errors/error/content")
+    if CheckErrors is None:
+        if oXml.find("code").text == '1':
+            return True
+        else:
+            return False 
     else:
-        return False 
-        #todo(jlauwers) error message
+        pchtrakt.logger.info(' [BetaSAPI] %s' % oXml.find("errors/error/content").text)
+        return True#oXml.find("errors/error/content").text
 
 def addShow(SerieXml,Token):
     url = getUrl('shows/add/{0}'.format(SerieXml)) + '&token={0}'.format(Token)
     oResponse = urlopen(url)
     oXml = ElementTree.XML(oResponse.read())
     if oXml.find("code").text == '1':
+        pchtrakt.logger.info(' [BetaSAPI] Show added')
         return True
     else:
-        return oXml.find("errors/error/content").text
+        pchtrakt.logger.info(' [BetaSAPI] %s' % oXml.find("errors/error/content").text)
+        return True#oXml.find("errors/error/content").text
 
 def isEpisodeWatched(SerieXml,Token,Saison,Episode):
     addShow(SerieXml,Token)
@@ -91,7 +96,12 @@ def isEpisodeWatched(SerieXml,Token,Saison,Episode):
     url += '&token={0}&season={1}&episode={2}'.format(Token,Saison,Episode)
     oResponse = urlopen(url)
     oXml = ElementTree.XML(oResponse.read())
-    if oXml.find("seasons/season/episodes/episode/has_seen").text == '1':
-        return True
+    CheckErrors = oXml.find("errors/error/content")
+    if CheckErrors is None:
+        if oXml.find("seasons/season/episodes/episode/has_seen").text == '1':
+            return True
+        else:
+            return False
     else:
         return False
+
