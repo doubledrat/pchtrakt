@@ -70,6 +70,17 @@ def newConfig():
     if not config.has_option('BetaSeries','password'):
         config.set('BetaSeries', 'password', 'your_password')
 
+    if not config.has_section('Last.fm'):
+        config.add_section('Last.fm')
+    if not config.has_option('Last.fm','enable_now_playing'):
+        config.set('Last.fm', 'enable_now_playing', False)
+    if not config.has_option('Last.fm','enable_scrobbling'):
+        config.set('Last.fm', 'enable_scrobbling', False)
+    if not config.has_option('Last.fm','login'):
+        config.set('Last.fm', 'login', 'your_login')
+    if not config.has_option('Last.fm','password'):
+        config.set('Last.fm', 'password', 'your_password')
+
     if not config.has_section('YAMJ'):
         config.add_section('YAMJ')
     if not config.has_option('YAMJ','watched'):

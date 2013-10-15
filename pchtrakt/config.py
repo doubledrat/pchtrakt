@@ -92,6 +92,12 @@ BetaSeriesUsername = config.get('BetaSeries', 'login')
 BetaSeriesPwd = config.get('BetaSeries', 'password')
 BetaSeriesScrobbleTvShow = config.getboolean('BetaSeries', 'enable_tvshow_scrobbling')
 
+# Last.fm
+LastfmUsername = config.get('Last.fm', 'login')
+LastfmPwd = config.get('Last.fm', 'password')
+LastfmNowPlaying = config.getboolean('Last.fm', 'enable_now_playing')
+LastfmScrobble = config.getboolean('Last.fm', 'enable_scrobbling')
+
 #YAMJ
 YamjWatchedPath = config.get('YAMJ', 'watched_path')
 if not YamjWatchedPath.endswith('/'):

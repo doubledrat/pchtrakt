@@ -44,6 +44,9 @@ class PchStatus:
         self.mediaType = ""
         self.currentChapter = 0 # For Blu-ray Disc only
         self.totalChapter = 0 # For Blu-ray Disc only
+        self.artist = ""
+        self.title = ""
+        self.album = ""
         self.error = None
 
 class PchRequestor:
@@ -107,6 +110,50 @@ class PchRequestor:
         oPchStatus = PchStatus()
         try:
             oResponse = urlopen("http://" + ip + ":8008/playback?arg0=get_current_vod_info",None,timeout)
+            oPchStatus = self.parseResponse(oResponse.readlines()[0])
+        except HTTPError, e:
+            oPchStatus.error = e
+            oPchStatus.status = EnumStatus.UNKNOWN
+            #Debug("Fail to contact server : " + unicode(e.reason))
+        except URLError, e:
+            oPchStatus.error = e
+            oPchStatus.status = EnumStatus.UNKNOWN
+            #Debug("Fail to contact server : " + unicode(e.reason))
+        return oPchStatus
+
+class PchMusicRequestor:
+    def parseResponse(self, response):
+        oPchStatus = PchStatus()
+        try:
+            oXml = ElementTree.fromstring(response)
+            if oXml.tag == "theDavidBox": # theDavidBox should be the root
+                if oXml.find("returnValue").text == '0' and oXml.find("response/fullPath").text != "/cdrom"  and int(oXml.find("response/totalTime").text) > 30:#Added total time check to avoid scrobble while playing adverts/trailers
+                    if oXml.find("response/mediatype")!= None:
+                        oPchStatus.artist = oXml.find("response/artist").text
+                        oPchStatus.title = oXml.find("response/title").text
+                        oPchStatus.album = oXml.find("response/album").text
+                        oPchStatus.totalTime = int(oXml.find("response/totalTime").text)
+                        oPchStatus.status = oXml.find("response/currentStatus").text
+                        oPchStatus.fullPath = oXml.find("response/fullPath").text
+                        oPchStatus.currentTime = int(oXml.find("response/currentTime").text)
+                        lowerpath = oXml.find("response/fullPath").text.split('/')[::-1][0].lower()
+                        if oPchStatus.totalTime!=0:
+                            oPchStatus.percent = int(math.ceil(float(oPchStatus.currentTime) / float(oPchStatus.totalTime) * 100.0))
+                    else:
+                        oPchStatus.status=EnumStatus.NOPLAY
+            else:
+                oPchStatus.status = EnumStatus.UNKNOWN
+        except ElementTree.ParseError, e:
+            oPchStatus.error = e
+            oPchStatus.status = EnumStatus.UNKNOWN
+        #if oPchStatus.artist == '':
+        #    EnumStatus.NOPLAY
+        return oPchStatus
+
+    def getStatus(self,ip,timeout=10.0):
+        oPchStatus = PchStatus()
+        try:
+            oResponse = urlopen("http://" + ip + ":8008/playback?arg0=get_current_aod_info",None,timeout)
             oPchStatus = self.parseResponse(oResponse.readlines()[0])
         except HTTPError, e:
             oPchStatus.error = e

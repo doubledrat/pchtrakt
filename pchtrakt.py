@@ -46,6 +46,7 @@ from time import sleep, time
 from lib.tvdb_api import tvdb_api
 from lib.tvdb_api import tvdb_exceptions
 from lib.utilities import Debug, checkSettings, OversightSync, startWait
+from lib import pylast
 from xml.etree import ElementTree
 #from urllib2 import URLError, HTTPError#Request, urlopen, URLError, HTTPError
 #from datetime import date
@@ -66,6 +67,7 @@ class PchTraktException(Exception):
 
 tvdb = tvdb_api.Tvdb()
 pchtrakt.oPchRequestor = PchRequestor()
+pchtrakt.oPchMusicRequestor = PchMusicRequestor()
 pchtrakt.mediaparser = mp.MediaParser()
 
 
@@ -187,7 +189,30 @@ def doWork():
     myMedia.ScrobResult = 0
     #pchtrakt.StopTrying = 0
     myMedia.oStatus = pchtrakt.oPchRequestor.getStatus(ipPch, 10)
-    #if pchtrakt.lastPath != myMedia.oStatus.fullPath:# and myMedia.oStatus.status == EnumStatus.PLAY:
+    if myMedia.oStatus.status == EnumStatus.NOPLAY and (LastfmNowPlaying is True or LastfmScrobble is True):
+        #sleep(2)
+        myMedia.oStatus = pchtrakt.oPchMusicRequestor.getStatus(ipPch, 10)
+        if myMedia.oStatus.status == EnumStatus.PLAY:
+            pchtrakt.logger.info(' [Pchtrakt] Music found playing')
+            network = ''
+            LastScrobble = 0
+            while myMedia.oStatus.status != EnumStatus.NOPLAY:
+                if network == '':
+                    network = pylast.LastFMNetwork(api_key = "e43fb2fa81a6d8fa85b9e630c90bdf27", api_secret = 
+                                                   "c51b8c3fa4b6b5b61cdfe59775b59c07", username = LastfmUsername, password_hash = pylast.md5(LastfmPwd))
+                if LastfmNowPlaying is True and (pchtrakt.lastPath != myMedia.oStatus.fullPath and myMedia.oStatus.artist != ''):
+                    #pchtrakt.logger.info(' [ Last.fm] try to do Now playing %s - %s '% (myMedia.oStatus.artist, myMedia.oStatus.title))
+                    network.update_now_playing(myMedia.oStatus.artist, myMedia.oStatus.title, duration = int(myMedia.oStatus.totalTime - myMedia.oStatus.currentTime))
+                    pchtrakt.lastPath = myMedia.oStatus.fullPath
+                    LastScrobble = 0
+                    pchtrakt.logger.info('  [Last.fm] Now playing %s - %s '% (myMedia.oStatus.artist, myMedia.oStatus.title))
+                if LastfmScrobble is True and LastScrobble == 0:
+                    if myMedia.oStatus.percent > watched_percent:
+                        network.scrobble(myMedia.oStatus.artist, myMedia.oStatus.title, int(time()))
+                        LastScrobble = 1
+                        pchtrakt.logger.info(' [ Last.fm] Scrobbled %s - %s '% (myMedia.oStatus.artist, myMedia.oStatus.title))
+                sleep(sleepTime)
+                myMedia.oStatus = pchtrakt.oPchMusicRequestor.getStatus(ipPch, 10)
     if pchtrakt.lastPath != myMedia.oStatus.fullPath and pchtrakt.StopTrying == 0:
         if isIgnored(myMedia) == True:
             while myMedia.oStatus.status == EnumStatus.PLAY:
@@ -232,7 +257,7 @@ def doWork():
         else:
             if pchtrakt.lastPath != '':# and myMedia.oStatus.status == EnumStatus.NOPLAY:
                 if myMedia.oStatus.status == EnumStatus.NOPLAY:#if pchtrakt.watched:# and myMedia.oStatus.status != EnumStatus.PAUSE:
-                    pchtrakt.logger.info(' [Pchtrakt] video Stopped')
+                    pchtrakt.logger.info(' [Pchtrakt] video/music file has stopped')
                     videoStopped()
                     #elif myMedia.oStatus.percent > watched_percent and (TraktScrobbleTvShow or TraktScrobbleMovie):
                     #    pchtrakt.logger.info(' [Pchtrakt] saving off-line scrobble')
@@ -455,16 +480,17 @@ if __name__ == '__main__':
     #            pchtrakt.logger.error('[traktAPI] Bad Gateway')
     #            sleep(sleepTime)
     #            startWait()
-            if hasattr(e, 'message'):  # error 401 or 503, possibly others
+            if hasattr(e, 'message') and e.message != '':  # error 401 or 503, possibly others
                 if e.message == "global name 'NotFoundError' is not defined":
                     msg = '[traktAPI] Unable to find match for file - {0}'.format(pchtrakt.lastName)
                     pchtrakt.logger.warning(msg)
                     startWait()
                     #pass
-            #elif e.message == "global name 'MaxScrobbleError' is not defined":
-            #    pchtrakt.logger.warning('[traktAPI] ScrobbleError to many scrobbles in an hour')
-            #    startWait()
-            #    #passMaxScrobbleError
+            elif hasattr(e, 'details'):
+                if e.details == 'Invalid authentication token. Please check username/password supplied':
+                    pchtrakt.logger.warning('[Last.fm] Please check your username and/or your password')
+                    #startWait()
+                    #passMaxScrobbleError
                 else:
                    stopTrying()
                    #Debug(u'::: {0} :::'.format(pchtrakt.lastPath))
