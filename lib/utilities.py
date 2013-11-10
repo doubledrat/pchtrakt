@@ -1045,26 +1045,23 @@ def trakt_api(method, url, params={}, passVersions=False):
                 if e.code == 401:  # authentication problem
                     #stopTrying()
                     pchtrakt.logger.error('[traktAPI] Login or password incorrect')
-                    sleep(60)
-                    startWait()
+                    startWait('Login or password incorrect')
                 elif e.code == 503:  # server busy problem
                     #stopTrying()
-                    pchtrakt.logger.error('[traktAPI] trakt.tv server is busy')
+                    pchtrakt.logger.error('[traktAPI] trakt.tv server is busy, retrying in 60 seconds')
                     sleep(60)
                     continue
                 elif e.code == 404:  # Not found on trakt.tv
                     #stopTrying()
                     pchtrakt.logger.error('[traktAPI] Item not found on trakt.tv')
-                    sleep(60)
-                    startWait()
+                    startWait('Item not found on trakt.tv')
                 elif e.code == 403:  # Forbidden on trakt.tv
                     #stopTrying()
                     pchtrakt.logger.error('[traktAPI] Item not found on trakt.tv')
-                    sleep(60)
-                    startWait()
+                    startWait('Item not found on trakt.tv')
                 elif e.code == 502:  # Bad Gateway
                     #stopTrying()
-                    pchtrakt.logger.warning('[traktAPI] Bad Gateway')
+                    pchtrakt.logger.warning('[traktAPI] Bad Gateway, retrying in 60 seconds')
                     sleep(60)
                     continue
                     #pass
@@ -1143,8 +1140,9 @@ def startWait(msg=''):
     else:
         pchtrakt.logger.info(' [Pchtrakt] waiting for file to stop as somthing is wrong with file name')
     waitforstop = pchtrakt.oPchRequestor.getStatus(ipPch, 10)
-    pchtrakt.StopTrying = 1#pchtrakt.StopTrying = 0
-    while waitforstop.status != 'noplay':
+    NowPlaying = waitforstop.fileName
+    pchtrakt.StopTrying = 1
+    while waitforstop.status != 'noplay' and NowPlaying == waitforstop.fileName:
         sleep(sleepTime)
         waitforstop = pchtrakt.oPchRequestor.getStatus(ipPch, 10)
         #pchtrakt.StopTrying = 1
@@ -1153,6 +1151,7 @@ def startWait(msg=''):
                 watchedFileCreation(myMedia)
             except BaseException as e:
                 pchtrakt.logger.error(e)
+    videoStopped()
 
 # get movies from trakt server
 def getMoviesFromTrakt(daemon=False):

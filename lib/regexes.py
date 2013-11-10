@@ -104,14 +104,14 @@ ep_regexes = [
                -(?P<release_group>[^- ]+))?)?$             # Group
                '''),
 
-              ('stupid',
+              #('stupid',
                # tpz-abc102
-               '''
-               (?P<release_group>.+?)-\w+?[\. ]?           # tpz-abc
-               (?!264)                                     # don't count x264
-               (?P<season_num>\d{1,2})                     # 1
-               (?P<ep_num>\d{2})$                          # 02
-               '''),
+               #'''
+               #(?P<release_group>.+?)-\w+?[\. ]?           # tpz-abc
+               #(?!264)                                     # don't count x264
+               #(?P<season_num>\d{1,2})                     # 1
+               #(?P<ep_num>\d{2})$                          # 02
+               #'''),
 
               ('verbose',
                # Show Name Season 1 Episode 2 Ep Name

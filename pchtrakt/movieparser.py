@@ -18,6 +18,7 @@
 # along with pchtrakt.  If not, see <http://www.gnu.org/licenses/>.
 #'(.cp.(?P<id>tt[0-9{7}]+).)'
 from lib import regexes
+from unicodedata import normalize
 import re
 import mediaparser
 
@@ -109,6 +110,10 @@ class MovieParser():
         # remove everything inside parenthesis
         #movie_name = re.sub('[([{].*?[)\]}]', '', movie_name)
         # replace dots, underscores and dashes with spaces
+        try:
+            movie_name = normalize('NFKD', movie_name).encode('ascii', 'ignore').replace(' ', '-').lower()
+        except:
+            pass
         movie_name = re.sub(r'[^a-zA-Z0-9]', ' ', movie_name)
         stitle = movie_name.split()
         movie_name = []

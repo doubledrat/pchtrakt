@@ -46,7 +46,7 @@ stop_pchtrakt()
 {
 # Stop pchtrakt
 if [ -n "`ps | grep "pchtrakt" | grep -v "grep"`" ]; then
-        kill -9 `ps -A |grep pchtrakt.py | grep -v grep |head -n 1 | awk '{print $1}'` >/dev/null 2>/dev/null
+        kill -9 `ps |grep pchtrakt.py | grep -v grep |head -n 1 | awk '{print $1}'` >/dev/null 2>/dev/null
         sleep 2
 fi
 }

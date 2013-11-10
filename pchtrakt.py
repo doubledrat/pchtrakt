@@ -260,8 +260,9 @@ def startWait(msg=''):
     else:
         pchtrakt.logger.info(' [Pchtrakt] waiting for file to stop as somthing is wrong with file name')
     waitforstop = pchtrakt.oPchRequestor.getStatus(ipPch, 10)
+    NowPlaying = waitforstop.fileName
     pchtrakt.StopTrying = 1
-    while waitforstop.status != 'noplay':
+    while waitforstop.status != 'noplay' and NowPlaying == waitforstop.fileName:
         sleep(sleepTime)
         waitforstop = pchtrakt.oPchRequestor.getStatus(ipPch, 10)
         #pchtrakt.StopTrying = 1
