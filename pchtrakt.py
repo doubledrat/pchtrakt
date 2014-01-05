@@ -45,7 +45,8 @@ from pchtrakt import mediaparser as mp
 from time import sleep, time
 from lib.tvdb_api import tvdb_api
 from lib.tvdb_api import tvdb_exceptions
-from lib.utilities import Debug, checkSettings, OversightSync, startWait
+from lib.utilities import Debug, checkSettings
+from lib.oversight import OversightSync
 from lib import pylast
 from xml.etree import ElementTree
 from httplib import HTTPException, BadStatusLine
@@ -121,7 +122,7 @@ def getParams():
 def checkUpdate(when):
     #pchtrakt.logger.info('update checker')
     hash = ""
-    for row in os.popen('git ls-remote').read().split('\n'):
+    for row in os.popen('git ls-remote 2>&-').read().split('\n'):
         if row.find('refs/heads/dvp') != -1:
             hash = row.split()[0]
             break
@@ -174,6 +175,7 @@ def daemonize():
     os.dup2(dev_null.fileno(), sys.stdin.fileno())
 
 def doWork():
+    pchtrakt.problem = ''
     myMedia.ScrobResult = 0
     myMedia.oStatus = pchtrakt.oPchRequestor.getStatus(ipPch, 10)
     if myMedia.oStatus.status == EnumStatus.NOPLAY and (LastfmNowPlaying is True or LastfmScrobble is True):
@@ -222,7 +224,11 @@ def doWork():
                     myMedia.parsedInfo = pchtrakt.mediaparser.parse(
                                             myMedia.oStatus.fullPath)
                     pchtrakt.Ttime = myMedia.oStatus.totalTime
+                    if hasattr(myMedia.parsedInfo, 'dirty'):
+                        pchtrakt.DirtyName = myMedia.parsedInfo.dirty
                 videoStatusHandle(myMedia)
+                if pchtrakt.problem != '':
+                    startWait(pchtrakt.problem)
         elif (myMedia.oStatus.status == EnumStatus.PAUSE
             and pchtrakt.allowedPauseTime > 0):
             pchtrakt.allowedPauseTime -= sleepTime
@@ -231,14 +237,17 @@ def doWork():
                 if myMedia.oStatus.status == EnumStatus.NOPLAY:
                     pchtrakt.logger.info(' [Pchtrakt] video/music file has stopped')
                     videoStopped()
-                if pchtrakt.allowedPauseTime <= 0 and not pchtrakt.watched:
+                if pchtrakt.allowedPauseTime <= 0:# and not pchtrakt.watched:
                     pchtrakt.logger.info(' [Pchtrakt] It seems you paused ' \
                                          'the video for more than {0} minutes: ' \
                                          'I say to trakt you stopped watching ' \
                                          'your video'.format(TraktMaxPauseTime/60))
+                Debug('[Pchtrakt] RESETTING DATA')
                 pchtrakt.watched = 0
                 pchtrakt.lastPath = ''
                 pchtrakt.lastName = ''
+                pchtrakt.lastShowName = ''
+                pchtrakt.DirtyName = ''
                 pchtrakt.isMovie = 0
                 pchtrakt.isTvShow = 0
                 pchtrakt.Check = 0
@@ -255,6 +264,7 @@ def stopTrying():
         pass
 
 def startWait(msg=''):
+    #Debug('pchtrakt start wait')
     if msg != '':
         pchtrakt.logger.info(' [Pchtrakt] waiting for file to stop as %s' % msg)
     else:
@@ -332,7 +342,7 @@ if __name__ == '__main__':
         daemonize()
 
     #Get model
-    pchtrakt.chip = os.popen('gbus_read_uint32 0x0002fee8').read()[-5:-1]
+    pchtrakt.chip = os.popen('/opt/syb/sigma/bin/gbus_read_uint32 0x0002fee8 2>&-').read()[-5:-1]
     if pchtrakt.chip == "8911":
         pchtrakt.chip = "A400 series"
     elif pchtrakt.chip == "8647":
@@ -388,7 +398,7 @@ if __name__ == '__main__':
         except IOError, e:
              if hasattr(e, 'reason'):
                  if e.reason == 'Unauthorized':
-                    stopTrying()
+                    #stopTrying()
                     pchtrakt.logger.error('[traktAPI] Login or password incorrect')
                     #sleep(sleepTime)
                     startWait()

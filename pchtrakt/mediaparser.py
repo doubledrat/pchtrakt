@@ -36,10 +36,11 @@ class MediaParserResult():
         self.file_name = file_name
 
 class MediaParserResultTVShow(MediaParserResult):
-    def __init__(self,file_name,name,season_number,episode_numbers,air_by_date):
+    def __init__(self,file_name,name,dirty,season_number,episode_numbers,air_by_date):
         self.file_name = file_name
         self.name = name
         self.air_by_date = air_by_date
+        self.dirty = dirty
         #np = parser.NameParser()
         #parse_result = np.parse(self.file_name)
         if self.air_by_date:
@@ -89,11 +90,8 @@ class MediaParserResultMovie(MediaParserResult):
             Debug('[IMDB api] Trying search 1: ' + ImdbAPIurl)
             try:
                 oResponse = urlopen(ImdbAPIurl,None,5)
-                #if json.load(foResponse['0']['Error'] == 'Movie not found!':
-                #    print 'hello'
                 myMovieJson = json.loads(oResponse.read())
                 if myMovieJson['Response'] == "True":#in myMovieJson.keys():
-                    #print "added "+myMovieJson["Title"]
                     self.id = myMovieJson['imdbID']
                     Debug('[IMDB api] Movie match using: ' + ImdbAPIurl)
                 else:
@@ -115,12 +113,10 @@ class MediaParserResultMovie(MediaParserResult):
                         Debug('[IMDB api] Search address = ' + ImdbAPIurl + ' ID = ' + self.id)
             except:
                 raise MovieResultNotFound(file_name)
-        #else:
-        #    self.id = '0'
 
 class MediaParserResultMoviebackup(MediaParserResult):
     def __init__(self,file_name,name,year,imdbid):
-        self.file_name = file_name#check if needed all below
+        self.file_name = file_name
         self.name = name
         if year == None:
             self.year = ""
@@ -171,7 +167,7 @@ class MediaParser():
     def parse(self, file_name):
         try:
             parsedResult = self.TVShowParser.parse(file_name)
-            oResultTVShow = MediaParserResultTVShow(file_name,parsedResult.series_name,parsedResult.season_number,parsedResult.episode_numbers,parsedResult.air_by_date)
+            oResultTVShow = MediaParserResultTVShow(file_name,parsedResult.series_name,parsedResult.series_name_dirty,parsedResult.season_number,parsedResult.episode_numbers,parsedResult.air_by_date)
             return oResultTVShow
         except parser.InvalidNameException as e:
             oMovie = self.MovieParser.parse(file_name)

@@ -28,24 +28,19 @@ def destroyToken(Token):
 
 def getSerieUrl(id,SerieName):
     if 'Betaseries' not in pchtrakt.dictSerie[SerieName].keys():
-        #quotedSerieName = quote(SerieName)
-        #url = getUrl('shows/search.json') + '&title={0}'.format(quotedSerieName)
-        #oResponse = urlopen(url)
-        #myJson = json.loads(oResponse.read())
-        #myKey= '0'
-        #for key, subdict in myJson['root']['shows'].iteritems():
-        #    if (subdict['title'] == SerieName):
-        #        myKey = key
-        #        break
-        searchurl = 'http://api.betaseries.com/shows/display/' + id + '.xml?key=' + BETASERIE_API
-        #dom = minidom.parse(urlopen(searchurl))
+        searchurl = "http://api.betaseries.com/shows/display/%s.xml?key=%s" % (id,BETASERIE_API)
+        #dom = urlopen(searchurl)
         oXml = ElementTree.parse(urlopen(searchurl))
-        myUrl = oXml.find( 'show/url').text
-        #myUrl = url.nodeValue
-        #myUrl = myJson['root']['shows'][myKey]['url']
-        pchtrakt.dictSerie[SerieName]['Betaseries'] = myUrl
-        with open('cache.json','w') as f:
-            json.dump(pchtrakt.dictSerie, f, separators=(',',':'), indent=4)
+        CheckErrors = oXml.find("errors/error/content")
+        if CheckErrors is None:
+            myUrl = oXml.find( 'show/url').text
+            #myUrl = url.nodeValue
+            #myUrl = myJson['root']['shows'][myKey]['url']
+            pchtrakt.dictSerie[SerieName]['Betaseries'] = myUrl
+            with open('cache.json','w') as f:
+                json.dump(pchtrakt.dictSerie, f, separators=(',',':'), indent=4)
+        else:
+            return None
     else:
         myUrl = pchtrakt.dictSerie[SerieName]['Betaseries']
     return quote('{0}.xml'.format(myUrl))

@@ -34,6 +34,7 @@ except socket.gaierror:
     myIp = '0.0.0.0'
     pchtrakt.online = 0
 
+s.close()
 config = ConfigParser.RawConfigParser()
 
 #class cacheSerie: #Errkk... need to change this
@@ -66,7 +67,6 @@ ipPch = config.get('PCHtrakt', 'pch_ip')
 AutoUpdate = float(config.get('PCHtrakt', 'autoupdate'))
 if AutoUpdate > 0:
     AutoUpdate = AutoUpdate*60*60
-#uptime = float(config.get('PCHtrakt', 'update_check'))*60*60
 sleepTime = float(config.get('PCHtrakt', 'sleep_time'))
 watched_percent = float(config.get('PCHtrakt', 'watched_percent'))
 if watched_percent > 100 or watched_percent < 0:

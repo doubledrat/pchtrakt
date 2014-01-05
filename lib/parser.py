@@ -84,6 +84,7 @@ class NameParser(object):
             if 'series_name' in named_groups:
                 result.series_name = match.group('series_name')
                 if result.series_name:
+                    result.series_name_dirty = result.series_name
                     result.series_name = self.clean_series_name(result.series_name)
 
             if 'season_num' in named_groups:
@@ -230,6 +231,8 @@ class NameParser(object):
         final_result.series_name = self._combine_results(dir_name_result, file_name_result, 'series_name')
         final_result.extra_info = self._combine_results(dir_name_result, file_name_result, 'extra_info')
         final_result.release_group = self._combine_results(dir_name_result, file_name_result, 'release_group')
+        if hasattr(file_name_result, 'series_name_dirty'):
+            final_result.series_name_dirty = file_name_result.series_name_dirty
 
         final_result.which_regex = []
         if final_result == file_name_result:
@@ -253,6 +256,7 @@ class ParseResult(object):
     def __init__(self,
                  original_name,
                  series_name=None,
+                 series_name_dirty=None,
                  season_number=None,
                  episode_numbers=None,
                  extra_info=None,

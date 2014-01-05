@@ -29,8 +29,6 @@ def newConfig():
         config.set('PCHtrakt', 'pch_ip', '127.0.0.1')
     if not config.has_option('PCHtrakt','autoupdate'):
         config.set('PCHtrakt', 'autoupdate', '-1')
-#    if not config.has_option('PCHtrakt','update_check'):
-#        config.set('PCHtrakt', 'update_check', '0')
     if not config.has_option('PCHtrakt','sleep_time'):
         config.set('PCHtrakt', 'sleep_time', '5')
     if not config.has_option('PCHtrakt','watched_percent'):
@@ -128,9 +126,9 @@ def newConfig():
     if not config.has_option('XML/HTML Update','update_xml_watched'):
         config.set('XML/HTML Update', 'update_xml_watched', 'False')
     if not config.has_option('XML/HTML Update','tvxml_find'):
-        config.set('XML/HTML Update', 'tvxml_find', 'Other_All,Other_HD,Other_New,Other_Rating,Other_TV,Other_Unwatched,Other_Sets')
+        config.set('XML/HTML Update', 'tvxml_find', 'Other_All,Other_HD,Other_New_,Other_New-TV,Other_Rating,Other_TV,Other_Unwatched,Other_Sets')
     if not config.has_option('XML/HTML Update','moviexml_find'):
-        config.set('XML/HTML Update', 'moviexml_find', 'Other_All,Other_HD,Other_New,Other_Rating,Other_Movies,Other_Unwatched,Other_Sets')		
+        config.set('XML/HTML Update', 'moviexml_find', 'Other_All,Other_HD,Other_New_,Other_New-Movies,Other_Rating,Other_Movies,Other_Unwatched,Other_Sets')		
     with open(config_file, 'w') as configfile:
         config.write(configfile)
 
