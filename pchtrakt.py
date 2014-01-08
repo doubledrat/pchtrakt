@@ -174,6 +174,19 @@ def daemonize():
     dev_null = file('/dev/null', 'r')
     os.dup2(dev_null.fileno(), sys.stdin.fileno())
 
+def Reset():
+    Debug('[Pchtrakt] RESETTING DATA')
+    pchtrakt.watched = 0
+    pchtrakt.lastPath = ''
+    pchtrakt.lastName = ''
+    pchtrakt.lastShowName = ''
+    pchtrakt.DirtyName = ''
+    pchtrakt.isMovie = 0
+    pchtrakt.isTvShow = 0
+    pchtrakt.Check = 0
+    pchtrakt.Ttime = 0
+    pchtrakt.CreatedFile = 0
+
 def doWork():
     pchtrakt.problem = ''
     myMedia.ScrobResult = 0
@@ -207,7 +220,8 @@ def doWork():
             while myMedia.oStatus.status == EnumStatus.PLAY:
                 sleep(sleepTime)
                 myMedia.oStatus = pchtrakt.oPchRequestor.getStatus(ipPch, 10)
-                pchtrakt.StopTrying = 1
+                #pchtrakt.StopTrying = 1
+            Reset()
         myMedia.parsedInfo = None
     if YamjWatched == True and not pchtrakt.watched and myMedia.oStatus.percent > watched_percent and pchtrakt.CreatedFile == 0:
         watchedFileCreation(myMedia)
@@ -242,17 +256,7 @@ def doWork():
                                          'the video for more than {0} minutes: ' \
                                          'I say to trakt you stopped watching ' \
                                          'your video'.format(TraktMaxPauseTime/60))
-                Debug('[Pchtrakt] RESETTING DATA')
-                pchtrakt.watched = 0
-                pchtrakt.lastPath = ''
-                pchtrakt.lastName = ''
-                pchtrakt.lastShowName = ''
-                pchtrakt.DirtyName = ''
-                pchtrakt.isMovie = 0
-                pchtrakt.isTvShow = 0
-                pchtrakt.Check = 0
-                pchtrakt.Ttime = 0
-                pchtrakt.CreatedFile = 0
+                Reset()
 
 def stopTrying():
     try:
@@ -271,7 +275,7 @@ def startWait(msg=''):
         pchtrakt.logger.info(' [Pchtrakt] waiting for file to stop as somthing is wrong with file name')
     waitforstop = pchtrakt.oPchRequestor.getStatus(ipPch, 10)
     NowPlaying = waitforstop.fileName
-    pchtrakt.StopTrying = 1
+    #pchtrakt.StopTrying = 1
     while waitforstop.status != 'noplay' and NowPlaying == waitforstop.fileName:
         sleep(sleepTime)
         waitforstop = pchtrakt.oPchRequestor.getStatus(ipPch, 10)
