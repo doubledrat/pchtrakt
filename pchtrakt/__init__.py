@@ -128,7 +128,13 @@ def newConfig():
     if not config.has_option('XML/HTML Update','tvxml_find'):
         config.set('XML/HTML Update', 'tvxml_find', 'Other_All,Other_HD,Other_New_,Other_New-TV,Other_Rating,Other_TV,Other_Unwatched,Other_Sets')
     if not config.has_option('XML/HTML Update','moviexml_find'):
-        config.set('XML/HTML Update', 'moviexml_find', 'Other_All,Other_HD,Other_New_,Other_New-Movies,Other_Rating,Other_Movies,Other_Unwatched,Other_Sets')		
+        config.set('XML/HTML Update', 'moviexml_find', 'Other_All,Other_HD,Other_New_,Other_New-Movies,Other_Rating,Other_Movies,Other_Unwatched,Other_Sets')
+
+    if not config.has_section('User Edits'):
+        config.add_section('User Edits')
+    if not config.has_option('User Edits','replace_with'):
+        config.set('User Edits', 'replace_with', '')
+
     with open(config_file, 'w') as configfile:
         config.write(configfile)
 

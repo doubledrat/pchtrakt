@@ -129,3 +129,11 @@ RutabagaModwatched = config.getboolean('XML/HTML Update', 'rutabaga_mod_watched'
 updatexmlwatched = config.getboolean('XML/HTML Update', 'update_xml_watched')
 tvxmlfind = [x.strip() for x in config.get('XML/HTML Update', 'tvxml_find').split(',')]
 moviexmlfind = [x.strip() for x in config.get('XML/HTML Update', 'moviexml_find').split(',')]
+
+#User Edits
+Get = config.get('User Edits', 'replace_with').split(',')
+Useredits = {}
+if Get != "":
+    Useredits = dict(zip(*[iter(Get)]*2))
+del Get
+Useredits.update({'S H I E L D':'S.H.I.E.L.D','CSI':'CSI: Crime Scene Investigation','Megabuilders':'Mega Builders', 'Discovery ':'', 'BBC':'', 'HDgrp':'', 'CSI New York':'CSI: NY', '2bg':'2 Broke Girls', 'tbbt':'The Big Bang Theory'})
