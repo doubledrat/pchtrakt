@@ -15,7 +15,7 @@ import os
 import json
 apikey = 'def6943c09e19dccb4df715bd4c9c6c74bc3b6d7'
 pwdsha1 = sha1(TraktPwd).hexdigest()
-headers = {"Accept": "*/*", "User-Agent": "Mozilla/4.0 (compatible; MSIE 5.5; Windows NT)",}
+headers = {'Accept-Encoding': 'gzip, deflate, compress', 'Accept': '*/*', 'User-Agent': 'CPython/2.7.6 Unknown/Unknown'}
 
   
 __author__ = "Ralph-Gordon Paul, Adrian Cowan"
@@ -314,6 +314,8 @@ def trakt_api(method, url, params={}, passVersions=False):
     request = Request(url, params)
     Debug("[traktAPI] Request URL '%s'" % (url+params))
     base64string = base64.encodestring('%s:%s' % (TraktUsername, pwdsha1)).replace('\n', '')
+    request.add_header("Accept", "*/*")
+    request.add_header("User-Agent", "CPython/2.7.5 Unknown/Unknown")
     request.add_header("Authorization", "Basic %s" % base64string)
     retries = 0
     while True:

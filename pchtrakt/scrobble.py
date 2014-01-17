@@ -331,12 +331,12 @@ def videoStatusHandleTVSeries(myMedia):
 def videoStatusHandle(myMedia):
     if isinstance(myMedia.parsedInfo,mp.MediaParserResultTVShow):
         pchtrakt.isTvShow = 1
-        if TraktScrobbleTvShow or BetaSeriesScrobbleTvShow:
-           videoStatusHandleTVSeries(myMedia)
+        #if TraktScrobbleTvShow or BetaSeriesScrobbleTvShow:
+        videoStatusHandleTVSeries(myMedia)
     elif isinstance(myMedia.parsedInfo,mp.MediaParserResultMovie):
         pchtrakt.isMovie = 1
-        if TraktScrobbleMovie:
-           videoStatusHandleMovie(myMedia)
+        #if TraktScrobbleMovie:
+        videoStatusHandleMovie(myMedia)
     else:
         pchtrakt.StopTrying = 1
     pchtrakt.lastPath = myMedia.oStatus.fullPath#check if needed
