@@ -26,9 +26,9 @@ from movieparser import *
 from lib.tvdb_api import tvdb_exceptions
 from pchtrakt.config import *
 from lib.tvdb_api import tvdb_api,tvdb_exceptions
-from lib.utilities import Debug
+from lib.utilities import Debug, sp, getNfo, getIDFromNFO
 from xml.etree import ElementTree
-
+import os
 tvdb = tvdb_api.Tvdb()
 
 class MediaParserResult():
@@ -38,9 +38,11 @@ class MediaParserResult():
 class MediaParserResultTVShow(MediaParserResult):
     def __init__(self,file_name,name,dirty,season_number,episode_numbers,air_by_date):
         self.file_name = file_name
+        self.path = os.path.dirname(file_name)
         self.name = name
         self.air_by_date = air_by_date
         self.dirty = dirty
+        self.id = ''
         #np = parser.NameParser()
         #parse_result = np.parse(self.file_name)
         if self.air_by_date:
@@ -64,20 +66,46 @@ class MediaParserResultTVShow(MediaParserResult):
             self.id = pchtrakt.dictSerie[self.name]['TvDbId']
             self.year = pchtrakt.dictSerie[self.name]['Year']
         else:
-            try:
-                self.id = tvdb[self.name]['id']
-                pchtrakt.online = 1
-                if tvdb[self.name]['firstaired'] != None:
-                    self.year = tvdb[self.name]['firstaired'].split('-')[0]
-                else:
-                    self.year = None
-                pchtrakt.dictSerie[self.name]={'Year':self.year,
-                                                            'TvDbId':self.id}
+            if parseNFO:
+                files = []
+                Debug('[Pchtrakt] checking for nfo')
+                for root, dirs, walk_files in os.walk('Y:\Videos\Tv\Intelligence (2014)\Season 01'):
+                    files.extend([sp(os.path.join(root, file)) for file in walk_files])
+                #self.x = getNfo(files)
+                for file in getNfo(files):
+                    self.id = getIDFromNFO('TV', file)
+                    if self.id != '':
+                        try:
+                            if (re.match("tt\d{5,10}", self.id)):
+                                Debug('[The TvDB] Using IMDB ID to find match')
+                                self.id = tvdb[self.id]['id']
+                                #self.id = int(self.id)
+                            self.name = tvdb[int(self.id)]['seriesname']
+                            pchtrakt.online = 1
+                            if tvdb[self.name]['firstaired'] != None:
+                                self.year = tvdb[self.name]['firstaired'].split('-')[0]
+                            else:
+                                self.year = None
+                            pchtrakt.dictSerie[self.name]={'Year':self.year, 'TvDbId':self.id}
+                            with open('cache.json','w') as f:
+                                json.dump(pchtrakt.dictSerie, f, separators=(',',':'), indent=4)
+                        except tvdb_exceptions.tvdb_error, e:
+                            pchtrakt.online = 0
+                        break
+            if self.id == '':
+                try:
+                    self.id = tvdb[self.name]['id']
+                    pchtrakt.online = 1
+                    if tvdb[self.name]['firstaired'] != None:
+                        self.year = tvdb[self.name]['firstaired'].split('-')[0]
+                    else:
+                        self.year = None
+                    pchtrakt.dictSerie[self.name]={'Year':self.year, 'TvDbId':self.id}
+                    with open('cache.json','w') as f:
+                        json.dump(pchtrakt.dictSerie, f, separators=(',',':'), indent=4)
+                except tvdb_exceptions.tvdb_error, e:
+                    pchtrakt.online = 0
 
-                with open('cache.json','w') as f:
-                    json.dump(pchtrakt.dictSerie, f, separators=(',',':'), indent=4)
-            except tvdb_exceptions.tvdb_error, e:
-                pchtrakt.online = 0
 
 class MediaParserResultMovie(MediaParserResult):
     def __init__(self,file_name,name,year,imdbid):

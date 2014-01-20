@@ -76,6 +76,7 @@ log_size = float(config.get('PCHtrakt', 'log_size'))
 ignored_repertory = [x.strip() for x in config.get('PCHtrakt', 'ignored_repertory').split(',')]
 ignored_keywords = [x.strip() for x in config.get('PCHtrakt', 'ignored_keywords').split(',')]
 OnPCH = (ipPch in ['127.0.0.1',myIp])
+parseNFO = config.getboolean('PCHtrakt', 'parse_nfo')
 use_debug = config.getboolean('PCHtrakt', 'use_debug')
 
 #Trakt

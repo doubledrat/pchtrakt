@@ -13,6 +13,7 @@ import pchtrakt
 import re
 import os
 import json
+import xml.etree.cElementTree as etree
 apikey = 'def6943c09e19dccb4df715bd4c9c6c74bc3b6d7'
 pwdsha1 = sha1(TraktPwd).hexdigest()
 headers = {'Accept-Encoding': 'gzip, deflate, compress', 'Accept': '*/*', 'User-Agent': 'CPython/2.7.6 Unknown/Unknown'}
@@ -25,7 +26,100 @@ __maintainer__ = "Ralph-Gordon Paul"
 __email__ = "ralph-gordon.paul@uni-duesseldorf.de"
 __status__ = "Production"
 
-    
+
+
+def getIDFromNFO(type, file):
+    if not isfile(file):
+        pchtrakt.logger.info(" [Pchtrakt] Show dir doesn't exist, can't load NFO")
+        raise exceptions.NoNFOException("The show dir doesn't exist, no NFO could be loaded")
+
+
+    pchtrakt.logger.info(' [Pchtrakt] Loading show info from NFO')
+
+    try:
+        xmlFileObj = open (file, 'r')
+        showXML = etree.ElementTree(file=xmlFileObj)
+        xmlFileObj.close()
+        name = None
+        if type == 'TV':
+            for country in showXML.iter('id'):
+                if country.attrib == {'moviedb': 'tvdb'}:
+                    name = country.text
+                    break
+
+        if showXML.findtext('title') == None or (name == None and showXML.findtext('id') == None):
+            raise exceptions.NoNFOException("Invalid info in tvshow.nfo (missing name or id):" \
+                + str(showXML.findtext('title')) + " " \
+                + str(showXML.findtext('tvdbid')) + " " \
+                + str(showXML.findtext('id')))
+
+
+        if name != None:
+            tvdb_id = name
+        elif showXML.findtext('id'):
+            tvdb_id = showXML.findtext('id')
+        else:
+            return ''
+
+
+    except Exception, e:
+        logger.log(u"There was an error parsing your existing tvshow.nfo file: " + ex(e), logger.ERROR)
+        logger.log(u"Attempting to rename it to tvshow.nfo.old", logger.DEBUG)
+
+    return tvdb_id
+
+
+def toUnicode(original, *args):
+    try:
+        if isinstance(original, unicode):
+            return original
+        else:
+            try:
+                return unicode(original, *args)
+            except:
+                try:
+                    return ek(original, *args)
+                except:
+                    raise
+    except:
+        log.error('Unable to decode value "%s..." : %s ', (repr(original)[:20], traceback.format_exc()))
+        ascii_text = str(original).encode('string_escape')
+        return toUnicode(ascii_text)
+
+def getExt(filename):
+    return os.path.splitext(filename)[1][1:]
+
+def getNfo(files):
+    extensions = {
+        'nfo': ['nfo', 'txt', 'tag']
+    }
+    return set(filter(lambda s: getExt(s.lower()) in extensions['nfo'], files))
+
+def ss(original, *args):
+
+
+    u_original = toUnicode(original, *args)
+    try:
+        return u_original.encode('UTF-8')
+    except Exception, e:
+        log.debug('Failed ss encoding char, force UTF8: %s', e)
+        return u_original.encode('UTF-8')
+
+
+def sp(path, *args):
+    if not path or len(path) == 0:
+        return path
+    if os.path.sep == '/' and '\\' in path:
+        path = '/' + path.replace(':', '').replace('\\', '/')
+    path = os.path.normpath(ss(path, *args))
+    if path != os.path.sep:
+        path = path.rstrip(os.path.sep)
+    if len(path) == 2 and path[1] == ':':
+        path = path + os.path.sep
+    path = re.sub('^//', '/', path)
+    return path
+
+
 def scrobbleMissed():
     pchtrakt.logger.info('started TEST ' + pchtrakt.lastpath)
     #self.path = pchtrakt.lastpath

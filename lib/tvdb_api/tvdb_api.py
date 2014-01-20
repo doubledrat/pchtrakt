@@ -28,6 +28,7 @@ import warnings
 import logging
 import datetime
 import zipfile
+import re
 
 try:
     import xml.etree.cElementTree as ElementTree
@@ -481,8 +482,11 @@ class Tvdb:
 
         if self.config['search_all_languages']:
             self.config['url_getSeries'] = u"%(base_url)s/api/GetSeries.php?seriesname=%%s&language=all" % self.config
+            self.config['url_getSeriesByRemoteID'] = u"%(base_url)s/api/GetSeriesByRemoteID.php?imdbid=%%s&language=all" % self.config
         else:
             self.config['url_getSeries'] = u"%(base_url)s/api/GetSeries.php?seriesname=%%s&language=%(language)s" % self.config
+            self.config['url_getSeriesByRemoteID'] = u"%(base_url)s/api/GetSeriesByRemoteID.php?imdbid=%%s&language=%(language)s" % self.config
+
 
         self.config['url_epInfo'] = u"%(base_url)s/api/%(apikey)s/series/%%s/all/%%s.xml" % self.config
         self.config['url_epInfo_zip'] = u"%(base_url)s/api/%(apikey)s/series/%%s/all/%%s.zip" % self.config
@@ -630,9 +634,16 @@ class Tvdb:
         series. If not, and interactive == True, ConsoleUI is used, if not
         BaseUI is used to select the first result.
         """
-        series = urllib.quote(series.encode("utf-8"))
-        log().debug("Searching for show %s" % series)
-        seriesEt = self._getetsrc(self.config['url_getSeries'] % (series))
+        
+        # If series name looks like an imdbID use that.
+        if (re.match("tt\d{5,10}", series)):
+            log().debug("Searching for show by imdb ID %s" % series)
+            seriesEt = self._getetsrc(self.config['url_getSeriesByRemoteID'] % (series))
+        else:
+            series = urllib.quote(series.encode("utf-8"))
+            log().debug("Searching for show %s" % series)
+            seriesEt = self._getetsrc(self.config['url_getSeries'] % (series))
+
         allSeries = []
         for series in seriesEt:
             result = dict((k.tag.lower(), k.text) for k in series.getchildren())
@@ -882,4 +893,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

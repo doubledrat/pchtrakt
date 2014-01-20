@@ -41,6 +41,8 @@ def newConfig():
         config.set('PCHtrakt', 'ignored_repertory', '')
     if not config.has_option('PCHtrakt','ignored_keywords'):
         config.set('PCHtrakt', 'ignored_keywords', '')
+    if not config.has_option('PCHtrakt','parse_nfo'):
+        config.set('PCHtrakt', 'parse_nfo', 'False')
     if not config.has_option('PCHtrakt','use_debug'):
         config.set('PCHtrakt', 'use_debug', 'False')
 
