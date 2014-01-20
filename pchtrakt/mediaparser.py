@@ -69,7 +69,7 @@ class MediaParserResultTVShow(MediaParserResult):
             if parseNFO:
                 files = []
                 Debug('[Pchtrakt] checking for nfo')
-                for root, dirs, walk_files in os.walk('Y:\Videos\Tv\Intelligence (2014)\Season 01'):
+                for root, dirs, walk_files in os.walk(self.path):
                     files.extend([sp(os.path.join(root, file)) for file in walk_files])
                 #self.x = getNfo(files)
                 for file in getNfo(files):
