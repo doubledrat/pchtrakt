@@ -66,6 +66,7 @@ class MovieParser():
 
     def parse(self,file_name):
         oResult = None
+        fullpath = file_name
         file_name = self.clean_movie_name(file_name.split('/')[::-1][0])
         for (name,regex) in self.compiled_regexes:
             try:
@@ -86,7 +87,7 @@ class MovieParser():
                     tmp_imdbid = match.group('imdbid')
 
                 #Debug(name + "=" + str(regex.search(file_name).groupdict()) + '       [' + file_name + ']')
-                return mediaparser.MediaParserResultMovie(file_name,tmp_movie_title,tmp_year,tmp_imdbid)
+                return mediaparser.MediaParserResultMovie(fullpath,file_name,tmp_movie_title,tmp_year,tmp_imdbid)
                 break
             except:
                 raise MovieResultNotFound(file_name)

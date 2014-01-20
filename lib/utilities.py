@@ -34,39 +34,30 @@ def getIDFromNFO(type, file):
         raise exceptions.NoNFOException("The show dir doesn't exist, no NFO could be loaded")
 
 
-    pchtrakt.logger.info(' [Pchtrakt] Loading show info from NFO')
-
+    pchtrakt.logger.info(' [Pchtrakt] Loading info from NFO')
+    id = ''
     try:
         xmlFileObj = open (file, 'r')
+        txt = xmlFileObj.read()
         showXML = etree.ElementTree(file=xmlFileObj)
-        xmlFileObj.close()
         name = None
         if type == 'TV':
-            for country in showXML.iter('id'):
-                if country.attrib == {'moviedb': 'tvdb'}:
-                    name = country.text
+            for find in showXML.iter('id'):
+                if find.attrib == {'moviedb': 'tvdb'}:
+                    name = find.text
                     break
-
-        if showXML.findtext('title') == None or (name == None and showXML.findtext('id') == None):
-            raise exceptions.NoNFOException("Invalid info in tvshow.nfo (missing name or id):" \
-                + str(showXML.findtext('title')) + " " \
-                + str(showXML.findtext('tvdbid')) + " " \
-                + str(showXML.findtext('id')))
-
-
         if name != None:
-            tvdb_id = name
+            id = name
         elif showXML.findtext('id'):
-            tvdb_id = showXML.findtext('id')
+            id = showXML.findtext('id')
         else:
             return ''
-
-
     except Exception, e:
-        logger.log(u"There was an error parsing your existing tvshow.nfo file: " + ex(e), logger.ERROR)
-        logger.log(u"Attempting to rename it to tvshow.nfo.old", logger.DEBUG)
-
-    return tvdb_id
+        if type != 'TV':
+            id = re.findall('(tt\d{4,7})', txt)[0]
+    Debug('[traktAPI] id:%s' % id)
+    xmlFileObj.close()
+    return id
 
 
 def toUnicode(original, *args):

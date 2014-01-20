@@ -15,7 +15,7 @@ force_pchtrakt()
 	fi
 	chmod 777 /share/Apps/pchtrakt
 	cd /share/Apps/pchtrakt
-	git stash
+	git reset --hard
 	git pull
     sleep 5
 	git reset

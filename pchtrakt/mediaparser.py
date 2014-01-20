@@ -68,10 +68,8 @@ class MediaParserResultTVShow(MediaParserResult):
         else:
             if parseNFO:
                 files = []
-                Debug('[Pchtrakt] checking for nfo')
                 for root, dirs, walk_files in os.walk(self.path):
                     files.extend([sp(os.path.join(root, file)) for file in walk_files])
-                #self.x = getNfo(files)
                 for file in getNfo(files):
                     self.id = getIDFromNFO('TV', file)
                     if self.id != '':
@@ -106,14 +104,24 @@ class MediaParserResultTVShow(MediaParserResult):
                 except tvdb_exceptions.tvdb_error, e:
                     pchtrakt.online = 0
 
-
 class MediaParserResultMovie(MediaParserResult):
-    def __init__(self,file_name,name,year,imdbid):
+    def __init__(self,fullpath,file_name,name,year,imdbid):
         self.file_name = file_name#check if needed all below
+        self.path = os.path.dirname(fullpath)
         self.name = name
         self.year = year
         self.id = imdbid
-        if pchtrakt.online and self.id == None:
+        if parseNFO:
+            files = []
+            for root, dirs, walk_files in os.walk(self.path):
+                files.extend([sp(os.path.join(root, file)) for file in walk_files])
+            #self.x = getNfo(files)
+            for file in getNfo(files):
+                self.id = getIDFromNFO('MOVIE', file)
+                if self.id != '':
+                    break
+
+        if pchtrakt.online and (self.id == None or self.id == ''):
             ImdbAPIurl = ('http://www.imdbapi.com/?t={0}&y={1}'.format(quote_plus(self.name.encode('utf-8', 'replace')), self.year))
             Debug('[IMDB api] Trying search 1: ' + ImdbAPIurl)
             try:
