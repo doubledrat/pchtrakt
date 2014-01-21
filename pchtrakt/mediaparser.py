@@ -68,7 +68,11 @@ class MediaParserResultTVShow(MediaParserResult):
         else:
             if parseNFO:
                 files = []
-                if isfile(self.path.rsplit('/', 1)[0] + '/tvshow.nfo'):
+                if (self.file_name.split(".")[-1] == "DVD" or self.file_name.split(".")[-1].lower() == "iso"):
+                    if isfile(self.path.rsplit('/', 2)[0] + '/tvshow.nfo'):
+                        pchtrakt.logger.info(' [Pchtrakt] found ../../tvshow.nfo')
+                        files.extend([sp(self.path.rsplit('/', 1)[0] + '/tvshow.nfo')])
+                elif isfile(self.path.rsplit('/', 1)[0] + '/tvshow.nfo'):
                     pchtrakt.logger.info(' [Pchtrakt] found ../tvshow.nfo')
                     files.extend([sp(self.path.rsplit('/', 1)[0] + '/tvshow.nfo')])
                 else:
