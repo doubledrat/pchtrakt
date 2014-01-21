@@ -37,27 +37,31 @@ def getIDFromNFO(type, file):
     pchtrakt.logger.info(' [Pchtrakt] Loading info from NFO')
     id = ''
     try:
-        xmlFileObj = open (file, 'r')
-        txt = xmlFileObj.read()
-        showXML = etree.ElementTree(file=xmlFileObj)
-        name = None
+        
         if type == 'TV':
+            xmlFileObj = open (file, 'r')
+            showXML = etree.ElementTree(file=xmlFileObj)
+            xmlFileObj.close()
+            name = None
             for find in showXML.iter('id'):
                 if find.attrib == {'moviedb': 'tvdb'}:
                     name = find.text
                     break
-        if name != None:
-            id = name
-        elif showXML.findtext('id'):
-            id = showXML.findtext('id')
-        else:
-            return ''
-    except Exception, e:
+            if name != None:
+                id = name
+            elif showXML.findtext('id'):
+                id = showXML.findtext('id')
+            else:
+                return ''
         if type != 'TV':
+            xmlFileObj = open (file, 'r')
+            txt = xmlFileObj.read()
             id = re.findall('(tt\d{4,7})', txt)[0]
-    Debug('[traktAPI] id:%s' % id)
-    xmlFileObj.close()
-    return id
+            xmlFileObj.close()
+        return id
+    except Exception, e:
+        Debug('[traktAPI] id:%s' % id)
+        return id
 
 
 def toUnicode(original, *args):

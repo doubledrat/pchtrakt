@@ -68,14 +68,19 @@ class MediaParserResultTVShow(MediaParserResult):
         else:
             if parseNFO:
                 files = []
-                for root, dirs, walk_files in os.walk(self.path):
-                    files.extend([sp(os.path.join(root, file)) for file in walk_files])
+                if isfile(self.path.rsplit('/', 1)[0] + '/tvshow.nfo'):
+                    pchtrakt.logger.info(' [Pchtrakt] found ../tvshow.nfo')
+                    files.extend([sp(self.path.rsplit('/', 1)[0] + '/tvshow.nfo')])
+                else:
+                    for root, dirs, walk_files in os.walk(self.path):
+                        files.extend([sp(os.path.join(root, file)) for file in walk_files])
                 for file in getNfo(files):
+                    pchtrakt.logger.info(' [Pchtrakt] parsing %s' % file)
                     self.id = getIDFromNFO('TV', file)
                     if self.id != '':
                         try:
                             if (re.match("tt\d{5,10}", self.id)):
-                                Debug('[The TvDB] Using IMDB ID to find match')
+                                pchtrakt.logger.info(' [Pchtrakt] Using IMDB ID to find match')
                                 self.id = tvdb[self.id]['id']
                                 #self.id = int(self.id)
                             self.name = tvdb[int(self.id)]['seriesname']
