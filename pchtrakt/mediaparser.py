@@ -71,14 +71,15 @@ class MediaParserResultTVShow(MediaParserResult):
                 if (self.file_name.split(".")[-1] == "DVD" or self.file_name.split(".")[-1].lower() == "iso"):
                     if isfile(self.path.rsplit('/', 2)[0] + '/tvshow.nfo'):
                         pchtrakt.logger.info(' [Pchtrakt] found ../../tvshow.nfo')
-                        files.extend([sp(self.path.rsplit('/', 1)[0] + '/tvshow.nfo')])
+                        files.extend([(self.path.rsplit('/', 1)[0] + '/tvshow.nfo')])
                 elif isfile(self.path.rsplit('/', 1)[0] + '/tvshow.nfo'):
                     pchtrakt.logger.info(' [Pchtrakt] found ../tvshow.nfo')
-                    files.extend([sp(self.path.rsplit('/', 1)[0] + '/tvshow.nfo')])
+                    files.extend([(self.path.rsplit('/', 1)[0] + '/tvshow.nfo')])
                 else:
-                    for root, dirs, walk_files in os.walk(self.path):
-                        files.extend([sp(os.path.join(root, file)) for file in walk_files])
+                    for root, dirs, walk_files in os.walk('Y:\Videos\Tv\New'):
+                        files.extend([(os.path.join(root, file)) for file in walk_files])
                 for file in getNfo(files):
+                    Debug('NFO 4')
                     pchtrakt.logger.info(' [Pchtrakt] parsing %s' % file)
                     self.id = getIDFromNFO('TV', file)
                     if self.id != '':
@@ -123,7 +124,7 @@ class MediaParserResultMovie(MediaParserResult):
         if parseNFO:
             files = []
             for root, dirs, walk_files in os.walk(self.path):
-                files.extend([sp(os.path.join(root, file)) for file in walk_files])
+                files.extend([sp(os.path.join(root, file)) for file in walk_files]) #not sure if sp is needed
             #self.x = getNfo(files)
             for file in getNfo(files):
                 self.id = getIDFromNFO('MOVIE', file)

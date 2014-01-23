@@ -2,7 +2,7 @@ from sys import version_info
 from os.path import isfile
 from xml.etree import ElementTree
 from lib import utilities
-from lib.utilities import Debug
+from lib.utilities import Debug, ss, toUnicode
 import pchtrakt, glob, os, re, urllib
 from pchtrakt.exception import BetaSerieAuthenticationException
 from pchtrakt import mediaparser as mp
@@ -474,7 +474,7 @@ def UpdateXMLFiles(pchtrakt):
 							bak_name = name[:-4]+'.bak'
 							tree.write(bak_name, encoding='utf-8')
 							os.rename(bak_name, name)
-							txt = name.replace(YamjPath, '') + ' has been modified as watched for ' + matchthis
+							txt = ss(name.replace(YamjPath, '') + ' has been modified as watched for ' + matchthis)
 							pchtrakt.logger.info(' [Pchtrakt] ' + txt)
 							break
 				try:
@@ -498,7 +498,7 @@ def UpdateXMLFiles(pchtrakt):
 										bak_name = name[:-4]+'.bak'
 										tree.write(bak_name, encoding='utf-8')
 										os.rename(bak_name, name)
-										txt = name.replace(YamjPath, '') + ' has been modified as watched for ' + matchthis
+										txt = ss(name.replace(YamjPath, '') + ' has been modified as watched for ' + matchthis)
 										pchtrakt.logger.info(' [Pchtrakt] ' + txt)
 										previous = xmlword
 										break
@@ -513,14 +513,9 @@ def UpdateXMLFiles(pchtrakt):
 												epno,str(pchtrakt.season_number))
 				else:
 					xpath = "*/movie/files/file"
-				#a = re.split("([-|.]*[Ss]\\d\\d[Ee]\\d\\d.)", matchthis)
-				#if len(a) == 1:
-				#    a = re.split("(?P<season_num>\d+)[. _-]*", matchthis)
-				#ep_name = a[2][:-4].replace(".", " ").replace("- ", "")
-				#season_xml = re.sub("(^|\s)(\S)", repl_func, pchtrakt.lastShowName)
 				season_xml = insensitive_glob(pchtrakt.lastShowName)
-				seasonb_xml = insensitive_glob(pchtrakt.DirtyName)
-				tvxmlfind.extend(["Set_" + season_xml,seasonb_xml])
+				seasonb_xml = pchtrakt.DirtyName
+				tvxmlfind.extend(["Set_" + season_xml,ss(seasonb_xml)])
 				for xmlword in tvxmlfind:
 					fileinfo = YamjPath + xmlword + "*.xml"
 					Debug('[Pchtrakt] scanning ' + xmlword)
@@ -537,7 +532,6 @@ def UpdateXMLFiles(pchtrakt):
 									zpath = "./movie/files/file"
 							else:
 								zpath = xpath
-							#Debug(zpath)
 							for movie in tree.findall(zpath):
 								Debug('[Pchtrakt] looking for ' + matchthisfull)
 								Debug('[Pchtrakt] found this ' + urllib.unquote_plus(movie.find('fileURL').text.encode('utf-8')))
@@ -547,7 +541,10 @@ def UpdateXMLFiles(pchtrakt):
 									bak_name = name[:-4]+'.bak'
 									tree.write(bak_name, encoding='utf-8')
 									os.rename(bak_name, name)
-									txt = name.replace(YamjPath, '') + ' has been modified as watched for ' + matchthis
+									if xmlword == seasonb_xml:
+										txt = name.replace(YamjPath, '') + ' has been modified as watched for ' + ss(matchthis)
+									else:
+										txt = name.replace(YamjPath, '') + ' has been modified as watched for ' + toUnicode(matchthis)
 									pchtrakt.logger.info(' [Pchtrakt] ' + txt)
 									previous = xmlword
 									break
@@ -582,4 +579,5 @@ def UpdateXMLFiles(pchtrakt):
 					#txt = name.replace(YamjPath, '') + ' has NOT been modified as watched for ' + matchthis
 					#pchtrakt.logger.info(txt)
     except:
+        pchtrakt.CreatedFile = 0
         Debug('[Pchtrakt] Error accured during xml updating, Its being looked into')
