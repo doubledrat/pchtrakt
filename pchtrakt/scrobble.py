@@ -2,7 +2,7 @@ from sys import version_info
 from os.path import isfile
 from xml.etree import ElementTree
 from lib import utilities
-from lib.utilities import Debug, ss, toUnicode
+from lib.utilities import Debug, ss
 import pchtrakt, glob, os, re, urllib
 from pchtrakt.exception import BetaSerieAuthenticationException
 from pchtrakt import mediaparser as mp
@@ -541,10 +541,7 @@ def UpdateXMLFiles(pchtrakt):
 									bak_name = name[:-4]+'.bak'
 									tree.write(bak_name, encoding='utf-8')
 									os.rename(bak_name, name)
-									if xmlword == seasonb_xml:
-										txt = name.replace(YamjPath, '') + ' has been modified as watched for ' + ss(matchthis)
-									else:
-										txt = name.replace(YamjPath, '') + ' has been modified as watched for ' + toUnicode(matchthis)
+									txt = name.replace(YamjPath, '') + ' has been modified as watched'
 									pchtrakt.logger.info(' [Pchtrakt] ' + txt)
 									previous = xmlword
 									break
