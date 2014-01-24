@@ -286,6 +286,7 @@ def startWait(msg=''):
             except BaseException as e:
                 pchtrakt.logger.error(e)
     videoStopped()
+    Reset()
 
 def starttvdbWait():
     if pchtrakt.online:
