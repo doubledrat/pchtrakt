@@ -156,6 +156,7 @@ def movieStillRunning(myMedia):
     movieStarted(myMedia)
 
 def showIsEnding(myMedia):
+    Debug("myMedia.ScrobResult" + str(myMedia.ScrobResult))
     if BetaSeriesScrobbleTvShow:
         result = 0
         msg = ' [BetaSAPI] Video is '
@@ -449,9 +450,9 @@ def UpdateXMLFiles(pchtrakt):
 		if  updatexmlwatched:
 			matchthis = pchtrakt.lastName.encode('utf-8')
 			#matchthisfull = pchtrakt.lastPath.encode('utf-8')
-			matchthisfull = ('/'.join(pchtrakt.lastPath.encode('utf-8').split('/')[5:]))
+			matchthisfull = pchtrakt.lastPath.encode('utf-8').split('/', 6)[-1]
 			lookfor = matchthis[:-4]
-			lookforfull = matchthisfull[:-4]
+			#lookforfull = matchthisfull[:-4]
 			if pchtrakt.isMovie:
 				msg = ' [Pchtrakt] Starting Normal Movie xml update in '+YamjPath
 				pchtrakt.logger.info(msg)
@@ -534,8 +535,8 @@ def UpdateXMLFiles(pchtrakt):
 								zpath = xpath
 							for movie in tree.findall(zpath):
 								Debug('[Pchtrakt] looking for ' + matchthisfull)
-								Debug('[Pchtrakt] found this ' + urllib.unquote_plus(movie.find('fileURL').text.encode('utf-8')))
-								if urllib.unquote_plus('/'.join(movie.find('fileURL').text.encode('utf-8').split('/')[7:])) == matchthisfull:
+								Debug('[Pchtrakt] found this ' + urllib.unquote_plus(movie.find('fileURL').text.encode('utf-8').split('/', 8)[-1]))
+								if urllib.unquote_plus(movie.find('fileURL').text.encode('utf-8').split('/', 8)[-1]) == matchthisfull:
 									Debug('[Pchtrakt] MATCH FOUND')
 									movie.set('watched', 'true')
 									bak_name = name[:-4]+'.bak'
@@ -550,7 +551,7 @@ def UpdateXMLFiles(pchtrakt):
 			pchtrakt.logger.info(msg)
 		elif RutabagaModwatched:
 			lookfor = matchthis[:-4]
-			lookforfull = matchthisfull[:-4]
+			#lookforfull = matchthisfull[:-4]
 			msg = ' [Pchtrakt] Starting html update in '+YamjPath
 			pchtrakt.logger.info(msg)
 			if pchtrakt.isMovie:
