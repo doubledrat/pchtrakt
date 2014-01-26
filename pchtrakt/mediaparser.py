@@ -79,7 +79,6 @@ class MediaParserResultTVShow(MediaParserResult):
                     for root, dirs, walk_files in os.walk('Y:\Videos\Tv\New'):
                         files.extend([(os.path.join(root, file)) for file in walk_files])
                 for file in getNfo(files):
-                    Debug('NFO 4')
                     pchtrakt.logger.info(' [Pchtrakt] parsing %s' % file)
                     self.id = getIDFromNFO('TV', file)
                     if self.id != '':
@@ -121,7 +120,7 @@ class MediaParserResultMovie(MediaParserResult):
         self.name = name
         self.year = year
         self.id = imdbid
-        if parseNFO:
+        if parseNFO and self.id == None:
             files = []
             for root, dirs, walk_files in os.walk(self.path):
                 files.extend([sp(os.path.join(root, file)) for file in walk_files]) #not sure if sp is needed
@@ -134,31 +133,44 @@ class MediaParserResultMovie(MediaParserResult):
         if pchtrakt.online and (self.id == None or self.id == ''):
             ImdbAPIurl = ('http://www.imdbapi.com/?t={0}&y={1}'.format(quote_plus(self.name.encode('utf-8', 'replace')), self.year))
             Debug('[IMDB api] Trying search 1: ' + ImdbAPIurl)
-            try:
-                oResponse = urlopen(ImdbAPIurl,None,5)
-                myMovieJson = json.loads(oResponse.read())
-                if myMovieJson['Response'] == "True":#in myMovieJson.keys():
-                    self.id = myMovieJson['imdbID']
-                    Debug('[IMDB api] Movie match using: ' + ImdbAPIurl)
-                else:
-                    ImdbAPIurl = ('http://www.deanclatworthy.com/imdb/?q={0}&year={1}'.format(quote_plus(self.name.encode('utf-8', 'replace')), self.year))
-                    Debug('[IMDB api] Trying search 2: ' + ImdbAPIurl)
-                    oResponse = urlopen(ImdbAPIurl,None,5)
+            retries = 0
+            while True:
+                try:
+                    oResponse = urlopen(ImdbAPIurl,None,10)
                     myMovieJson = json.loads(oResponse.read())
-                    if "title" in myMovieJson.keys():
-                        self.id = myMovieJson['imdbid']
-                        Debug('[IMDB api] Found Movie match using: ' + ImdbAPIurl)
+                    if myMovieJson['Response'] == "True":#in myMovieJson.keys():
+                        self.id = myMovieJson['imdbID']
+                        Debug('[IMDB api] Movie match using: ' + ImdbAPIurl)
+                        break
                     else:
-                        ImdbAPIurl = ('http://www.google.com/search?q=www.imdb.com:site+{0}+({1})&num=1&start=0'.format(quote_plus(self.name.encode('utf-8', 'replace')), self.year))
-                        Debug('[IMDB api] Trying search 3: ' + ImdbAPIurl)
-                        request = Request(ImdbAPIurl, None, {'User-Agent':'Mosilla/5.0 (Macintosh; Intel Mac OS X 10_7_4) AppleWebKit/536.11 (KHTML, like Gecko) Chrome/20.0.1132.57 Safari/536.11'})
-                        urlfile = urlopen(request)
-                        page = urlfile.read()
-                        entries = re.findall("/title/tt(\d{7})/", page)
-                        self.id = "tt"+str(entries[0])
-                        Debug('[IMDB api] Search address = ' + ImdbAPIurl + ' ID = ' + self.id)
-            except:
-                raise MovieResultNotFound(file_name)
+                        ImdbAPIurl = ('http://www.deanclatworthy.com/imdb/?q={0}&year={1}'.format(quote_plus(self.name.encode('utf-8', 'replace')), self.year))
+                        Debug('[IMDB api] Trying search 2: ' + ImdbAPIurl)
+                        oResponse = urlopen(ImdbAPIurl,None,10)
+                        myMovieJson = json.loads(oResponse.read())
+                        if "title" in myMovieJson.keys():
+                            self.id = myMovieJson['imdbid']
+                            Debug('[IMDB api] Found Movie match using: ' + ImdbAPIurl)
+                            break
+                        else:
+                            ImdbAPIurl = ('http://www.google.com/search?q=www.imdb.com:site+{0}+({1})&num=1&start=0'.format(quote_plus(self.name.encode('utf-8', 'replace')), self.year))
+                            Debug('[IMDB api] Trying search 3: ' + ImdbAPIurl)
+                            request = Request(ImdbAPIurl, None, {'User-Agent':'Mosilla/5.0 (Macintosh; Intel Mac OS X 10_7_4) AppleWebKit/536.11 (KHTML, like Gecko) Chrome/20.0.1132.57 Safari/536.11'})
+                            urlfile = urlopen(request)
+                            page = urlfile.read()
+                            entries = re.findall("/title/tt(\d{7})/", page)
+                            self.id = "tt"+str(entries[0])
+                            Debug('[IMDB api] Search address = ' + ImdbAPIurl + ' ID = ' + self.id)
+                            break
+                except:
+                    if retries >= 1:
+                        raise MovieResultNotFound(file_name)
+                        break
+                    else:
+                        msg = ('[IMDB api] First lookup failed, trying 1 more time')
+                        pchtrakt.logger.warning(msg)
+                        retries += 1
+                        sleep(60)
+                        continue
 
 class MediaParserResultMoviebackup(MediaParserResult):
     def __init__(self,file_name,name,year,imdbid):
@@ -172,7 +184,7 @@ class MediaParserResultMoviebackup(MediaParserResult):
             ImdbAPIurl = ('http://www.imdbapi.com/?t={0}&y={1}'.format(quote_plus(self.name.encode('utf-8', 'replace')), self.year))
             Debug('[IMDB api] Trying search 1: ' + ImdbAPIurl)
             try:
-                oResponse = urlopen(ImdbAPIurl,None,5)
+                oResponse = urlopen(ImdbAPIurl,None,10)
                 myMovieJson = json.loads(oResponse.read())
                 self.id = myMovieJson['imdbID']
                 Debug('[IMDB api] Movie match using: ' + ImdbAPIurl)
@@ -182,7 +194,7 @@ class MediaParserResultMoviebackup(MediaParserResult):
                 ImdbAPIurl = ('http://www.deanclatworthy.com/imdb/?q={0}&year={1}'.format(quote_plus(self.name.encode('utf-8', 'replace')), self.year))
                 Debug('[IMDB api] Trying search 2: ' + ImdbAPIurl)
                 try:
-                    oResponse = urlopen(ImdbAPIurl,None,5)
+                    oResponse = urlopen(ImdbAPIurl,None,10)
                     myMovieJson = json.loads(oResponse.read())
                     self.id = myMovieJson['imdbid']
                     Debug('[IMDB api] Found Movie match using: ' + ImdbAPIurl)

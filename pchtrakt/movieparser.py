@@ -23,7 +23,9 @@ import re
 import mediaparser
 
 regexes_movies = [
-                    ("imdb", "^.+(?P<imdbid>tt\d{7}).+$")
+                    ("imdb", "^(?P<movie_title>.+?)[. _-]+[\(\[]{0,1}(?P<year>[0-9]{4})[\)\]]{0,1}.*(?P<imdbid>tt\d{7}).*")
+                    ,
+                    ("movie_only", "^(?P<movie_title>.+?)[. _-]+(?P<imdbid>tt\d{7}).*")
                     ,
                     ("movie_year", "^(?P<movie_title>.+?)[. _-]+[\(\[]{0,1}(?P<year>[0-9]{4})[\)\]]{0,1}")
                     ,
@@ -130,6 +132,11 @@ class MovieParser():
                 movie_name.append(word)
             else:
                 break
+        #check for IMDB
+        reg=re.compile('tt\d{7}')
+        for word in stitle:
+            if reg.match(word):
+                movie_name.append(word)
         movie_name = ' '.join(movie_name)
         return movie_name.strip()
 
