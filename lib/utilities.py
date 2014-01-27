@@ -6,7 +6,7 @@ from time import sleep, time
 from httplib import HTTPException, BadStatusLine
 from sha import new as sha1
 from urllib2 import Request, urlopen, HTTPError, URLError
-from urllib import urlencode, quote_plus
+from urllib import quote_plus
 import base64
 import copy
 import pchtrakt
@@ -128,8 +128,8 @@ def scrobbleMissed():
     with open('missed.scrobbles','w') as f:
         json.dump(pchtrakt.missed, f, separators=(',',':'), indent=4)
 
-def Debug(myMsg):#, force=use_debug):
-    if use_debug:# or force):
+def Debug(myMsg):
+    if use_debug:
         try:
             pchtrakt.logger.debug(myMsg)
         except UnicodeEncodeError:
@@ -293,16 +293,11 @@ def trakt_api_old_TRYING(method, url, params={}, passVersions=False):
     Debug("[traktAPI] Request URL '%s'" % (url))
     request = Request(url, params)
     Debug("[traktAPI] Request URL '%s'" % (url))
-    #request = Request(url, params)
     Debug("[traktAPI] Request URL '%s'" % (url+params))
-    #base64string = base64.encodestring('%s:%s' % (TraktUsername, pwdsha1)).replace('\n', '')
-    #request.add_header("Authorization", "Basic %s" % base64string)
     retries = 0
     while True:
         try:
-            Debug("1")
             response = urlopen(request, timeout=timeout).read()
-            Debug("2")
         except BadStatusLine, e:
             if retries >= 10:
                 pchtrakt.logger.warning('[traktAPI] BadStatusLine retries failed, switching to off-line mode.')
@@ -409,9 +404,7 @@ def trakt_api(method, url, params={}, passVersions=False):
     retries = 0
     while True:
         try:
-            Debug("1")
             response = urlopen(request).read()
-            Debug("2")
         except BadStatusLine, e:
             if retries >= 10:
                 pchtrakt.logger.warning('[traktAPI] BadStatusLine retries failed, switching to off-line mode.')

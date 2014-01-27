@@ -1,15 +1,19 @@
 from sys import version_info
 from os.path import isfile
+from os import rename
 from xml.etree import ElementTree
 from lib import utilities
-from lib.utilities import Debug, ss
-import pchtrakt, glob, os, re, urllib
+from lib.utilities import Debug
+from urllib import unquote_plus
 from pchtrakt.exception import BetaSerieAuthenticationException
 from pchtrakt import mediaparser as mp
 from pchtrakt import betaseries as bs
 from pchtrakt.config import *
 from time import sleep, time
-from pchtrakt.pch import EnumStatus
+import pchtrakt
+import glob
+#import re
+#from pchtrakt.pch import EnumStatus
 #import codecs
 #import lib.connector
 #from time import time
@@ -17,10 +21,10 @@ from pchtrakt.pch import EnumStatus
 #from os import listdir#use glob instead? or switch both to list dir?
 #import fileinput
 #from pchtrakt.pch import decode_string, utf8_encoded
-class EnumScrobbleResult:
-    KO = 0
-    TRAKTOK = 1
-    BETASERIESOK= 2
+#class EnumScrobbleResult:
+#    KO = 0
+#    TRAKTOK = 1
+#    BETASERIESOK= 2
 
 class OutToMainLoop(Exception):
     pass
@@ -31,7 +35,7 @@ def insensitive_glob(pattern):
     return ''.join(map(either,pattern))
 
 def Oversightwatched(searchValue):
-    if os.path.isfile("/share/Apps/oversight/index.db"):
+    if isfile("/share/Apps/oversight/index.db"):
         newfile = ""
         pchtrakt.logger.info('[Oversight] Doing update...')
         addValue = "\t_w\t1\t"
@@ -58,12 +62,9 @@ def Oversightwatched(searchValue):
         pchtrakt.logger.info('[Oversight] Could not find your Oversight database file.')
 
 def scrobbleMissed():
-    #pchtrakt.logger.info('started TEST ' + pchtrakt.lastpath)
-    #self.path = pchtrakt.lastpath
     ctime = time()
     pchtrakt.missed = {}
-    #if pchtrakt.online:
-    if os.path.isfile('missed.scrobbles'):
+    if isfile('missed.scrobbles'):
         with open('missed.scrobbles','r+') as f:
             pchtrakt.missed = json.load(f)
     pchtrakt.missed[pchtrakt.lastPath]={"Totaltime": int(pchtrakt.Ttime), "Totallength": int(ctime)}
@@ -156,7 +157,7 @@ def movieStillRunning(myMedia):
     movieStarted(myMedia)
 
 def showIsEnding(myMedia):
-    Debug("myMedia.ScrobResult" + str(myMedia.ScrobResult))
+    #Debug("myMedia.ScrobResult" + str(myMedia.ScrobResult))
     if BetaSeriesScrobbleTvShow:
         result = 0
         msg = ' [BetaSAPI] Video is '
@@ -176,7 +177,7 @@ def showIsEnding(myMedia):
                 bs.destroyToken(token)#added this but not sure if needed
                 msg += 'already watched: '
             if result or isWatched:
-                myMedia.ScrobResult |=  EnumScrobbleResult.BETASERIESOK
+                result = 1
                 msg += u'{0} {1}x{2}'.format(myMedia.parsedInfo.name,
                                            myMedia.parsedInfo.season_number,
                                            myMedia.parsedInfo.episode_numbers[myMedia.idxEpisode]
@@ -184,11 +185,11 @@ def showIsEnding(myMedia):
                 pchtrakt.logger.info(msg)
 
             else:
-                myMedia.ScrobResult |= EnumScrobbleResult.BETASERIESOK
+                result = 1
         else:
             msg += 'not found '
             pchtrakt.logger.info(msg)
-            myMedia.ScrobResult |= EnumScrobbleResult.BETASERIESOK
+            result = 1
     if TraktScrobbleTvShow:
         Debug("[traktAPI] Tv Show is ending")
         result = 0
@@ -206,12 +207,9 @@ def showIsEnding(myMedia):
                 msg = ' [traktAPI] Tv Show is ending: %s - %s ' %(response['status'],response['message'])
                 pchtrakt.logger.info(msg)
             result = 1
-
-        if result == 1:
-            myMedia.ScrobResult |= EnumScrobbleResult.TRAKTOK
     else:
-        myMedia.ScrobResult |= EnumScrobbleResult.TRAKTOK
-    return result#myMedia.ScrobResult == EnumScrobbleResult.TRAKTOK | EnumScrobbleResult.BETASERIESOK
+        result = 1
+    return result
 
 def movieIsEnding(myMedia):
     Debug("[traktAPI] Movie is ending")
@@ -273,7 +271,7 @@ def videoStatusHandleMovie(myMedia):
             elif myMedia.oStatus.currentTime > pchtrakt.currentTime + int(TraktRefreshTime)*60:
                 pchtrakt.currentTime = myMedia.oStatus.currentTime
                 movieStillRunning(myMedia)
-        elif myMedia.oStatus.percent < 10 and myMedia.oStatus.status != EnumStatus.NOPLAY and TraktScrobbleMovie:
+        elif myMedia.oStatus.percent < 10 and myMedia.oStatus.status != 'noplay' and TraktScrobbleMovie:
             pchtrakt.logger.info(' [Pchtrakt] It seems you came back at the begining of the video... so I say to trakt it\'s playing')
             pchtrakt.watched = 0
             pchtrakt.currentTime = myMedia.oStatus.currentTime
@@ -295,9 +293,6 @@ def videoStatusHandleTVSeries(myMedia):
         pchtrakt.currentTime = myMedia.oStatus.currentTime
         myMedia.idxEpisode = 0
         if pchtrakt.lastPath != '' and (TraktScrobbleTvShow or BetaSeriesScrobbleTvShow):
-            #if myMedia.oStatus.percent > watched_percent:
-            #    pchtrakt.watched  = 1
-            #    pchtrakt.logger.info(' [Pchtrakt] Started at more than '+ str(watched_percent) + '%! I''m not doing anything!')
             if doubleEpisode:
                 while myMedia.oStatus.percent > (myMedia.idxEpisode + 1) * watched_percent/len(myMedia.parsedInfo.episode_numbers):
                     myMedia.idxEpisode += 1
@@ -309,13 +304,6 @@ def videoStatusHandleTVSeries(myMedia):
         if not pchtrakt.watched and (TraktScrobbleTvShow or BetaSeriesScrobbleTvShow):
             if myMedia.oStatus.percent > watched_percent:
                 pchtrakt.watched = showIsEnding(myMedia)
-            #if pchtrakt.watched:
-            #    pchtrakt.StopTrying = 0
-            #    while myMedia.oStatus.status != EnumStatus.NOPLAY:
-            #        sleep(sleepTime)
-            #        myMedia.oStatus = pchtrakt.oPchRequestor.getStatus(ipPch, 10)
-            #        pchtrakt.StopTrying = 1
-            #    #videoStopped()
             elif myMedia.oStatus.currentTime > pchtrakt.currentTime + int(TraktRefreshTime)*60:
                 pchtrakt.currentTime = myMedia.oStatus.currentTime
                 showStillRunning(myMedia)
@@ -323,7 +311,7 @@ def videoStatusHandleTVSeries(myMedia):
                 showIsEnding(myMedia)
                 myMedia.idxEpisode += 1
                 showStarted(myMedia)
-        elif myMedia.oStatus.percent < 10 and myMedia.oStatus.status != EnumStatus.NOPLAY and (TraktScrobbleTvShow or BetaSeriesScrobbleTvShow):
+        elif myMedia.oStatus.percent < 10 and myMedia.oStatus.status != 'noplay' and (TraktScrobbleTvShow or BetaSeriesScrobbleTvShow):
             pchtrakt.logger.info(' [Pchtrakt] It seems you came back at the begining of the video... so I say to trakt it\'s playing')
             pchtrakt.watched = 0
             pchtrakt.currentTime = myMedia.oStatus.currentTime
@@ -332,11 +320,9 @@ def videoStatusHandleTVSeries(myMedia):
 def videoStatusHandle(myMedia):
     if isinstance(myMedia.parsedInfo,mp.MediaParserResultTVShow):
         pchtrakt.isTvShow = 1
-        #if TraktScrobbleTvShow or BetaSeriesScrobbleTvShow:
         videoStatusHandleTVSeries(myMedia)
     elif isinstance(myMedia.parsedInfo,mp.MediaParserResultMovie):
         pchtrakt.isMovie = 1
-        #if TraktScrobbleMovie:
         videoStatusHandleMovie(myMedia)
     else:
         pchtrakt.StopTrying = 1
@@ -435,12 +421,16 @@ def watchedFileCreation(myMedia):
         path = '{0}{1}'.format(YamjWatchedPath, path)
     path = '{0}.watched'.format(path)
     if not isfile(path):
-        Debug('[Pchtrakt] Start to write file')
-        f = open(path, 'w')
-        f.close()
-        msg = ' [Pchtrakt] I have created the file {0}'.format(path)
-        pchtrakt.logger.info(msg)
-        pchtrakt.CreatedFile = 1
+        try:
+            Debug('[Pchtrakt] Start to write file')
+            f = open(path, 'w')
+            f.close()
+            msg = ' [Pchtrakt] I have created the file {0}'.format(path)
+            pchtrakt.logger.info(msg)
+            pchtrakt.CreatedFile = 1
+        except IOError, e:
+            pchtrakt.logger.exception(e)
+            pchtrakt.CreatedFile = 1
     else:
         pchtrakt.CreatedFile = 2
 
@@ -448,20 +438,19 @@ def UpdateXMLFiles(pchtrakt):
     try:
         if  updatexmlwatched:
             matchthis = pchtrakt.lastName.encode('utf-8')
-            #matchthisfull = pchtrakt.lastPath.encode('utf-8')
             matchthisfull = ('/'.join(pchtrakt.lastPath.encode('utf-8').split('/')[5:]))
             lookfor = matchthis[:-4]
-            lookforfull = matchthisfull[:-4]
+            mod = 0
             if pchtrakt.isMovie:
-                msg = ' [Pchtrakt] Starting Normal Movie xml update in '+YamjPath
+                msg = ' [Pchtrakt] Starting Normal Movie xml update in ' + YamjPath
                 pchtrakt.logger.info(msg)
                 previous = None
-                name = urllib.unquote_plus(YamjPath + lookfor + '.xml')
+                name = unquote_plus(YamjPath + lookfor + '.xml')
                 Debug('[Pchtrakt] Looking at ' + name)
                 if isfile(name):
                     tree = ElementTree.parse(name)
                     try:
-                        SET = urllib.unquote_plus(tree.find('movie/sets/set').attrib['index'])
+                        SET = unquote_plus(tree.find('movie/sets/set').attrib['index'])
                     except AttributeError:
                         SET = '0'
                     Debug('[Pchtrakt] 1 ' + name)
@@ -474,9 +463,10 @@ def UpdateXMLFiles(pchtrakt):
                                 mfile.set('watched', 'true')
                                 bak_name = name[:-4]+'.bak'
                                 tree.write(bak_name, encoding='utf-8')
-                                os.rename(bak_name, name)
-                                txt = ss(name.replace(YamjPath, '') + ' has been modified as watched for ' + matchthis)
-                                pchtrakt.logger.info(' [Pchtrakt] ' + txt)
+                                rename(bak_name, name)
+                                txt = utilities.ss(name.replace(YamjPath, '') + ' has been modified as watched')
+                                Debug('[Pchtrakt] ' + txt)
+                                mod += 1
                                 break
                 else:
                     pchtrakt.logger.info(' [Pchtrakt] Can not find file, check your jukebox path')
@@ -500,9 +490,10 @@ def UpdateXMLFiles(pchtrakt):
                                         movie.find('watched').text = 'true'
                                         bak_name = name[:-4]+'.bak'
                                         tree.write(bak_name, encoding='utf-8')
-                                        os.rename(bak_name, name)
-                                        txt = ss(name.replace(YamjPath, '') + ' has been modified as watched for ' + matchthis)
-                                        pchtrakt.logger.info(' [Pchtrakt] ' + txt)
+                                        rename(bak_name, name)
+                                        txt = utilities.ss(name.replace(YamjPath, '') + ' has been modified as watched for ' + matchthis)
+                                        Debug('[Pchtrakt] ' + txt)
+                                        mod += 1
                                         previous = xmlword
                                         break
                                 break
@@ -521,7 +512,7 @@ def UpdateXMLFiles(pchtrakt):
                 for xmlword in tvxmlfind:
                     fileinfo = YamjPath + xmlword + "*.xml"
                     Debug('[Pchtrakt] scanning ' + xmlword)
-                    for name in glob.glob(ss(fileinfo)):
+                    for name in glob.glob(utilities.ss(fileinfo)):
                         Debug('[Pchtrakt] scanning ' + name)
                         if lookfor in open(name).read():
                             Debug("after name " + fileinfo)
@@ -533,30 +524,25 @@ def UpdateXMLFiles(pchtrakt):
                                     zpath = "./movie/files/file"
                             else:
                                 zpath = xpath
-                            #Debug(zpath)
                             for movie in tree.findall(zpath):
                                 Debug('[Pchtrakt] looking for ' + matchthisfull)
-                                Debug('[Pchtrakt] found this ' + urllib.unquote_plus(movie.find('fileURL').text.encode('utf-8')))
-                                if urllib.unquote_plus('/'.join(movie.find('fileURL').text.encode('utf-8').split('/')[7:])) == matchthisfull:
+                                Debug('[Pchtrakt] found this ' + unquote_plus(movie.find('fileURL').text.encode('utf-8')))
+                                if unquote_plus('/'.join(movie.find('fileURL').text.encode('utf-8').split('/')[7:])) == matchthisfull:
                                     Debug('[Pchtrakt] MATCH FOUND')
                                     movie.set('watched', 'true')
                                     bak_name = name[:-4]+'.bak'
                                     tree.write(bak_name, encoding='utf-8')
-                                    os.rename(bak_name, name)
-                                    txt = name.replace(YamjPath, '')
-                                    if xmlword == seasonb_xml:
-                                        txt = txt + ' has been modified as watched for ' + ss(matchthis)
-                                    else:
-                                        txt = txt + ' has been modified as watched for ' + toUnicode(matchthis)
-                                    pchtrakt.logger.info(' [Pchtrakt] ' + txt)
+                                    rename(bak_name, name)
+                                    txt = name.replace(YamjPath, '') + ' has been modified as watched'
+                                    Debug('[Pchtrakt] ' + txt)
+                                    mod += 1
                                     previous = xmlword
                                     break
                             break
-            msg = ' [Pchtrakt] XML Update complete'
+            msg = ' [Pchtrakt] XML Update complete, %d xml file(s) were updated' % mod
             pchtrakt.logger.info(msg)
         elif RutabagaModwatched:
             lookfor = matchthis[:-4]
-            lookforfull = matchthisfull[:-4]
             msg = ' [Pchtrakt] Starting html update in '+YamjPath
             pchtrakt.logger.info(msg)
             if pchtrakt.isMovie:

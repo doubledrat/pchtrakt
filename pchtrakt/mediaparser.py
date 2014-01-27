@@ -131,11 +131,11 @@ class MediaParserResultMovie(MediaParserResult):
                     break
 
         if pchtrakt.online and (self.id == None or self.id == ''):
-            ImdbAPIurl = ('http://www.imdbapi.com/?t={0}&y={1}'.format(quote_plus(self.name.encode('utf-8', 'replace')), self.year))
-            Debug('[IMDB api] Trying search 1: ' + ImdbAPIurl)
-            retries = 0
             while True:
                 try:
+                    ImdbAPIurl = ('http://www.imdbapi.com/?t={0}&y={1}'.format(quote_plus(self.name.encode('utf-8', 'replace')), self.year))
+                    Debug('[IMDB api] Trying search 1: ' + ImdbAPIurl)
+                    retries = 0
                     oResponse = urlopen(ImdbAPIurl,None,10)
                     myMovieJson = json.loads(oResponse.read())
                     if myMovieJson['Response'] == "True":#in myMovieJson.keys():
@@ -161,7 +161,8 @@ class MediaParserResultMovie(MediaParserResult):
                             self.id = "tt"+str(entries[0])
                             Debug('[IMDB api] Search address = ' + ImdbAPIurl + ' ID = ' + self.id)
                             break
-                except:
+                except Exception as e:
+                    Debug('[IMDB api] ' + str(e))
                     if retries >= 1:
                         raise MovieResultNotFound(file_name)
                         break

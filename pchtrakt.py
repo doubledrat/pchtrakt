@@ -105,7 +105,6 @@ def getParams():
                       'starting normally')
             else:
                 pchtrakt.DAEMON = True
-                #pchtrakt.debug = False
 
         if o in ('-h', '--help'):
             printHelp()
@@ -120,7 +119,6 @@ def getParams():
                 sys.exit()
 
 def checkUpdate(when):
-    #pchtrakt.logger.info('update checker')
     hash = ""
     for row in os.popen('git ls-remote 2>&-').read().split('\n'):
         if row.find('refs/heads/dvp') != -1:
@@ -189,10 +187,9 @@ def Reset():
 
 def doWork():
     pchtrakt.problem = ''
-    myMedia.ScrobResult = 0
+    #myMedia.ScrobResult = 0
     myMedia.oStatus = pchtrakt.oPchRequestor.getStatus(ipPch, 10)
     if myMedia.oStatus.status == EnumStatus.NOPLAY and (LastfmNowPlaying is True or LastfmScrobble is True):
-        #sleep(2)
         myMedia.oStatus = pchtrakt.oPchMusicRequestor.getStatus(ipPch, 10)
         if myMedia.oStatus.status == EnumStatus.PLAY:
             pchtrakt.logger.info(' [Pchtrakt] Music found playing')
@@ -203,7 +200,6 @@ def doWork():
                     network = pylast.LastFMNetwork(api_key = "e43fb2fa81a6d8fa85b9e630c90bdf27", api_secret = 
                                                    "c51b8c3fa4b6b5b61cdfe59775b59c07", username = LastfmUsername, password_hash = pylast.md5(LastfmPwd))
                 if LastfmNowPlaying is True and (pchtrakt.lastPath != myMedia.oStatus.fullPath and myMedia.oStatus.artist != ''):
-                    #pchtrakt.logger.info(' [ Last.fm] try to do Now playing %s - %s '% (myMedia.oStatus.artist, myMedia.oStatus.title))
                     network.update_now_playing(myMedia.oStatus.artist, myMedia.oStatus.title, duration = int(myMedia.oStatus.totalTime - myMedia.oStatus.currentTime))
                     pchtrakt.lastPath = myMedia.oStatus.fullPath
                     LastScrobble = 0
@@ -220,7 +216,6 @@ def doWork():
             while myMedia.oStatus.status == EnumStatus.PLAY:
                 sleep(sleepTime)
                 myMedia.oStatus = pchtrakt.oPchRequestor.getStatus(ipPch, 10)
-                #pchtrakt.StopTrying = 1
             Reset()
         myMedia.parsedInfo = None
     if YamjWatched == True and not pchtrakt.watched and myMedia.oStatus.percent > watched_percent and pchtrakt.CreatedFile == 0:
@@ -268,18 +263,15 @@ def stopTrying():
         pass
 
 def startWait(msg=''):
-    #Debug('pchtrakt start wait')
     if msg != '':
         pchtrakt.logger.info(' [Pchtrakt] waiting for file to stop as %s' % msg)
     else:
         pchtrakt.logger.info(' [Pchtrakt] waiting for file to stop as somthing is wrong with file name')
     waitforstop = pchtrakt.oPchRequestor.getStatus(ipPch, 10)
     NowPlaying = waitforstop.fileName
-    #pchtrakt.StopTrying = 1
     while waitforstop.status != 'noplay' and NowPlaying == waitforstop.fileName:
         sleep(sleepTime)
         waitforstop = pchtrakt.oPchRequestor.getStatus(ipPch, 10)
-        #pchtrakt.StopTrying = 1
         if YamjWatched == True and not pchtrakt.watched and waitforstop.percent > watched_percent and pchtrakt.CreatedFile == 0:
             try:
                 watchedFileCreation(myMedia)
@@ -291,17 +283,17 @@ def startWait(msg=''):
 def starttvdbWait():
     if pchtrakt.online:
         while urllib.urlopen("http://thetvdb.com").getcode() != 200:
-            pchtrakt.StopTrying = 1#pchtrakt.StopTrying = 0
+            pchtrakt.StopTrying = 1
             while myMedia.oStatus.status != EnumStatus.NOPLAY:
                 sleep(sleepTime)
                 myMedia.oStatus = pchtrakt.oPchRequestor.getStatus(ipPch, 10)
-                #pchtrakt.StopTrying = 1
                 if YamjWatched == True and not pchtrakt.watched and myMedia.oStatus.percent > watched_percent and pchtrakt.CreatedFile == 0:
                     try:
                         watchedFileCreation(myMedia)
                     except BaseException as e:
                         pchtrakt.logger.error(e)
             #videoStopped()
+            #Reset()
 
 def StartUP():
     if pchtrakt.online:
@@ -316,7 +308,6 @@ def StartUP():
                 pchtrakt.logger.info(u' [Pchtrakt] marking %s watched on trakt.tv' % xname.split('/')[::-1][0])
                 myMedia.parsedInfo = pchtrakt.mediaparser.parse(xname.split('/')[::-1][0])
                 myMedia.idxEpisode = 0
-                myMedia.ScrobResult = 0
                 myMedia.oStatus = PchStatus()
                 myMedia.oStatus.totalTime = pchtrakt.missed[xname]['Totaltime']
                 myMedia.oStatus.percent = 100
