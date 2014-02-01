@@ -142,7 +142,7 @@ class MediaParserResultMovie(MediaParserResult):
                         self.id = myMovieJson['imdbID']
                         Debug('[IMDB api] Movie match using: ' + ImdbAPIurl)
                         break
-                    else:
+                except Exception:
                         ImdbAPIurl = ('http://www.deanclatworthy.com/imdb/?q={0}&year={1}'.format(quote_plus(self.name.encode('utf-8', 'replace')), self.year))
                         Debug('[IMDB api] Trying search 2: ' + ImdbAPIurl)
                         oResponse = urlopen(ImdbAPIurl,None,10)
@@ -151,7 +151,7 @@ class MediaParserResultMovie(MediaParserResult):
                             self.id = myMovieJson['imdbid']
                             Debug('[IMDB api] Found Movie match using: ' + ImdbAPIurl)
                             break
-                        else:
+                except Exception:
                             ImdbAPIurl = ('http://www.google.com/search?q=www.imdb.com:site+{0}+({1})&num=1&start=0'.format(quote_plus(self.name.encode('utf-8', 'replace')), self.year))
                             Debug('[IMDB api] Trying search 3: ' + ImdbAPIurl)
                             request = Request(ImdbAPIurl, None, {'User-Agent':'Mosilla/5.0 (Macintosh; Intel Mac OS X 10_7_4) AppleWebKit/536.11 (KHTML, like Gecko) Chrome/20.0.1132.57 Safari/536.11'})

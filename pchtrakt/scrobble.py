@@ -438,10 +438,11 @@ def UpdateXMLFiles(pchtrakt):
     try:
         if  updatexmlwatched:
             matchthis = pchtrakt.lastName.encode('utf-8')
-            matchthisfull = ('/'.join(pchtrakt.lastPath.encode('utf-8').split('/')[5:]))
+            matchthisfull = ('/'.join(pchtrakt.lastPath.encode('utf-8').split('/')[6:]))
             lookfor = matchthis[:-4]
             mod = 0
             if pchtrakt.isMovie:
+                moviexml = moviexmlfind
                 msg = ' [Pchtrakt] Starting Normal Movie xml update in ' + YamjPath
                 pchtrakt.logger.info(msg)
                 previous = None
@@ -472,9 +473,9 @@ def UpdateXMLFiles(pchtrakt):
                     pchtrakt.logger.info(' [Pchtrakt] Can not find file, check your jukebox path')
                 try:
                     if SET != "0":
-                        moviexmlfind.insert(0,SET)
+                        moviexml.insert(0,SET)
                         Debug('[Pchtrakt] Has Set_ file: ' + SET)
-                    for xmlword in moviexmlfind:
+                    for xmlword in moviexml:
                         fileinfo = YamjPath + xmlword + "*xml"
                         Debug('[Pchtrakt] ' + fileinfo)
                         for name in glob.glob(fileinfo):
@@ -500,16 +501,24 @@ def UpdateXMLFiles(pchtrakt):
                 except OutToMainLoop:
                     pass
             elif pchtrakt.isTvShow:
-                pchtrakt.logger.info(' [Pchtrakt] Starting Tv xml update in '+ YamjPath)
+                tvxml = tvxmlfind
+                doubleEpisode = 0
                 epno = str(pchtrakt.episode_numbers).replace('[', '').replace(']', '')
                 if version_info >= (2,7): #[@...=...] only available with python >= 2.7
-                    xpath = "*/movie/files/file[@firstPart='{0}'][@season='{1}']".format(epno,str(pchtrakt.season_number))
+                    if len(pchtrakt.episode_numbers) == 1:
+                        xpath = "*/movie/files/file[@firstPart='{0}'][@season='{1}']".format(epno,str(pchtrakt.season_number))
+                        pchtrakt.logger.info(' [Pchtrakt] Starting normal Tv xml update in '+ YamjPath)
+                    else:
+                        doubleEpisode = 1
+                        first, last = [epno[0], epno[-1]]
+                        xpath = "*/movie/files/file[@firstPart='{0}'][@lastPart='{1}'][@season='{2}']".format(first,last,str(pchtrakt.season_number))
+                        pchtrakt.logger.info(' [Pchtrakt] Starting multi episode Tv xml update in '+ YamjPath)
                 else:
                     xpath = "*/movie/files/file"
                 season_xml = insensitive_glob(pchtrakt.lastShowName)
                 seasonb_xml = pchtrakt.DirtyName
-                tvxmlfind.extend(["Set_" + season_xml,seasonb_xml])
-                for xmlword in tvxmlfind:
+                tvxml.extend(["Set_" + season_xml,seasonb_xml])
+                for xmlword in tvxml:
                     fileinfo = YamjPath + xmlword + "*.xml"
                     Debug('[Pchtrakt] scanning ' + xmlword)
                     for name in glob.glob(utilities.ss(fileinfo)):
@@ -519,15 +528,18 @@ def UpdateXMLFiles(pchtrakt):
                             tree = ElementTree.parse(name)
                             if xmlword == seasonb_xml:
                                 if version_info >= (2,7):
-                                    zpath = "./movie/files/file[@firstPart='{0}'][@season='{1}']".format(epno,str(pchtrakt.season_number))
+                                    if doubleEpisode:
+                                        zpath = "./movie/files/file[@firstPart='{0}'][@lastPart='{1}'][@season='{2}']".format(first,last,str(pchtrakt.season_number))
+                                    else:
+                                        zpath = "./movie/files/file[@firstPart='{0}'][@season='{1}']".format(epno,str(pchtrakt.season_number))
                                 else:
                                     zpath = "./movie/files/file"
                             else:
                                 zpath = xpath
                             for movie in tree.findall(zpath):
                                 Debug('[Pchtrakt] looking for ' + matchthisfull)
-                                Debug('[Pchtrakt] found this ' + unquote_plus(movie.find('fileURL').text.encode('utf-8')))
-                                if unquote_plus('/'.join(movie.find('fileURL').text.encode('utf-8').split('/')[7:])) == matchthisfull:
+                                Debug('[Pchtrakt] found this ' + unquote_plus('/'.join(movie.find('fileURL').text.encode('utf-8').split('/')[8:]))
+                                if unquote_plus('/'.join(movie.find('fileURL').text.encode('utf-8').split('/')[8:])) == matchthisfull or unquote_plus('/'.join(movie.find('fileURL').text.encode('utf-8').split('/')[5:])) == matchthisfull:
                                     Debug('[Pchtrakt] MATCH FOUND')
                                     movie.set('watched', 'true')
                                     bak_name = name[:-4]+'.bak'
@@ -567,6 +579,6 @@ def UpdateXMLFiles(pchtrakt):
                 #else:
                     #txt = name.replace(YamjPath, '') + ' has NOT been modified as watched for ' + matchthis
                     #pchtrakt.logger.info(txt)
-    except:
+    except Exception as e:
         pchtrakt.CreatedFile = 0
-        Debug('[Pchtrakt] Error accured during xml updating, Its being looked into')
+        Debug('[Pchtrakt] %s - Error accured during xml updating, Its being looked into' % str(e))
