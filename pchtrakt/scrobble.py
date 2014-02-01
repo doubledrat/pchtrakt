@@ -538,7 +538,7 @@ def UpdateXMLFiles(pchtrakt):
                                 zpath = xpath
                             for movie in tree.findall(zpath):
                                 Debug('[Pchtrakt] looking for ' + matchthisfull)
-                                Debug('[Pchtrakt] found this ' + unquote_plus('/'.join(movie.find('fileURL').text.encode('utf-8').split('/')[8:]))
+                                Debug('[Pchtrakt] found this ' + unquote_plus('/'.join(movie.find('fileURL').text.encode('utf-8').split('/')[8:])))
                                 if unquote_plus('/'.join(movie.find('fileURL').text.encode('utf-8').split('/')[8:])) == matchthisfull or unquote_plus('/'.join(movie.find('fileURL').text.encode('utf-8').split('/')[5:])) == matchthisfull:
                                     Debug('[Pchtrakt] MATCH FOUND')
                                     movie.set('watched', 'true')
