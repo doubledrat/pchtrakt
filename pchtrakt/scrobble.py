@@ -438,7 +438,7 @@ def UpdateXMLFiles(pchtrakt):
     try:
         if  updatexmlwatched:
             matchthis = pchtrakt.lastName.encode('utf-8')
-            matchthisfull = ('/'.join(pchtrakt.lastPath.encode('utf-8').split('/')[6:]))
+            matchthisfull = ('/'.join(pchtrakt.lastPath.encode('utf-8').split('/')[-2:]))
             lookfor = matchthis[:-4]
             mod = 0
             if pchtrakt.isMovie:
@@ -538,8 +538,8 @@ def UpdateXMLFiles(pchtrakt):
                                 zpath = xpath
                             for movie in tree.findall(zpath):
                                 Debug('[Pchtrakt] looking for ' + matchthisfull)
-                                Debug('[Pchtrakt] found this ' + unquote_plus('/'.join(movie.find('fileURL').text.encode('utf-8').split('/')[8:])))
-                                if unquote_plus('/'.join(movie.find('fileURL').text.encode('utf-8').split('/')[8:])) == matchthisfull or unquote_plus('/'.join(movie.find('fileURL').text.encode('utf-8').split('/')[5:])) == matchthisfull:
+                                Debug('[Pchtrakt] found this ' + unquote_plus('/'.join(movie.find('fileURL').text.encode('utf-8').split('/')[-2:])))
+                                if unquote_plus('/'.join(movie.find('fileURL').text.encode('utf-8').split('/')[-2:])) == matchthisfull:
                                     Debug('[Pchtrakt] MATCH FOUND')
                                     movie.set('watched', 'true')
                                     bak_name = name[:-4]+'.bak'
