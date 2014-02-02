@@ -146,7 +146,7 @@ class MediaParserResultMovie(MediaParserResult):
                     Debug('[IMDB api] ' + str(e))
                 try:
                     if self.id == None:
-                        ImdbAPIurl = ('http://www.deanclatworthy.com/imdb/?q={0}&year={1}'.format(quote_plus('gjhghgjhgjhgjhg'.encode('utf-8', 'replace')), self.year))
+                        ImdbAPIurl = ('http://www.deanclatworthy.com/imdb/?q={0}&year={1}'.format(quote_plus(self.name.encode('utf-8', 'replace')), self.year))
                         Debug('[IMDB api] Trying search 2: ' + ImdbAPIurl)
                         oResponse = urlopen(ImdbAPIurl,None,10)
                         myMovieJson = json.loads(oResponse.read())
