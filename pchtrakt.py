@@ -212,11 +212,12 @@ def doWork():
                 sleep(sleepTime)
                 myMedia.oStatus = pchtrakt.oPchMusicRequestor.getStatus(ipPch, 10)
     if pchtrakt.lastPath != myMedia.oStatus.fullPath and pchtrakt.StopTrying == 0:
-        if isIgnored(myMedia) == True:
-            while myMedia.oStatus.status == EnumStatus.PLAY:
-                sleep(sleepTime)
-                myMedia.oStatus = pchtrakt.oPchRequestor.getStatus(ipPch, 10)
-            Reset()
+        if myMedia.oStatus.fullPath != '':
+            if isIgnored(myMedia) == True:
+                while myMedia.oStatus.status == EnumStatus.PLAY:
+                    sleep(sleepTime)
+                    myMedia.oStatus = pchtrakt.oPchRequestor.getStatus(ipPch, 10)
+                Reset()
         myMedia.parsedInfo = None
     if YamjWatched == True and not pchtrakt.watched and myMedia.oStatus.percent > watched_percent and pchtrakt.CreatedFile == 0:
         watchedFileCreation(myMedia)
@@ -225,19 +226,20 @@ def doWork():
                                           EnumStatus.UNKNOWN,
                                           EnumStatus.PAUSE]:
             pchtrakt.allowedPauseTime = TraktMaxPauseTime
-            if myMedia.oStatus.status != EnumStatus.LOAD:
-                if myMedia.parsedInfo == None:
-                    Debug('[Pchtrakt] full path: ' + myMedia.oStatus.fullPath)
-                    msg = u' [Pchtrakt] File: {0}'.format(myMedia.oStatus.fileName)
-                    pchtrakt.logger.info(msg)
-                    myMedia.parsedInfo = pchtrakt.mediaparser.parse(
-                                            myMedia.oStatus.fullPath)
-                    pchtrakt.Ttime = myMedia.oStatus.totalTime
-                    if hasattr(myMedia.parsedInfo, 'dirty'):
-                        pchtrakt.DirtyName = myMedia.parsedInfo.dirty
-                videoStatusHandle(myMedia)
-                if pchtrakt.problem != '':
-                    startWait(pchtrakt.problem)
+            #if myMedia.oStatus.status != EnumStatus.LOAD:
+            if myMedia.parsedInfo == None:
+                #Debug('[Pchtrakt] status: ' + myMedia.oStatus.status)
+                Debug('[Pchtrakt] full path: ' + myMedia.oStatus.fullPath)
+                #msg = ' [Pchtrakt] File: {0}'.format(myMedia.oStatus.fileName)
+                #msg = ' [Pchtrakt] %s File %s' % myMedia.oStatus.fileName, myMedia.oStatus.status
+                pchtrakt.logger.info(' [Pchtrakt] %s File %s' % (myMedia.oStatus.status, myMedia.oStatus.fileName))
+                myMedia.parsedInfo = pchtrakt.mediaparser.parse(myMedia.oStatus.fullPath)
+                pchtrakt.Ttime = myMedia.oStatus.totalTime
+                if hasattr(myMedia.parsedInfo, 'dirty'):
+                    pchtrakt.DirtyName = myMedia.parsedInfo.dirty
+            videoStatusHandle(myMedia)
+            if pchtrakt.problem != '':
+                startWait(pchtrakt.problem)
         elif (myMedia.oStatus.status == EnumStatus.PAUSE
             and pchtrakt.allowedPauseTime > 0):
             pchtrakt.allowedPauseTime -= sleepTime

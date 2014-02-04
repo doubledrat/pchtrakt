@@ -76,10 +76,9 @@ def repl_func(m):
 
 def showStarted(myMedia):
     if TraktScrobbleTvShow:
-        percent = myMedia.oStatus.percent * len(myMedia.parsedInfo.episode_numbers)  - (myMedia.idxEpisode * 100 )#fixed percent for multipleEpisode
-
-        if percent < 0 : percent = 0
-        
+        percent = myMedia.oStatus.percent * len(myMedia.parsedInfo.episode_numbers) - (myMedia.idxEpisode * 100 )#fixed percent for multipleEpisode
+        if percent < 0:
+			percent = 0
         if str(myMedia.parsedInfo.season_number) == "None":
             myMedia.parsedInfo.season_number = "1"
         response = utilities.watchingEpisodeOnTrakt(myMedia.parsedInfo.id,
@@ -334,14 +333,15 @@ def isIgnored(myMedia):
     ignored = False
     ignored = isKeywordIgnored(myMedia.oStatus.fileName)
     if not ignored and ignored_repertory[0] != '':
-        for el in myMedia.oStatus.fullPath.split('/'):
-            if el != '':
-                Debug("[Pchtrakt] Checking if " + el + " is an ignored folder")
-                if el in ignored_repertory:
-                    msg = ' [Pchtrakt] This video is in a ignored repertory: {0}'.format(el) + ' Waiting for next file to start.'
-                    pchtrakt.logger.info(msg)
-                    ignored = True
-                    break
+        for el in myMedia.oStatus.fullPath.replace('/opt/sybhttpd/localhost.drives/', '').split('/'):
+            #if el != '':
+            Debug("[Pchtrakt] Checking if %s is an ignored folder" % el)
+            if el in ignored_repertory:
+                msg = ' [Pchtrakt] This video is in a ignored repertory: {0}'.format(el) + ' Waiting for next file to start.'
+                pchtrakt.logger.info(msg)
+                ignored = True
+                break
+    #Debug("[Pchtrakt] Finished Checking folders")
     if not ignored and YamjIgnoredCategory[0] != '':
         if YamjPath != "/":
             #YAMJ2 Genre
@@ -505,14 +505,14 @@ def UpdateXMLFiles(pchtrakt):
                 doubleEpisode = 0
                 epno = str(pchtrakt.episode_numbers).replace('[', '').replace(']', '')
                 if version_info >= (2,7): #[@...=...] only available with python >= 2.7
-                    if len(pchtrakt.episode_numbers) == 1:
-                        xpath = "*/movie/files/file[@firstPart='{0}'][@season='{1}']".format(epno,str(pchtrakt.season_number))
-                        pchtrakt.logger.info(' [Pchtrakt] Starting normal Tv xml update in '+ YamjPath)
-                    else:
+                    if len(pchtrakt.episode_numbers)>1:
                         doubleEpisode = 1
                         first, last = [epno[0], epno[-1]]
                         xpath = "*/movie/files/file[@firstPart='{0}'][@lastPart='{1}'][@season='{2}']".format(first,last,str(pchtrakt.season_number))
                         pchtrakt.logger.info(' [Pchtrakt] Starting multi episode Tv xml update in '+ YamjPath)
+                    else:
+                        xpath = "*/movie/files/file[@firstPart='{0}'][@season='{1}']".format(epno,str(pchtrakt.season_number))
+                        pchtrakt.logger.info(' [Pchtrakt] Starting normal Tv xml update in '+ YamjPath)
                 else:
                     xpath = "*/movie/files/file"
                 season_xml = insensitive_glob(pchtrakt.lastShowName)
@@ -538,7 +538,7 @@ def UpdateXMLFiles(pchtrakt):
                                 zpath = xpath
                             for movie in tree.findall(zpath):
                                 Debug('[Pchtrakt] looking for ' + matchthisfull)
-                                Debug('[Pchtrakt] found this ' + unquote_plus('/'.join(movie.find('fileURL').text.encode('utf-8').split('/')[-2:])))
+                                Debug('[Pchtrakt]  found this ' + unquote_plus('/'.join(movie.find('fileURL').text.encode('utf-8').split('/')[-2:])))
                                 if unquote_plus('/'.join(movie.find('fileURL').text.encode('utf-8').split('/')[-2:])) == matchthisfull:
                                     Debug('[Pchtrakt] MATCH FOUND')
                                     movie.set('watched', 'true')
