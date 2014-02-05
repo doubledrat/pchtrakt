@@ -19,7 +19,8 @@
 import ConfigParser
 import pchtrakt
 import json
-from os.path import isfile
+from os.path import isfile, isdir
+from os import listdir
 from commands import getoutput
 import socket
 pchtrakt.online = 1
@@ -109,9 +110,17 @@ YamjIgnoredCategory = [x.strip().lower() for x in config.get('YAMJ', 'ignored_ca
 
 #YAMJ2
 YamjPath = config.get('YAMJ2', 'jukebox_path')
+#Check path is correct
+if not isdir(YamjPath):
+	x = listdir('/opt/sybhttpd/localhost.drives/NETWORK_SHARE/')
+	rest = '/' + ('/'.join(YamjPath.encode('utf-8').split('/')[6:])) + '/'
+	for y in x:
+		if isdir('/opt/sybhttpd/localhost.drives/NETWORK_SHARE/' + y + rest):
+			YamjPath = '/opt/sybhttpd/localhost.drives/NETWORK_SHARE/' + y + rest
+			break
 if not YamjPath.endswith('/'):
     YamjPath += '/'
-
+	
 #YAMJ3
 apiurl = config.get('YAMJ3', 'API_url')
 
