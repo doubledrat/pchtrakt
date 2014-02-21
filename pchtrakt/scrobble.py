@@ -439,7 +439,7 @@ def UpdateXMLFiles(pchtrakt):
         if  updatexmlwatched:
             matchthis = pchtrakt.lastName.encode('utf-8')
             matchthisfull = ('/'.join(pchtrakt.lastPath.encode('utf-8').split('/')[-2:]))
-            lookfor = matchthis[:-4]
+            lookfor = matchthis[:-4].replace('&','&amp;')
             mod = 0
             if pchtrakt.isMovie:
                 moviexml = moviexmlfind
