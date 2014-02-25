@@ -21,7 +21,9 @@ from xml.etree import ElementTree
 from string import split
 from urllib2 import Request, urlopen, URLError, HTTPError
 from lib.utilities import Debug
-import math, glob
+from os.path import realpath
+import math
+import glob
 import pchtrakt
 #import repr
 
@@ -54,8 +56,9 @@ class PchRequestor:
         oPchStatus = PchStatus()
         try:
             oXml = ElementTree.fromstring(response)
-            if oXml.tag == "theDavidBox": # theDavidBox should be the root
+            if (oXml.tag == "theDavidBox") and (oXml.find("response/mediatype")!= None): # theDavidBox should be the root
                 if oXml.find("returnValue").text == '0' and oXml.find("response/fullPath").text != "/cdrom"  and int(oXml.find("response/totalTime").text) > 90:#Added total time check to avoid scrobble while playing adverts/trailers
+                    #Debug('[Pchtrakt] %s' % response)
                     oPchStatus.totalTime = int(oXml.find("response/totalTime").text)
                     oPchStatus.status = oXml.find("response/currentStatus").text
                     oPchStatus.fullPath = oXml.find("response/fullPath").text
@@ -64,11 +67,10 @@ class PchRequestor:
                     if oXml.find("response/totalchapter")!= None:
                         oPchStatus.currentChapter = int(oXml.find("response/currentchapter").text)
                         oPchStatus.totalChapter = int(oXml.find("response/totalchapter").text)
-                    if oXml.find("response/mediatype")!= None:
                         self.mediaType = oXml.find("response/mediatype").text
                         if (oPchStatus.fullPath == "/iso"):#Change path if iso file
-                            newpath = glob.glob("/isolink/*.iso")
-                            oPchStatus.fullPath = unicode(newpath)[2:-2]#oPchStatus.fullPath = toUnicode(newpath)[2:-2]
+                            oPchStatus.fullPath = realpath(str(glob.glob("/isolink/*.iso")).strip('[\'\']'))
+                            #oPchStatus.fullPath = unicode(newpath)[2:-2]#oPchStatus.fullPath = toUnicode(newpath)[2:-2]
                         if(self.mediaType == "BluRay"): # Blu-ray Disc are not handle like .mkv or .avi files
                             oPchStatus.fileName = oPchStatus.fullPath.split('/')[::-1][1]# add a / on last position when ISO
                             if oPchStatus.totalTime!=0:
@@ -95,8 +97,6 @@ class PchRequestor:
                             oPchStatus.fileName = oPchStatus.fullPath.split('/')[::-1][0]
                             if oPchStatus.totalTime!=0:
                                 oPchStatus.percent = int(math.ceil(float(oPchStatus.currentTime) / float(oPchStatus.totalTime) * 100.0))
-                    else:
-                        oPchStatus.status=EnumStatus.NOPLAY
             else:
                 oPchStatus.status = EnumStatus.UNKNOWN
         except ElementTree.ParseError, e:

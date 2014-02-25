@@ -96,6 +96,18 @@ def newConfig():
         config.add_section('YAMJ2')
     if not config.has_option('YAMJ2','jukebox_path'):
         config.set('YAMJ2', 'jukebox_path', '')
+    #if not config.has_option('YAMJ2','boot_time_sync'):
+    #    config.set('YAMJ2', 'boot_time_sync', '-1')
+    #if not config.has_option('YAMJ2','update_movie_collection'):
+    #    config.set('YAMJ2', 'update_movie_collection', 'False')
+    #if not config.has_option('YAMJ2','update_movie_watched'):
+    #    config.set('YAMJ2', 'update_movie_watched', 'False')		
+    #if not config.has_option('YAMJ2','update_show_collection'):
+    #    config.set('YAMJ2', 'update_show_collection', 'False')	
+    #if not config.has_option('YAMJ2','update_show_watched'):
+    #    config.set('YAMJ2', 'update_show_watched', 'False')			
+    #if not config.has_option('YAMJ2','mark_watched'):
+    #    config.set('YAMJ2', 'mark_watched', 'False')
 
     if not config.has_section('YAMJ3'):
         config.add_section('YAMJ3')

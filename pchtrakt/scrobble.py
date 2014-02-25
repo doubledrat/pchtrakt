@@ -194,6 +194,10 @@ def showIsEnding(myMedia):
         result = 0
         if str(myMedia.parsedInfo.season_number) == "None":
             myMedia.parsedInfo.season_number = "1"
+        try:
+			Debug('NAME: ' + myMedia.parsedInfo.name + ' Season: ' + str(myMedia.parsedInfo.season_number) + ' Episode: ' + str(myMedia.parsedInfo.episode_numbers[myMedia.idxEpisode]))
+        except Exception as e:
+			print e
         response = utilities.scrobbleEpisodeOnTrakt(myMedia.parsedInfo.id,
                                                     myMedia.parsedInfo.name,
                                                     myMedia.parsedInfo.year,
