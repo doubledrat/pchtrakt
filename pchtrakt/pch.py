@@ -69,19 +69,19 @@ class PchRequestor:
                         oPchStatus.totalChapter = int(oXml.find("response/totalchapter").text)
                         self.mediaType = oXml.find("response/mediatype").text
                         if (oPchStatus.fullPath == "/iso"):#Change path if iso file
-                            oPchStatus.fullPath = realpath(str(glob.glob("/isolink/*.iso")).strip('[\'\']'))
+                            oPchStatus.fullPath = realpath(str(glob.glob("/isolink/*.[Ii][Ss][Oo]")).strip('[\'\']'))
                             #oPchStatus.fullPath = unicode(newpath)[2:-2]#oPchStatus.fullPath = toUnicode(newpath)[2:-2]
                         if(self.mediaType == "BluRay"): # Blu-ray Disc are not handle like .mkv or .avi files
                             oPchStatus.fileName = oPchStatus.fullPath.split('/')[::-1][1]# add a / on last position when ISO
                             if oPchStatus.totalTime!=0:
                                 oPchStatus.percent = int(math.ceil(float(oPchStatus.currentChapter) / float(oPchStatus.totalChapter) * 100.0)) # approximation because chapters are differents
-                        elif (self.mediaType == "DVD") and (oPchStatus.fullPath.split(".")[-1] == "iso"):
+                        elif (self.mediaType == "DVD") and (oPchStatus.fullPath.split(".")[-1].lower() == "iso"):
                             oPchStatus.fileName = oPchStatus.fullPath.split('/')[::-1][0]
                             if oPchStatus.totalTime!=0:
                                 oPchStatus.percent = int(math.ceil(float(oPchStatus.currentTime) / float(oPchStatus.totalTime) * 100.0))
                             if oPchStatus.totalChapter!=0:
                                 oPchStatus.percent = int(math.ceil(float(oPchStatus.currentChapter) / float(oPchStatus.totalChapter) * 100.0)) # approximation because chapters are differents
-                        elif (self.mediaType == "DVD") and (oPchStatus.fullPath.split(".")[-1] != "iso"):
+                        elif (self.mediaType == "DVD") and (oPchStatus.fullPath.split(".")[-1].lower() != "iso"):
                             if oPchStatus.fullPath[-1:] == "/":
                                 oPchStatus.fullPath = oPchStatus.fullPath[:-1]+".DVD"#Add .DVD extension for later use or will just make .watched file
                                 oPchStatus.fileName = oPchStatus.fullPath.split('/')[::-1][0]
@@ -97,8 +97,10 @@ class PchRequestor:
                             oPchStatus.fileName = oPchStatus.fullPath.split('/')[::-1][0]
                             if oPchStatus.totalTime!=0:
                                 oPchStatus.percent = int(math.ceil(float(oPchStatus.currentTime) / float(oPchStatus.totalTime) * 100.0))
+                else:
+                    oPchStatus.status = EnumStatus.NOPLAY
             else:
-                oPchStatus.status = EnumStatus.UNKNOWN
+                oPchStatus.status = EnumStatus.NOPLAY
         except ElementTree.ParseError, e:
             oPchStatus.error = e
             oPchStatus.status = EnumStatus.UNKNOWN
