@@ -725,7 +725,7 @@ def trakt_shows_watched_to_YAMJ():
 
         if trakt_shows_seen:
             pchtrakt.logger.info('[YAMJ] %s TV shows episodes watched status will be updated in YAMJ' % len(trakt_shows_seen))
-            WatchedYAMJ(trakt_shows_seen)
+            WatchedYAMJtv(trakt_shows_seen)
         else:
             pchtrakt.logger.info('[YAMJ] Watched TV shows on YAMJ are up to date')
 
@@ -757,3 +757,33 @@ def WatchedYAMJ(watched):
                     pchtrakt.logger.info(msg)
                 except IOError, e:
                     pchtrakt.logger.exception(e)
+
+def WatchedYAMJtv(watched):
+    pchtrakt.logger.info('[YAMJ] Start to create watched files')
+    if YamjWatched == True:
+        for x in watched:
+            for y in x['episodes']:
+                try:
+                    path = y['path'].split('/')[::-1][0].encode('utf-8', 'replace')
+                except:
+                    path = y['path'].split('/')[::-1][0].encode('latin-1', 'replace')
+                if YamJWatchedVithVideo:
+                    try:
+                        path = y['path'].replace('file:///', '/').encode('utf-8', 'replace')
+                    except:
+                        path = y['path'].replace('file:///', '/').encode('latin-1', 'replace')
+                    if (path.split(".")[-1] == "DVD"):#Remember that .DVD extension
+                        path = path[:-4]
+                else:
+                    if (path.split(".")[-1] == "DVD"):
+                        path = path[:-4]
+                    path = '{0}{1}'.format(YamjWatchedPath, path)
+                path = '{0}.watched'.format(path)
+                if not isfile(path):
+                    try:
+                        f = open(path, 'w')
+                        f.close()
+                        msg = ' [Pchtrakt] I have created the file {0}'.format(path)
+                        pchtrakt.logger.info(msg)
+                    except IOError, e:
+                        pchtrakt.logger.exception(e)
