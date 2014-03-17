@@ -78,7 +78,7 @@ def showStarted(myMedia):
     if TraktScrobbleTvShow:
         percent = myMedia.oStatus.percent * len(myMedia.parsedInfo.episode_numbers) - (myMedia.idxEpisode * 100 )#fixed percent for multipleEpisode
         if percent < 0:
-			percent = 0
+            percent = 0
         if str(myMedia.parsedInfo.season_number) == "None":
             myMedia.parsedInfo.season_number = "1"
         response = utilities.watchingEpisodeOnTrakt(myMedia.parsedInfo.id,
@@ -195,9 +195,9 @@ def showIsEnding(myMedia):
         if str(myMedia.parsedInfo.season_number) == "None":
             myMedia.parsedInfo.season_number = "1"
         try:
-			Debug('NAME: ' + myMedia.parsedInfo.name + ' Season: ' + str(myMedia.parsedInfo.season_number) + ' Episode: ' + str(myMedia.parsedInfo.episode_numbers[myMedia.idxEpisode]))
+            Debug('NAME: ' + myMedia.parsedInfo.name + ' Season: ' + str(myMedia.parsedInfo.season_number) + ' Episode: ' + str(myMedia.parsedInfo.episode_numbers[myMedia.idxEpisode]))
         except Exception as e:
-			print e
+            print e
         response = utilities.scrobbleEpisodeOnTrakt(myMedia.parsedInfo.id,
                                                     myMedia.parsedInfo.name,
                                                     myMedia.parsedInfo.year,

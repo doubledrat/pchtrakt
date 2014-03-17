@@ -120,14 +120,14 @@ if not isdir(YamjPath):
 			break
 if not YamjPath.endswith('/'):
     YamjPath += '/'
-#markYAMJ = config.getboolean('YAMJ2', 'mark_watched')
-#YAMJSyncCheck = float(config.get('YAMJ2', 'boot_time_sync'))
-#if YAMJSyncCheck > 0:
-#    YAMJSyncCheck = YAMJSyncCheck*60*60
-#YAMJumc = config.getboolean('YAMJ2', 'update_movie_collection')
-#YAMJusc = config.getboolean('YAMJ2', 'update_show_collection')
-#YAMJumw = config.getboolean('YAMJ2', 'update_movie_watched')
-#YAMJusw = config.getboolean('YAMJ2', 'update_show_watched')
+markYAMJ = config.getboolean('YAMJ2', 'mark_watched')
+YAMJSyncCheck = float(config.get('YAMJ2', 'boot_time_sync'))
+if YAMJSyncCheck > 0:
+    YAMJSyncCheck = YAMJSyncCheck*60*60
+YAMJumc = config.getboolean('YAMJ2', 'update_movie_collection')
+YAMJusc = config.getboolean('YAMJ2', 'update_show_collection')
+YAMJumw = config.getboolean('YAMJ2', 'update_movie_watched')
+YAMJusw = config.getboolean('YAMJ2', 'update_show_watched')
 	
 #YAMJ3
 apiurl = config.get('YAMJ3', 'API_url')

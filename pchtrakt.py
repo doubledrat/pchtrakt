@@ -47,7 +47,7 @@ from lib.tvdb_api import tvdb_api
 from lib.tvdb_api import tvdb_exceptions
 from lib.utilities import Debug, checkSettings
 from lib.oversight import OversightSync
-#from lib.yamj2 import YAMJSync
+from lib.yamj2 import YAMJSync
 from lib import pylast
 from xml.etree import ElementTree
 from httplib import HTTPException, BadStatusLine
@@ -302,7 +302,7 @@ def StartUP():
     if pchtrakt.online:
         checkUpdate('first')
         OversightSync()
-        #YAMJSync()
+        YAMJSync()
         if os.path.isfile('missed.scrobbles'):
             pchtrakt.logger.info(' [Pchtrakt] Found missed scrobbles, updating trakt.tv')
             with open('missed.scrobbles','r+') as f:

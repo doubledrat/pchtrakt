@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 
 from pchtrakt.config import *
-from lib.utilities import trakt_api
+from lib.utilities import Debug, trakt_api
 from xml.etree import ElementTree
 from urllib import unquote_plus
+#from pchtrakt.scrobble import watchedFileCreation
 import re
 import os
 import copy
@@ -18,7 +19,9 @@ trakt_shows = []
 
 def YAMJSync():
     if YAMJSyncCheck >= 0:
+        Debug('[Pchtrakt] Reading ' + name)
         tree = ElementTree.parse(name)
+        Debug('[Pchtrakt] Finished')
         if YAMJumc or YAMJumw:
             get_YAMJ_movies(tree)
             get_trakt_movies()
@@ -27,7 +30,8 @@ def YAMJSync():
             if YAMJumw:
                 get_trakt_movies() #Need to re-get trakt films in case they were updated above
                 YAMJ_movies_watched_to_trakt()
-                trakt_movies_watched_to_YAMJ()
+                if markYAMJ:
+                    trakt_movies_watched_to_YAMJ()
         if YAMJusc or YAMJusw:
             global YAMJ_shows
             YAMJ_shows = {}
@@ -38,7 +42,8 @@ def YAMJSync():
             if YAMJusw:
                 get_trakt_shows() #Need to re-get trakt shows in case they were updated above
                 YAMJ_shows_watched_to_trakt()
-                trakt_shows_watched_to_YAMJ()
+                if markYAMJ:
+                    trakt_shows_watched_to_YAMJ()
             del YAMJ_shows
     #clear globals
     del YAMJ_movies[:]
@@ -46,6 +51,7 @@ def YAMJSync():
     del YAMJ_movies_unseen[:]
     del trakt_movies[:]
     del trakt_shows[:]
+    tree = ''
     config.set('YAMJ2', 'boot_time_sync', '-1')
     with open(config_file, 'w') as configfile:
         config.write(configfile)
@@ -309,7 +315,7 @@ def trakt_movies_watched_to_YAMJ():
 
     if trakt_movies_seen:
         pchtrakt.logger.info('[YAMJ] %s movie watched files will be created' % len(trakt_movies_seen))
-        WatchedYAMJmv(trakt_movies_seen)
+        WatchedYAMJ(trakt_movies_seen)
     else:
         pchtrakt.logger.info('[YAMJ] No watched files ned to be created')
 
@@ -719,14 +725,14 @@ def trakt_shows_watched_to_YAMJ():
 
         if trakt_shows_seen:
             pchtrakt.logger.info('[YAMJ] %s TV shows episodes watched status will be updated in YAMJ' % len(trakt_shows_seen))
-            WatchedYAMJtv(trakt_shows_seen)
+            WatchedYAMJ(trakt_shows_seen)
         else:
             pchtrakt.logger.info('[YAMJ] Watched TV shows on YAMJ are up to date')
 
-def WatchedYAMJtv(episodes):
+def WatchedYAMJ(watched):
     pchtrakt.logger.info('[YAMJ] Start to create watched files')
     if YamjWatched == True:
-        for x in episodes['episodes']:
+        for x in watched:
             try:
                 path = x['path'].split('/')[::-1][0].encode('utf-8', 'replace')
             except:
@@ -751,34 +757,3 @@ def WatchedYAMJtv(episodes):
                     pchtrakt.logger.info(msg)
                 except IOError, e:
                     pchtrakt.logger.exception(e)
-
-def WatchedYAMJmv(movies):
-    pchtrakt.logger.info('[YAMJ] Start to create watched files')
-    if YamjWatched == True:
-        for x in movies:
-            try:
-                path = x['path'].split('/')[::-1][0].encode('utf-8', 'replace')
-            except:
-                path = x['path'].split('/')[::-1][0].encode('latin-1', 'replace')
-            if YamJWatchedVithVideo:
-                try:
-                    path = x['path'].replace('file:///', '/').encode('utf-8', 'replace')
-                except:
-                    path = x['path'].replace('file:///', '/').encode('latin-1', 'replace')
-                if (path.split(".")[-1] == "DVD"):#Remember that .DVD extension
-                    path = path[:-4]
-            else:
-                if (path.split(".")[-1] == "DVD"):
-                    path = path[:-4]
-                path = '{0}{1}'.format(YamjWatchedPath, path)
-            path = '{0}.watched'.format(path)
-            if not isfile(path):
-                try:
-                    f = open(path, 'w')
-                    f.close()
-                    msg = ' [Pchtrakt] I have created the file {0}'.format(path)
-                    pchtrakt.logger.info(msg)
-                except IOError, e:
-                    pchtrakt.logger.exception(e)
-
-
