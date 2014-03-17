@@ -755,8 +755,9 @@ def WatchedYAMJ(watched):
                     f.close()
                     msg = ' [Pchtrakt] I have created the file {0}'.format(path)
                     pchtrakt.logger.info(msg)
-                except IOError, e:
+                except Exception as e: #except IOError, e:
                     pchtrakt.logger.exception(e)
+                    continue
 
 def WatchedYAMJtv(watched):
     pchtrakt.logger.info('[YAMJ] Start to create watched files')
@@ -785,5 +786,5 @@ def WatchedYAMJtv(watched):
                         f.close()
                         msg = ' [Pchtrakt] I have created the file {0}'.format(path)
                         pchtrakt.logger.info(msg)
-                    except IOError, e:
+                    except Exception as e: #except IOError, e:
                         pchtrakt.logger.exception(e)
