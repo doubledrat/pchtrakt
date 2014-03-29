@@ -522,6 +522,7 @@ def UpdateXMLFiles(pchtrakt):
                 season_xml = insensitive_glob(pchtrakt.lastShowName)
                 seasonb_xml = pchtrakt.DirtyName
                 tvxml.extend(["Set_" + season_xml,seasonb_xml])
+                Debug('[Pchtrakt] looking for ' + lookfor)
                 for xmlword in tvxml:
                     fileinfo = YamjPath + xmlword + "*.xml"
                     Debug('[Pchtrakt] scanning ' + xmlword)
