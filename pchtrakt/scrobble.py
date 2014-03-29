@@ -147,7 +147,7 @@ def videoStopped():
     if (TraktScrobbleTvShow or TraktScrobbleMovie) and (not pchtrakt.online and pchtrakt.watched):
         pchtrakt.logger.info(' [Pchtrakt] saving off-line scrobble')
         scrobbleMissed()
-    pchtrakt.logger.info(' [Pchtrakt] Waiting for a file to start.....')
+    #pchtrakt.logger.info(' [Pchtrakt] Waiting for a file to start.....')
 
 def showStillRunning(myMedia):
     showStarted(myMedia)

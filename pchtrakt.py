@@ -186,6 +186,7 @@ def Reset():
     pchtrakt.Ttime = 0
     pchtrakt.CreatedFile = 0
     myMedia.parsedInfo = None
+    pchtrakt.logger.info(' [Pchtrakt] Waiting for a file to start.....')
 
 def doWork():
     pchtrakt.problem = ''
