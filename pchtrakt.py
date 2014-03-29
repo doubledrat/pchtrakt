@@ -185,6 +185,7 @@ def Reset():
     pchtrakt.Check = 0
     pchtrakt.Ttime = 0
     pchtrakt.CreatedFile = 0
+    myMedia.parsedInfo = None
 
 def doWork():
     pchtrakt.problem = ''
@@ -213,12 +214,6 @@ def doWork():
                 sleep(sleepTime)
                 myMedia.oStatus = pchtrakt.oPchMusicRequestor.getStatus(ipPch, 10)
     if pchtrakt.lastPath != myMedia.oStatus.fullPath and pchtrakt.StopTrying == 0:
-        if myMedia.oStatus.fullPath != '':
-            if isIgnored(myMedia) == True:
-                while myMedia.oStatus.status == EnumStatus.PLAY:
-                    sleep(sleepTime)
-                    myMedia.oStatus = pchtrakt.oPchRequestor.getStatus(ipPch, 10)
-                Reset()
         myMedia.parsedInfo = None
     if YamjWatched == True and not pchtrakt.watched and myMedia.oStatus.percent > watched_percent and pchtrakt.CreatedFile == 0:
         watchedFileCreation(myMedia)
@@ -238,7 +233,11 @@ def doWork():
                 pchtrakt.Ttime = myMedia.oStatus.totalTime
                 if hasattr(myMedia.parsedInfo, 'dirty'):
                     pchtrakt.DirtyName = myMedia.parsedInfo.dirty
-            videoStatusHandle(myMedia)
+            if myMedia.oStatus.fullPath != '':
+                if isIgnored(myMedia) == True:
+                    startWait('it is being ignored')
+                else:
+                    videoStatusHandle(myMedia)
             if pchtrakt.problem != '':
                 startWait(pchtrakt.problem)
         elif (myMedia.oStatus.status == EnumStatus.PAUSE
@@ -280,7 +279,7 @@ def startWait(msg=''):
                 watchedFileCreation(myMedia)
             except BaseException as e:
                 pchtrakt.logger.error(e)
-    videoStopped()
+    #videoStopped()
     Reset()
 
 def starttvdbWait():

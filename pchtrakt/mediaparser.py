@@ -76,7 +76,7 @@ class MediaParserResultTVShow(MediaParserResult):
                     pchtrakt.logger.info(' [Pchtrakt] found ../tvshow.nfo')
                     files.extend([(self.path.rsplit('/', 1)[0] + '/tvshow.nfo')])
                 else:
-                    for root, dirs, walk_files in os.walk('Y:\Videos\Tv\New'):
+                    for root, dirs, walk_files in os.walk(self.path):
                         files.extend([(os.path.join(root, file)) for file in walk_files])
                 for file in getNfo(files):
                     pchtrakt.logger.info(' [Pchtrakt] parsing %s' % file)
