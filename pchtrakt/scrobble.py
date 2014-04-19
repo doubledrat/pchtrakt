@@ -1,5 +1,7 @@
 from sys import version_info
-from os.path import isfile
+#from os.path import isfile
+from os.path import isfile, isdir
+from os import listdir
 from os import rename
 from xml.etree import ElementTree
 from lib import utilities
@@ -441,6 +443,16 @@ def watchedFileCreation(myMedia):
 def UpdateXMLFiles(pchtrakt):
     try:
         if  updatexmlwatched:
+            #Check path is correct
+            #if not isdir(YamjPath):
+            #    x = listdir('/opt/sybhttpd/localhost.drives/NETWORK_SHARE/')
+            #    rest = '/' + ('/'.join(YamjPath.encode('utf-8').split('/')[6:])) + '/'
+            #    for y in x:
+            #        if isdir('/opt/sybhttpd/localhost.drives/NETWORK_SHARE/' + y + rest):
+            #            YamjPath = '/opt/sybhttpd/localhost.drives/NETWORK_SHARE/' + y + rest
+            #            break
+            #    if not YamjPath.endswith('/'):
+            #        YamjPath += '/'
             matchthis = pchtrakt.lastName.encode('utf-8')
             matchthisfull = ('/'.join(pchtrakt.lastPath.encode('utf-8').split('/')[-2:]))
             lookfor = matchthis[:-4].replace('&','&amp;')
