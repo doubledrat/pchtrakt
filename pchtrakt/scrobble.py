@@ -443,26 +443,29 @@ def watchedFileCreation(myMedia):
 def UpdateXMLFiles(pchtrakt):
     try:
         if  updatexmlwatched:
+            checkpath = YamjPath.encode('utf-8')
             #Check path is correct
-            #if not isdir(YamjPath):
-            #    x = listdir('/opt/sybhttpd/localhost.drives/NETWORK_SHARE/')
-            #    rest = '/' + ('/'.join(YamjPath.encode('utf-8').split('/')[6:])) + '/'
-            #    for y in x:
-            #        if isdir('/opt/sybhttpd/localhost.drives/NETWORK_SHARE/' + y + rest):
-            #            YamjPath = '/opt/sybhttpd/localhost.drives/NETWORK_SHARE/' + y + rest
-            #            break
-            #    if not YamjPath.endswith('/'):
-            #        YamjPath += '/'
+            if not isfile(checkpath + 'Other_All_1.xml'):
+                Debug('[Pchtrakt] Somthing wrong with jukebox path, using ' + checkpath)
+                Debug('[Pchtrakt] Trying to find correct path...')
+                x = listdir('/opt/sybhttpd/localhost.drives/NETWORK_SHARE/')
+                rest = '/' + ('/'.join(checkpath.split('/')[6:]))
+                for y in x:
+                    if isfile('/opt/sybhttpd/localhost.drives/NETWORK_SHARE/' + y + rest + 'Other_All_1.xml'):
+                        checkpath = '/opt/sybhttpd/localhost.drives/NETWORK_SHARE/' + y + rest
+                        break
+                if not checkpath.endswith('/'):
+                    checkpath += '/'
             matchthis = pchtrakt.lastName.encode('utf-8')
             matchthisfull = ('/'.join(pchtrakt.lastPath.encode('utf-8').split('/')[-2:]))
             lookfor = matchthis[:-4].replace('&','&amp;')
             mod = 0
             if pchtrakt.isMovie:
                 moviexml = moviexmlfind
-                msg = ' [Pchtrakt] Starting Normal Movie xml update in ' + YamjPath
+                msg = ' [Pchtrakt] Starting Normal Movie xml update in ' + checkpath
                 pchtrakt.logger.info(msg)
                 previous = None
-                name = unquote_plus(YamjPath + lookfor + '.xml')
+                name = unquote_plus(checkpath + lookfor + '.xml')
                 Debug('[Pchtrakt] Looking at ' + name)
                 if isfile(name):
                     tree = ElementTree.parse(name)
@@ -481,7 +484,7 @@ def UpdateXMLFiles(pchtrakt):
                                 bak_name = name[:-4]+'.bak'
                                 tree.write(bak_name, encoding='utf-8')
                                 rename(bak_name, name)
-                                txt = utilities.ss(name.replace(YamjPath, '') + ' has been modified as watched')
+                                txt = utilities.ss(name.replace(checkpath, '') + ' has been modified as watched')
                                 Debug('[Pchtrakt] ' + txt)
                                 mod += 1
                                 break
@@ -492,7 +495,7 @@ def UpdateXMLFiles(pchtrakt):
                         moviexml.insert(0,SET)
                         Debug('[Pchtrakt] Has Set_ file: ' + SET)
                     for xmlword in moviexml:
-                        fileinfo = YamjPath + xmlword + "*xml"
+                        fileinfo = checkpath + xmlword + "*xml"
                         Debug('[Pchtrakt] ' + fileinfo)
                         for name in glob.glob(fileinfo):
                             Debug('[Pchtrakt] Looking for ' + lookfor + " in " + name)
@@ -508,7 +511,7 @@ def UpdateXMLFiles(pchtrakt):
                                         bak_name = name[:-4]+'.bak'
                                         tree.write(bak_name, encoding='utf-8')
                                         rename(bak_name, name)
-                                        txt = utilities.ss(name.replace(YamjPath, '') + ' has been modified as watched for ' + matchthis)
+                                        txt = utilities.ss(name.replace(checkpath, '') + ' has been modified as watched for ' + matchthis)
                                         Debug('[Pchtrakt] ' + txt)
                                         mod += 1
                                         previous = xmlword
@@ -525,10 +528,10 @@ def UpdateXMLFiles(pchtrakt):
                         doubleEpisode = 1
                         first, last = [epno[0], epno[-1]]
                         xpath = "*/movie/files/file[@firstPart='{0}'][@lastPart='{1}'][@season='{2}']".format(first,last,str(pchtrakt.season_number))
-                        pchtrakt.logger.info(' [Pchtrakt] Starting multi episode Tv xml update in '+ YamjPath)
+                        pchtrakt.logger.info(' [Pchtrakt] Starting multi episode Tv xml update in '+ checkpath)
                     else:
                         xpath = "*/movie/files/file[@firstPart='{0}'][@season='{1}']".format(epno,str(pchtrakt.season_number))
-                        pchtrakt.logger.info(' [Pchtrakt] Starting normal Tv xml update in '+ YamjPath)
+                        pchtrakt.logger.info(' [Pchtrakt] Starting normal Tv xml update in '+ checkpath)
                 else:
                     xpath = "*/movie/files/file"
                 season_xml = insensitive_glob(pchtrakt.lastShowName)
@@ -536,7 +539,7 @@ def UpdateXMLFiles(pchtrakt):
                 tvxml.extend(["Set_" + season_xml,seasonb_xml])
                 Debug('[Pchtrakt] looking for ' + lookfor)
                 for xmlword in tvxml:
-                    fileinfo = YamjPath + xmlword + "*.xml"
+                    fileinfo = checkpath + xmlword + "*.xml"
                     Debug('[Pchtrakt] scanning ' + xmlword)
                     for name in glob.glob(utilities.ss(fileinfo)):
                         Debug('[Pchtrakt] scanning ' + name)
@@ -562,7 +565,7 @@ def UpdateXMLFiles(pchtrakt):
                                     bak_name = name[:-4]+'.bak'
                                     tree.write(bak_name, encoding='utf-8')
                                     rename(bak_name, name)
-                                    txt = name.replace(YamjPath, '') + ' has been modified as watched'
+                                    txt = name.replace(checkpath, '') + ' has been modified as watched'
                                     Debug('[Pchtrakt] ' + txt)
                                     mod += 1
                                     previous = xmlword
@@ -572,29 +575,29 @@ def UpdateXMLFiles(pchtrakt):
             pchtrakt.logger.info(msg)
         elif RutabagaModwatched:
             lookfor = matchthis[:-4]
-            msg = ' [Pchtrakt] Starting html update in '+YamjPath
+            msg = ' [Pchtrakt] Starting html update in '+checkpath
             pchtrakt.logger.info(msg)
             if pchtrakt.isMovie:
-                fileinfo = YamjPath + lookfor + ".html"
+                fileinfo = checkpath + lookfor + ".html"
                 content = open(fileinfo,'rb+').read()
                 replacedText = content.replace('unwatched', 'watched') 
                 if replacedText is not content:
                     open(fileinfo, 'w').write(replacedText)
-                    txt = name.replace(YamjPath, '') + ' has been modified as watched for ' + matchthis
+                    txt = name.replace(checkpath, '') + ' has been modified as watched for ' + matchthis
                     pchtrakt.logger.info(' [Pchtrakt] ' + txt)
                 else:
-                    txt = name.replace(YamjPath, '') + ' has NOT been modified as watched for ' + matchthis
+                    txt = name.replace(checkpath, '') + ' has NOT been modified as watched for ' + matchthis
                     pchtrakt.logger.info(' [Pchtrakt] ' + txt)
             #elif pchtrakt.isTvShow:
-                #fileinfo = YamjPath + lookfor + ".html"
+                #fileinfo = checkpath + lookfor + ".html"
                 #content = open(fileinfo,'rb+').read()
                 #replacedText = content.replace('unwatched', 'watched') 
                 #if replacedText is not content:
                     #open(fileinfo, 'w').write(replacedText)
-                    #txt = name.replace(YamjPath, '') + ' has been modified as watched for ' + matchthis
+                    #txt = name.replace(checkpath, '') + ' has been modified as watched for ' + matchthis
                     #pchtrakt.logger.info(txt)
                 #else:
-                    #txt = name.replace(YamjPath, '') + ' has NOT been modified as watched for ' + matchthis
+                    #txt = name.replace(checkpath, '') + ' has NOT been modified as watched for ' + matchthis
                     #pchtrakt.logger.info(txt)
     except Exception as e:
         pchtrakt.CreatedFile = 0
