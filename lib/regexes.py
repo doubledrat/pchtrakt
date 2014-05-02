@@ -66,8 +66,13 @@ ep_regexes = [
                # Show Name - 1x02-03-04 - My Ep Name
                '''
                ^((?P<series_name>.+?)[\[. _-]+)?           # Show_Name and separator
-               (?P<season_num>\d+)x                        # 1x
-               (?P<ep_num>\d+)                             # 02 and separator
+               (?P<season_num>
+               (?!(1080|720))                              # ignore obviously wrong multi-eps
+               \d+)
+               (x|X)                                       # 1x or X
+               (?P<ep_num>
+               (?!(1080|720))                              # ignore obviously wrong multi-eps
+               \d+)
                (([. _-]*x|-)                               # linking x/- char
                (?P<extra_ep_num>
                (?!(1080|720)[pi])(?!(?<=x)264)             # ignore obviously wrong multi-eps
