@@ -175,6 +175,7 @@ def daemonize():
 
 def Reset():
     Debug('[Pchtrakt] RESETTING DATA')
+    pchtrakt.StopTrying = 0
     pchtrakt.watched = 0
     pchtrakt.lastPath = ''
     pchtrakt.lastName = ''
@@ -295,6 +296,7 @@ def starttvdbWait():
                         watchedFileCreation(myMedia)
                     except BaseException as e:
                         pchtrakt.logger.error(e)
+            pchtrakt.StopTrying = 0
             #videoStopped()
             #Reset()
 
@@ -367,10 +369,11 @@ if __name__ == '__main__':
                 if myMedia.oStatus.status == EnumStatus.NOPLAY:
                     if float(time()) > float(pchtrakt.Started+AutoUpdate) and AutoUpdate > 0:
                         checkUpdate('no')
-                        pchtrakt.Started = time()
-                    if float(time()) > float(pchtrakt.Started2+SyncCheck) and SyncCheck > 0:
+                    if float(time()) > float(pchtrakt.Started+SyncCheck) and SyncCheck > 0:
                         OversightSync()
-                        pchtrakt.Started2 = time()
+                    if float(time()) > float(pchtrakt.Started+YAMJSyncCheck) and YAMJSyncCheck > 0:
+                        YAMJSync()
+                    pchtrakt.Started = time()
         except tvdb_exceptions.tvdb_shownotfound as e:
             stopTrying()
             msg = ('[The TvDB] The show was not found ' \

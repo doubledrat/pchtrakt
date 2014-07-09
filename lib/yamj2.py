@@ -8,7 +8,7 @@ from urllib import unquote_plus
 import re
 import os
 import copy
-config_file = 'pchtrakt.ini'
+#config_file = 'pchtrakt.ini'
 name = YamjPath + 'CompleteMovies.xml'
 #name = 'E:\\Desktop\\CompleteMovies.xml'
 YAMJ_movies = []
@@ -52,9 +52,9 @@ def YAMJSync():
     del trakt_movies[:]
     del trakt_shows[:]
     tree = ''
-    config.set('YAMJ2', 'boot_time_sync', '-1')
-    with open(config_file, 'w') as configfile:
-        config.write(configfile)
+    #config.set('YAMJ2', 'boot_time_sync', '-1')
+    #with open(config_file, 'w') as configfile:
+    #    config.write(configfile)
 
 def get_YAMJ_movies(tree):
     pchtrakt.logger.info('[YAMJ] Getting movies from YAMJ')
