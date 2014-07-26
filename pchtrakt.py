@@ -362,18 +362,23 @@ if __name__ == '__main__':
         try:
             if FirstRun == 0:
                 StartUP()
+                pchtrakt.Started1 = time()
+                pchtrakt.Started2 = time()
+                pchtrakt.Started3 = time()
                 FirstRun = 1
             else:
                 doWork()
                 sleep(sleepTime)
                 if myMedia.oStatus.status == EnumStatus.NOPLAY:
-                    if float(time()) > float(pchtrakt.Started+AutoUpdate) and AutoUpdate > 0:
+                    if float(time()) > float(pchtrakt.Started1+AutoUpdate) and AutoUpdate > 0:
                         checkUpdate('no')
-                    if float(time()) > float(pchtrakt.Started+SyncCheck) and SyncCheck > 0:
+                        pchtrakt.Started1 = time()
+                    if float(time()) > float(pchtrakt.Started2+SyncCheck) and SyncCheck > 0:
                         OversightSync()
-                    if float(time()) > float(pchtrakt.Started+YAMJSyncCheck) and YAMJSyncCheck > 0:
+                        pchtrakt.Started2 = time()
+                    if float(time()) > float(pchtrakt.Started2+YAMJSyncCheck) and YAMJSyncCheck > 0:
                         YAMJSync()
-                    pchtrakt.Started = time()
+                        pchtrakt.Started3 = time()
         except tvdb_exceptions.tvdb_shownotfound as e:
             stopTrying()
             msg = ('[The TvDB] The show was not found ' \

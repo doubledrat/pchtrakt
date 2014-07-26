@@ -128,6 +128,18 @@ ep_regexes = [
                (?P<ep_num>\d+)[. _-]+                      # 02 and separator
                (?P<extra_info>.+)$                         # Source_Quality_Etc-
                '''),
+              
+              ('season_only',
+               # Show.Name.S01.Source.Quality.Etc-Group
+               '''
+               ^((?P<series_name>.+?)[. _-]+)?               # Show_Name and separator
+               s(eason[. _-])?                               # S01/Season 01
+               (?P<season_num>\d+)[. _-]*                    # S01 and optional separator
+               [. _-]*((?P<extra_info>.+?)                   # Source_Quality_Etc-
+               ((?<![. _-])(?<!WEB)                          # Make sure this is really the release group
+               -(?P<release_group>[^- ]+))?)?$               # Group
+               '''
+              ),
 
               ('bare',
                # Show.Name.102.Source.Quality.Etc-Group
