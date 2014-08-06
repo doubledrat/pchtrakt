@@ -97,7 +97,7 @@ def ss(original, *args):
     try:
         return u_original.encode('UTF-8')
     except Exception, e:
-        log.debug('Failed ss encoding char, force UTF8: %s', e)
+        pchtrakt.logger.warning('[PchTrakt] Failed ss encoding char, force UTF8: %s', e)
         return u_original.encode('UTF-8')
 
 
@@ -383,7 +383,7 @@ def trakt_api_old_TRYING(method, url, params={}, passVersions=False):
     return response
 
 
-def trakt_api(method, url, params={}, passVersions=False):
+def trakt_api(method, url, params={}, passVersions=False, sync=False):
     url = 'https://api.trakt.tv' + url
     #url = 'http://httpstat.us/502' #use to test error codes
     Debug("[traktAPI] Request URL '%s'" % (url))
@@ -439,9 +439,12 @@ def trakt_api(method, url, params={}, passVersions=False):
                     sleep(60)
                     continue
                 elif e.code == 404:  # Not found on trakt.tv
-                    #stopTrying()
-                    pchtrakt.logger.error('[traktAPI] Item not found on trakt.tv')
-                    startWait('Item not found on trakt.tv')
+                    if sync:
+                        response = {'status': 'success', 'message': 'Item not found on trakt.tv'}
+                        return response
+                    else:
+                        pchtrakt.logger.error('[traktAPI] Item not found on trakt.tv')
+                        startWait('Item not found on trakt.tv')
                 elif e.code == 403:  # Forbidden on trakt.tv
                     #stopTrying()
                     pchtrakt.logger.error('[traktAPI] Item not found on trakt.tv')

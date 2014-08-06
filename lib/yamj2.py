@@ -10,7 +10,7 @@ import os
 import copy
 #config_file = 'pchtrakt.ini'
 name = YamjPath + 'CompleteMovies.xml'
-#name = 'E:\\Desktop\\CompleteMovies.xml'
+#name = 'D:\\test\\CompleteMovies.xml'
 YAMJ_movies = []
 YAMJ_movies_seen = []
 YAMJ_movies_unseen = []
@@ -74,7 +74,7 @@ def get_YAMJ_movies(tree):
             watched = movie.find('isWatched').text
             watchedDate = movie.find('files/file/watchedDateString').text
 
-            YAMJ_movie['path'] = unquote_plus(movie.find('files/file/fileURL').text)
+            YAMJ_movie['path'] = unquote_plus(movie.find('files/file/fileURL').text).decode('utf-8', 'replace')
             
             if watched == 'true':
                 YAMJ_movie['playcount'] = 1
@@ -222,7 +222,7 @@ def YAMJ_movies_to_trakt():
 
         try:
             pchtrakt.logger.info('[YAMJ] Adding movies to trakt.tv collection...')
-            response = trakt_api('POST', url, params)
+            response = trakt_api('POST', url, params, sync=True)
             if response['inserted'] != 0:
                 pchtrakt.logger.info('[YAMJ] Successfully added %s out of %s to your collection' % (response['inserted'], response['inserted'] + response['skipped']))
             if response['skipped'] != 0:
@@ -269,7 +269,7 @@ def YAMJ_movies_watched_to_trakt():
 
         try:
             pchtrakt.logger.info('[YAMJ] Updating playcount for movies on trakt.tv...')
-            response = trakt_api('POST', url, params)
+            response = trakt_api('POST', url, params, sync=True)
 
             pchtrakt.logger.info('[YAMJ]     Added %s out of %s' % (response['inserted'], len(YAMJ_movies_to_trakt)))
 
@@ -331,7 +331,7 @@ def get_YAMJ_shows(tree):
                 firstPart = x.get('firstPart')
                 lastPart = x.get('lastPart')
                 season = int(x.find('info').attrib['season'])
-                path = unquote_plus(x.find('fileURL').text)
+                path = unquote_plus(x.find('fileURL').text).decode('utf-8', 'replace')
                 if x.find('watched').text == 'true':
                     watched = 1
                 else:
@@ -413,15 +413,17 @@ def get_trakt_shows():
         for season in show['seasons']:
             for episode in season['episodes']:
                 for trakt_show in trakt_shows:
-                    if 'imdb_id' in show and 'imdb_id' in trakt_show and show['imdb_id'] == trakt_show['imdb_id']:
-                        for trakt_episode in trakt_show['episodes']:
-                            if trakt_episode['season'] == season['season'] and trakt_episode['episode'] == episode:
-                                trakt_episode['plays'] = 1
+                    if ('imdb_id' in show and 'imdb_id' in trakt_show) and show['imdb_id'] == trakt_show['imdb_id']:
+                        if len(show['imdb_id']) > 0:
+                            for trakt_episode in trakt_show['episodes']:
+                                if trakt_episode['season'] == season['season'] and trakt_episode['episode'] == episode:
+                                    trakt_episode['plays'] = 1
 
-                    elif 'tvdb_id' in show and 'tvdb_id' in trakt_show and show['tvdb_id'] == trakt_show['tvdb_id']:
-                        for trakt_episode in trakt_show['episodes']:
-                            if trakt_episode['season'] == season['season'] and trakt_episode['episode'] == episode:
-                                trakt_episode['plays'] = 1
+                    elif ('tvdb_id' in show and 'tvdb_id' in trakt_show) and show['tvdb_id'] == trakt_show['tvdb_id']:
+                        if len(show['tvdb_id']) > 0:
+                            for trakt_episode in trakt_show['episodes']:
+                                if trakt_episode['season'] == season['season'] and trakt_episode['episode'] == episode:
+                                    trakt_episode['plays'] = 1
 
                     elif show['title'] == trakt_show['title']:
                         for trakt_episode in trakt_show['episodes']:
@@ -436,6 +438,12 @@ def convert_YAMJ_show_to_trakt(show):
             trakt_show['imdb_id'] = show['imdbnumber']
         else:
             trakt_show['tvdb_id'] = show['imdbnumber']
+
+    if 'tvdb_id' in show:
+        trakt_show['tvdb_id'] = show['tvdb_id']
+
+    if 'imdb_id' in show:
+        trakt_show['imdb_id'] = show['imdb_id']
 
     if 'title' in show:
         trakt_show['title'] = show['title']
@@ -468,11 +476,10 @@ def YAMJ_shows_to_trakt():
 
         return shows
 
-    if YAMJ_shows:
-        if trakt_shows:
+    if YAMJ_shows and trakt_shows:
 
-            t_shows = copy.deepcopy(trakt_shows)
-            t_shows = clean_episodes(t_shows)
+        t_shows = copy.deepcopy(trakt_shows)
+        t_shows = clean_episodes(t_shows)
         x_shows = copy.deepcopy(YAMJ_shows.values())
         x_shows = clean_episodes(x_shows)
 
@@ -559,11 +566,11 @@ def YAMJ_shows_to_trakt():
 
             for show in YAMJ_shows_to_trakt:
                 try:
-                    pchtrakt.logger.info('[YAMJ]     -->%s' % show['title'].encode('utf-8'))
-                    trakt = trakt_api('POST', url, show)
+                    pchtrakt.logger.info('[YAMJ]     -->%s' % show['title'])
+                    trakt = trakt_api('POST', url, show, sync=True)
                     pchtrakt.logger.info('[YAMJ]       %s' % trakt['message'])
                 except Exception, e:
-                    pchtrakt.logger.info('[YAMJ] Failed to add %s\'s new episodes to trakt.tv collection' % show['title'].encode('utf-8'))
+                    pchtrakt.logger.info('[YAMJ] Failed to add %s\'s new episodes to trakt.tv collection' % show['title'])
                     pchtrakt.logger.info(e)
 
         else:
@@ -653,11 +660,11 @@ def YAMJ_shows_watched_to_trakt():
 
             for show in YAMJ_shows_to_trakt:
                 try:
-                    pchtrakt.logger.info('[YAMJ]     -->%s' % show['title'].encode('utf-8'))
-                    trakt = trakt_api('POST', url, show)
+                    pchtrakt.logger.info('[YAMJ]     -->%s' % show['title'])
+                    trakt = trakt_api('POST', url, show, sync=True)
                     pchtrakt.logger.info('[YAMJ]       %s' % trakt['message'])
                 except Exception, e:
-                    pchtrakt.logger.info('[YAMJ] Failed to mark %s\'s episodes as watched in trakt.tv collection' % show['title'].encode('utf-8'))
+                    pchtrakt.logger.info('[YAMJ] Failed to mark %s\'s episodes as watched in trakt.tv collection' % show['title'])
                     pchtrakt.logger.info(e)
 
         else:
@@ -764,10 +771,6 @@ def WatchedYAMJtv(watched):
     if YamjWatched == True:
         for x in watched:
             for y in x['episodes']:
-                try:
-                    path = y['path'].split('/')[::-1][0].encode('utf-8', 'replace')
-                except:
-                    path = y['path'].split('/')[::-1][0].encode('latin-1', 'replace')
                 if YamJWatchedVithVideo:
                     try:
                         path = y['path'].replace('file:///', '/').encode('utf-8', 'replace')
@@ -776,6 +779,10 @@ def WatchedYAMJtv(watched):
                     if (path.split(".")[-1] == "DVD"):#Remember that .DVD extension
                         path = path[:-4]
                 else:
+                    try:
+                        path = y['path'].split('/')[::-1][0].encode('utf-8', 'replace')
+                    except:
+                        path = y['path'].split('/')[::-1][0].encode('latin-1', 'replace')
                     if (path.split(".")[-1] == "DVD"):
                         path = path[:-4]
                     path = '{0}{1}'.format(YamjWatchedPath, path)
