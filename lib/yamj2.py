@@ -310,7 +310,13 @@ def trakt_movies_watched_to_YAMJ():
     if trakt_movies:
 
         for movie in trakt_movies:
+            find = False
             if 'movieid' in movie:
+                for x in trakt_movies_seen:
+                    if movie['title'] == x['title']:
+                        find = True
+                if find:
+                    break
                 trakt_movies_seen.append(movie)
 
     if trakt_movies_seen:
