@@ -60,10 +60,16 @@ def get_YAMJ_movies(tree):
     pchtrakt.logger.info('[YAMJ] Getting movies from YAMJ')
     for movie in tree.findall('movies'):
         if movie.get('isTV') == 'false':
+                
+            # create movie item
             YAMJ_movie = {
-                          'title': movie.find('originalTitle').text.encode('utf-8'),
-                          'imdbnumber': movie.find("id/[@movieDatabase='imdb']").text
+                          'title': movie.find('originalTitle').text.encode('utf-8')
                           }
+            try:
+                YAMJ_movie['imdbnumber'] = movie.find("id/[@movieDatabase='imdb']").text
+            except Exception, e:
+                YAMJ_movie['imdbnumber'] = '0' 
+                pass
 
             year = movie.find('files/file/info').attrib['year']
             if year != "-1":
