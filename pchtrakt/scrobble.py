@@ -91,11 +91,7 @@ def showStarted(myMedia):
                                                         str(myMedia.oStatus.totalTime),
                                                         str(percent))
         if response:
-            if response['message'] == 'PROBLEM':
-                msg = ' [traktAPI] Tv Show ERROR: %s' % (response['PROBLEM'])
-                pchtrakt.problem = response['PROBLEM']
-            else:
-                msg = ' [traktAPI] Tv Show is playing: %s - %s' %(response['status'],response['message'])
+            msg = ' [traktAPI] Tv Show: %s' % (response)
         else:
             msg = ' [traktAPI] No response from Trakt.tv'
         pchtrakt.logger.info(msg)
@@ -107,19 +103,15 @@ def movieStarted(myMedia):
 												str(myMedia.oStatus.totalTime),
 												str(myMedia.oStatus.percent))
     if response:
-        if response['message'] == 'PROBLEM':
-            msg = ' [traktAPI] Movie ERROR: %s' % (response['PROBLEM'])
-            pchtrakt.problem = response['PROBLEM']
-        else:
-            msg = ' [traktAPI] Movie is playing: %s - %s' %(response['status'],response['message'])
+        msg = ' [traktAPI] Movie: %s' % (response)
     else:
         msg = ' [traktAPI] No response from Trakt.tv'
     pchtrakt.logger.info(msg)
 
-def showStopped():
-    response = utilities.cancelWatchingEpisodeOnTrakt()
+def showStopped(myMedia):
+    response = utilities.cancelWatchingEpisodeOnTrakt(myMedia)
     if response:
-        msg = ' [traktAPI] Tv Show has stopped: %s - %s' %(response['status'],response['message'])
+        msg = ' [traktAPI] Tv Show has stopped: - %s' %(response)
     else:
         msg = ' [traktAPI] No response from Trakt.tv'
     pchtrakt.logger.info(msg)
@@ -132,13 +124,13 @@ def movieStopped():
         msg = ' [traktAPI] No response from Trakt.tv'
     pchtrakt.logger.info(msg)
 
-def videoStopped():
+def videoStopped(myMedia):
     if not pchtrakt.isTvShow and not pchtrakt.isMovie:
         Debug("[Pchtrakt] ****NOT TV OR FILM****")
     if pchtrakt.isTvShow and TraktScrobbleTvShow:
-        showStopped()
+        showStopped(myMedia)
     elif pchtrakt.isMovie and TraktScrobbleMovie:
-        movieStopped()
+        movieStopped(myMedia)
     if pchtrakt.CreatedFile == 1:
         if YamjPath != "/":
             UpdateXMLFiles(pchtrakt)
@@ -208,9 +200,9 @@ def showIsEnding(myMedia):
                                                     str(myMedia.oStatus.totalTime),
                                                     str(myMedia.oStatus.percent))
         if response:
-            if response['message'] != 'fake scrobble':
-                msg = ' [traktAPI] Tv Show is ending: %s - %s ' %(response['status'],response['message'])
-                pchtrakt.logger.info(msg)
+            #if response['message'] != 'fake scrobble':
+            msg = ' [traktAPI] Tv Show is ending: - %s ' %(response)
+            pchtrakt.logger.info(msg)
             result = 1
     else:
         result = 1

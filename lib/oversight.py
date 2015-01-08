@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from pchtrakt.config import *
-from lib.utilities import trakt_api
+from lib.utilities import trakt_apiv2
 import re
 import os
 import copy

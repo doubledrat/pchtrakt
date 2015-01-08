@@ -192,6 +192,9 @@ def Reset():
 def doWork():
     pchtrakt.problem = ''
     #myMedia.ScrobResult = 0
+    #if myMedia.oStatus.percent != 0:
+    if hasattr(myMedia, 'parsedInfoOld'):
+        myMedia.parsedInfoOld.percent = myMedia.oStatus.percent
     myMedia.oStatus = pchtrakt.oPchRequestor.getStatus(ipPch, 10)
     if myMedia.oStatus.status == EnumStatus.NOPLAY and (LastfmNowPlaying is True or LastfmScrobble is True):
         myMedia.oStatus = pchtrakt.oPchMusicRequestor.getStatus(ipPch, 10)
@@ -233,6 +236,8 @@ def doWork():
                 pchtrakt.logger.info(' [Pchtrakt] %s File %s' % (myMedia.oStatus.status, myMedia.oStatus.fileName))
                 myMedia.parsedInfo = pchtrakt.mediaparser.parse(myMedia.oStatus.fullPath)
                 pchtrakt.Ttime = myMedia.oStatus.totalTime
+                if hasattr(myMedia, 'parsedInfo'):
+                    myMedia.parsedInfoOld = myMedia.parsedInfo
                 if hasattr(myMedia.parsedInfo, 'dirty'):
                     pchtrakt.DirtyName = myMedia.parsedInfo.dirty
             if myMedia.oStatus.fullPath != '':
@@ -249,7 +254,7 @@ def doWork():
             if pchtrakt.lastPath != '':
                 if myMedia.oStatus.status == EnumStatus.NOPLAY:
                     pchtrakt.logger.info(' [Pchtrakt] video/music file has stopped')
-                    videoStopped()
+                    videoStopped(myMedia)
                 if pchtrakt.allowedPauseTime <= 0:# and not pchtrakt.watched:
                     pchtrakt.logger.info(' [Pchtrakt] It seems you paused ' \
                                          'the video for more than {0} minutes: ' \

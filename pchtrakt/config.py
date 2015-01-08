@@ -27,6 +27,8 @@ import socket
 pchtrakt.online = 1
 pchtrakt.CreatedFile = 0
 pchtrakt.Ttime = 0
+pchtrakt.token = ''
+
 try:
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     s.connect(("gmail.com",80))
