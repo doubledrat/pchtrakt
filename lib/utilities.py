@@ -201,6 +201,8 @@ def login():
 
 
 def trakt_apiv2(url, data = None, params=None, auth=True, cache_limit=.25, cached=True, sync=False):
+    if pchtrakt.token == '':
+        pchtrakt.token = login()
     json_data=json.dumps(data) if data else None
     headers = {'Content-Type': 'application/json', 'trakt-api-key': V2_API_KEY, 'trakt-api-version': 2}
     url = '%s%s' % (BASE_URL, url) 
@@ -224,9 +226,10 @@ def trakt_apiv2(url, data = None, params=None, auth=True, cache_limit=.25, cache
                 if isinstance(e, urllib2.HTTPError):
                     if e.code == 401:
                         #if login_retry or url.endswith('login'):
-                            pchtrakt.token = login()
-                            login_retry=True
-                            continue
+                        pchtrakt.token == ''
+                        pchtrakt.token = login()
+                        login_retry=True
+                        continue
                     if e.code == 504:
                         if login_retry or url.endswith('login'):
                             raise
