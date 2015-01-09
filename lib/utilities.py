@@ -187,10 +187,14 @@ def getYamj3Connection(url, timeout = 60):
 
 def login():
     if pchtrakt.token == '':
+        Debug("[traktAPI] Getting auth token")
         url = '/auth/login' 
-        if not TraktUsername or not TraktPwd: return '' 
+        if not TraktUsername or not TraktPwd:
+            Debug("[traktAPI] Check username and password")
+            return '' 
         data = {'login': TraktUsername, 'password': TraktPwd} 
-        response = trakt_apiv2(url, data, cached=False) 
+        response = trakt_apiv2(url, data, cached=False)
+        Debug("[traktAPI] Token recieved '%s'" % (response['token'])) 
         return response['token']
     else:
         return pchtrakt.token 

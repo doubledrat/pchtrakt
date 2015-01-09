@@ -942,3 +942,4 @@ def WatchedYAMJtv(watched):
                         pchtrakt.logger.info(msg)
                     except Exception as e: #except IOError, e:
                         pchtrakt.logger.exception(e)
+                        continue
