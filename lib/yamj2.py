@@ -905,13 +905,12 @@ def WatchedYAMJ(watched):
             path = '{0}.watched'.format(path)
             if not isfile(path):
                 try:
-                    f = open(path, 'w')
+                    f = open(path, 'w+')
                     f.close()
                     msg = ' [Pchtrakt] I have created the file {0}'.format(path)
                     pchtrakt.logger.info(msg)
-                except Exception as e: #except IOError, e:
-                    pchtrakt.logger.exception(e)
-                    pass
+                except:
+                    continue
 
 def WatchedYAMJtv(watched):
     pchtrakt.logger.info(' [YAMJ] Start to create watched files')
@@ -936,10 +935,9 @@ def WatchedYAMJtv(watched):
                 path = '{0}.watched'.format(path)
                 if not isfile(path):
                     try:
-                        f = open(path, 'w')
+                        f = open(path, 'w+')
                         f.close()
                         msg = ' [Pchtrakt] I have created the file {0}'.format(path)
                         pchtrakt.logger.info(msg)
-                    except Exception as e: #except IOError, e:
-                        pchtrakt.logger.exception(e)
-                        pass
+                    except:
+                        continue

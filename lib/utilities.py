@@ -212,11 +212,11 @@ def trakt_apiv2(url, data = None, params=None, auth=True, cache_limit=.25, cache
     if data:
         if 'password' in data:
             data['password'] = 'xXx'
-    Debug("[traktAPI] Request URL %s, header: %s, data: %s" % (url, headers, data))
     login_retry=False
     while True:
             try:
                 if (pchtrakt.token == '' and url.endswith('login')) or pchtrakt.token != '':
+                    Debug("[traktAPI] Request URL %s, header: %s, data: %s" % (url, headers, data))
                     if url.endswith('login'):
                         if auth: headers.update({'trakt-user-login': TraktUsername})
                     else:
