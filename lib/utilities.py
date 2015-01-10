@@ -4,14 +4,13 @@
 from pchtrakt.config import *
 from time import sleep, time
 from httplib import HTTPException, BadStatusLine
-from sha import new as sha1
+#from sha import new as sha1
 
-import urllib2 
-from urllib2 import HTTPError 
+from urllib2 import urlopen, Request, URLError, HTTPError
 
 from urllib import quote_plus, urlencode
-import base64
-import copy
+#import base64
+#import copy
 import pchtrakt
 import re
 import os
@@ -19,16 +18,20 @@ import json
 import xml.etree.cElementTree as etree
 
 import ssl
+if hasattr(ssl, '_create_unverified_context'):
+    ssl._create_default_https_context = ssl._create_unverified_context
 
 
 #trakt_api=Trakt_API(TraktUsername,TraktPwd, token)
 TEMP_ERRORS=[500, 502, 503, 504, 520, 521, 522, 524]
 
+#V2_API_KEY='49e6907e6221d3c7e866f9d4d890c6755590cf4aa92163e8490a17753b905e57'
+#V2_API_KEY='eb41e95243d8c95152ed72a1fc0394c93cb785cb33aed609fdde1a07454584b4'
 V2_API_KEY='a18b7486b102e402e5a627fa3b56b5d54697ec49c05ab9375c85891a48766030'
 BASE_URL='https://api.trakt.tv'
 
-#apikey='def6943c09e19dccb4df715bd4c9c6c74bc3b6d7'
-pwdsha1=sha1(TraktPwd).hexdigest()
+apikey='def6943c09e19dccb4df715bd4c9c6c74bc3b6d7'
+#pwdsha1=sha1(TraktPwd).hexdigest()
 # headers = {'Accept-Encoding': 'gzip, deflate, compress', 'Accept': '*/*', 'User-Agent': 'CPython/2.7.6 Unknown/Unknown'}
 
   
@@ -188,46 +191,47 @@ def getYamj3Connection(url, timeout = 60):
 def login():
     if pchtrakt.token == '':
         Debug("[traktAPI] Getting auth token")
-        url = '/auth/login' 
+        url = '/auth/login'
         if not TraktUsername or not TraktPwd:
             Debug("[traktAPI] Check username and password")
-            return '' 
-        data = {'login': TraktUsername, 'password': TraktPwd} 
+            return ''
+        data = {'login': TraktUsername, 'password': TraktPwd}
         response = trakt_apiv2(url, data, cached=False)
-        Debug("[traktAPI] Token recieved '%s'" % (response['token'])) 
+        if 'token' in response:
+            Debug("[traktAPI] Token recieved '%s'" % (response['token']))
         return response['token']
     else:
         return pchtrakt.token 
 
 
 def trakt_apiv2(url, data = None, params=None, auth=True, cache_limit=.25, cached=True, sync=False):
-    if pchtrakt.token == '':
-        if not url.endswith('login'):
-            pchtrakt.token = login()
     json_data=json.dumps(data) if data else None
     headers = {'Content-Type': 'application/json', 'trakt-api-key': V2_API_KEY, 'trakt-api-version': 2}
     url = '%s%s' % (BASE_URL, url) 
     if params: url = url + '?' + urlencode(params) 
-
     if data:
         if 'password' in data:
-            data['password']="xXx"
+            data['password'] = 'xXx'
     Debug("[traktAPI] Request URL %s, header: %s, data: %s" % (url, headers, data))
     login_retry=False
     while True:
             try:
-                if url.endswith('login'):
-                    if auth: headers.update({'trakt-user-login': TraktUsername})
+                if (pchtrakt.token == '' and url.endswith('login')) or pchtrakt.token != '':
+                    if url.endswith('login'):
+                        if auth: headers.update({'trakt-user-login': TraktUsername})
+                    else:
+                        if auth: headers.update({'trakt-user-login': TraktUsername, 'trakt-user-token': pchtrakt.token})
+                    request = Request(url, data=json_data, headers=headers)
+                    result = urlopen(request, timeout = 60).read()
+                    break
                 else:
-                    if auth: headers.update({'trakt-user-login': TraktUsername, 'trakt-user-token': pchtrakt.token})
-                request = urllib2.Request(url, data=json_data, headers=headers )
-                result=urllib2.urlopen(request, timeout=60).read()
-                break
-            except urllib2.URLError as e:
-                if isinstance(e, urllib2.HTTPError):
+                    pchtrakt.token = login()
+                    continue
+            except URLError as e:
+                Debug("[traktAPI] ERROR %s" % (e))
+                if isinstance(e, HTTPError):
                     if e.code == 401:
                         #if login_retry or url.endswith('login'):
-                        pchtrakt.token == ''
                         pchtrakt.token = login()
                         login_retry=True
                         continue
@@ -238,121 +242,15 @@ def trakt_apiv2(url, data = None, params=None, auth=True, cache_limit=.25, cache
                             pchtrakt.token = login()
                             login_retry=True
 
-    response=json.loads(result)
+    if result:
+        response=json.loads(result)
 
-    if 'status' in response and response['status']=='failure':
-        if 'message' in response: raise TraktError(response['message'])
-        if 'error' in response: raise TraktError(response['error'])
-        else: raise TraktError()
-    else:
-        return response
-
-
-    url = url.replace("%%API_KEY%%", apikey)
-    if passVersions:
-        # check if plugin version needs to be passed
-        params['plugin_version'] = PchTraktVersion[-4:]#0  # __settings__.getAddonInfo("version")
-        params['media_center'] = 'Popcorn Hour ' + pchtrakt.chip
-        params['media_center_version'] = 0
-        params['media_center_date'] = '10/01/2012' 
-    params = json.JSONEncoder().encode(params)
-    request = Request(url, params)
-    Debug("[traktAPI] Request URL '%s'" % (url+params))
-    base64string = base64.encodestring('%s:%s' % (TraktUsername, pwdsha1)).replace('\n', '')
-    request.add_header("Accept", "*/*")
-    request.add_header("User-Agent", "CPython/2.7.5 Unknown/Unknown")
-    request.add_header("Authorization", "Basic %s" % base64string)
-    retries = 0
-    while True:
-        try:
-            response = urlopen(request).read()
-        except BadStatusLine, e:
-            if retries >= 10:
-                pchtrakt.logger.warning('[traktAPI] BadStatusLine retries failed, switching to off-line mode.')
-                pchtrakt.online = 0
-                break
-            else:
-                msg = ('[BadStatusLine] ' \
-				'{0} '.format(pchtrakt.lastPath))
-                pchtrakt.logger.warning(msg)
-                pchtrakt.logger.warning('[traktAPI] BadStatusLine')
-                retries += 1
-                sleep(60)
-                continue
-        except HTTPError as e:
-            if retries >= 10:
-                pchtrakt.logger.warning('[traktAPI] BadStatusLine retries failed, switching to off-line mode.')
-                pchtrakt.online = 0
-                break
-            if hasattr(e, 'code'):  # error 401 or 503, possibly others
-                # read the error document, strip newlines, this will make an html page 1 line
-                error_data = e.read().replace("\n", "").replace("\r", "")
-                retries += 1
-                if e.code == 401:  # authentication problem
-                    #stopTrying()
-                    #pchtrakt.logger.error('[traktAPI] Login or password incorrect')
-                    response = {'status': 'success', 'message': 'PROBLEM', 'PROBLEM': 'Login or password incorrect'}
-                    return response
-                    pchtrakt.startWait('Login or password incorrect')
-                elif e.code == 503:  # server busy problem
-                    #stopTrying()
-                    pchtrakt.logger.error('[traktAPI] trakt.tv server is busy, retrying in 60 seconds')
-                    sleep(60)
-                    continue
-                elif e.code == 404:  # Not found on trakt.tv
-                    if sync:
-                        response = {'status': 'success', 'message': 'Item not found on trakt.tv'}
-                        return response
-                    else:
-                        pchtrakt.logger.error('[traktAPI] Item not found on trakt.tv')
-                        startWait('Item not found on trakt.tv')
-                elif e.code == 403:  # Forbidden on trakt.tv
-                    #stopTrying()
-                    pchtrakt.logger.error('[traktAPI] Item not found on trakt.tv')
-                    startWait('Item not found on trakt.tv')
-                elif e.code == 502:  # Bad Gateway
-                    #stopTrying()
-                    pchtrakt.logger.warning('[traktAPI] Bad Gateway, retrying in 60 seconds')
-                    sleep(60)
-                    continue
-                    #pass
-        break
-
-    if response is None:
-        Debug("[traktAPI] JSON Request failed, data is empty.")
-        return None
-
-    if pchtrakt.online == 1:
-        response = json.JSONDecoder().decode(response)
-    else:
-        response = '{"status": "success", "message": "Off-line scrobble"}'
-    
-    if 'status' in response:
-        if response['status'] == 'failure':
-            if response['error'][-7:] == 'already':
-                #scrobblealready
-                response = {'status': 'success', 'message': 'Item has just been scrobbled earlier'}
-                return response
-            Debug("[traktAPI] Error: " + str(response['error']))
-            if response['error'] == 'episode not found':
-                raise NotFoundError()
-            if response['error'] == 'failed authentication':
-                raise AuthenticationTraktError()
-            if response['error'] == 'shows per hour limit reached':
-                #scrobbleMissed()
-                response = {'status': 'success', 'message': 'shows per hour limit reached - added item to off-line list'}
-                return data#raise MaxScrobbleError()
-            if response['error'] == 'movies per hour limit reached':
-                #scrobbleMissed()
-                response = {'status': 'success', 'message': 'movies per hour limit reached - added item to off-line list'}
-                return response
-            if response['error'] == 'episode must be > 0':
-                #startWait(response['error'])
-                response = {'status': 'success', 'message': 'PROBLEM', 'PROBLEM': 'episode must be > 0'}
-                return response
-                #exit
-            return None
-    return response
+        if 'status' in response and response['status']=='failure':
+            if 'message' in response: raise TraktError(response['message'])
+            if 'error' in response: raise TraktError(response['error'])
+            else: raise TraktError()
+        else:
+            return response
 
 
 def yamj3JsonRequest(url):
