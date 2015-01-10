@@ -30,7 +30,7 @@ TEMP_ERRORS=[500, 502, 503, 504, 520, 521, 522, 524]
 V2_API_KEY='a18b7486b102e402e5a627fa3b56b5d54697ec49c05ab9375c85891a48766030'
 BASE_URL='https://api.trakt.tv'
 
-apikey='def6943c09e19dccb4df715bd4c9c6c74bc3b6d7'
+#apikey='def6943c09e19dccb4df715bd4c9c6c74bc3b6d7'
 #pwdsha1=sha1(TraktPwd).hexdigest()
 # headers = {'Accept-Encoding': 'gzip, deflate, compress', 'Accept': '*/*', 'User-Agent': 'CPython/2.7.6 Unknown/Unknown'}
 
