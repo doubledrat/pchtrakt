@@ -216,9 +216,10 @@ def movieIsEnding(myMedia):
                                                str(myMedia.oStatus.totalTime),
                                                str(myMedia.oStatus.percent))
     if response:
-        if response['message'] != 'fake scrobble':
-            msg = ' [traktAPI] Movie is ending: %s' %(response)
-            pchtrakt.logger.info(msg)
+        if 'message' in response:
+            if response['message'] != 'fake scrobble':
+                msg = ' [traktAPI] Movie is ending: %s' %(response)
+                pchtrakt.logger.info(msg)
         return 1
     return 0
 
