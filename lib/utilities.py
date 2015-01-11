@@ -632,7 +632,7 @@ def watchingEpisodeOnTrakt(tvdb_id, title, year, season, episode, duration, perc
 
 # tell trakt that the user has stopped watching a movie
 def cancelWatchingMovieOnTrakt(myMedia):
-    responce = trakt_apiv2('/scrobble/stop', {"movie": {"title": myMedia.parsedInfoOld.name, "year": myMedia.parsedInfoOld.year, "ids": {"imdb": myMedia.parsedInfoOld.imdb_id}}, "progress": myMedia.parsedInfoOld.percent, "app_version": "1.0", "app_date": "2014-09-22"}, auth=True)
+    responce = trakt_apiv2('/scrobble/stop', {"movie": {"title": myMedia.parsedInfoOld.name, "year": myMedia.parsedInfoOld.year, "ids": {"imdb": myMedia.parsedInfoOld.id}}, "progress": myMedia.parsedInfoOld.percent, "app_version": "1.0", "app_date": "2014-09-22"}, auth=True)
     #Debug('[traktAPI] ' + str(responce))
     if responce == None:
         Debug("[traktAPI] Error in request from 'cancelWatchingMovieOnTrakt()'")
