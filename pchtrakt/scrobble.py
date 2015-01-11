@@ -116,10 +116,10 @@ def showStopped(myMedia):
         msg = ' [traktAPI] No response from Trakt.tv'
     pchtrakt.logger.info(msg)
 
-def movieStopped():
-    response = utilities.cancelWatchingMovieOnTrakt()
+def movieStopped(myMedia):
+    response = utilities.cancelWatchingMovieOnTrakt(myMedia)
     if response:
-        msg = ' [traktAPI] Movie has stopped: %s - %s' %(response['status'],response['message'])
+        msg = ' [traktAPI] Movie has stopped: %s' %(response)
     else:
         msg = ' [traktAPI] No response from Trakt.tv'
     pchtrakt.logger.info(msg)
