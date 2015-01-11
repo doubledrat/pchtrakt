@@ -216,12 +216,12 @@ def trakt_apiv2(url, data = None, params=None, auth=True, cache_limit=.25, cache
     while True:
             try:
                 if (pchtrakt.token == '' and url.endswith('login')) or pchtrakt.token != '':
-                    Debug("[traktAPI] Request URL %s, header: %s, data: %s" % (url, headers, data))
                     if url.endswith('login'):
                         if auth: headers.update({'trakt-user-login': TraktUsername})
                     else:
                         if auth: headers.update({'trakt-user-login': TraktUsername, 'trakt-user-token': pchtrakt.token})
-                    request = Request(url, data=json_data, headers=headers)
+                    Debug("[traktAPI] Request URL %s, header: %s, data: %s" % (url, headers, data))
+                    request = Request(url, data = json_data, headers = headers)
                     result = urlopen(request, timeout = 60).read()
                     break
                 else:
@@ -251,7 +251,6 @@ def trakt_apiv2(url, data = None, params=None, auth=True, cache_limit=.25, cache
             else: raise TraktError()
         else:
             return response
-
 
 def yamj3JsonRequest(url):
     raw = None
@@ -633,11 +632,11 @@ def watchingEpisodeOnTrakt(tvdb_id, title, year, season, episode, duration, perc
 
 # tell trakt that the user has stopped watching a movie
 def cancelWatchingMovieOnTrakt(myMedia):
-    responce = trakt_apiv2('/scrobble/stop', {"movie": {"title": title, "year": year, "ids": {"imdb": imdb_id}}, "progress": percent, "app_version": "1.0", "app_date": "2014-09-22"}, auth=True)
+    responce = trakt_apiv2('/scrobble/stop', {"movie": {"title": myMedia.parsedInfoOld.name, "year": myMedia.parsedInfoOld.year, "ids": {"imdb": myMedia.parsedInfoOld.imdb_id}}, "progress": myMedia.parsedInfoOld.percent, "app_version": "1.0", "app_date": "2014-09-22"}, auth=True)
     #Debug('[traktAPI] ' + str(responce))
     if responce == None:
         Debug("[traktAPI] Error in request from 'cancelWatchingMovieOnTrakt()'")
-    return responcemy
+    return responce
 
 # tell trakt that the user has stopped an episode
 def cancelWatchingEpisodeOnTrakt(myMedia):
