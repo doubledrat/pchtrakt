@@ -227,13 +227,11 @@ def movieIsSeen(myMedia, SeenTime):
     response = utilities.setMoviesSeenOnTrakt(myMedia.parsedInfo.id,
                                               myMedia.parsedInfo.name,
                                               myMedia.parsedInfo.year,
+                                              myMedia.oStatus.percent,
                                               str(SeenTime))
-    if response:
-        if response['already_exist']:
-            pchtrakt.logger.info(' [traktAPI] Movie was found, can not mark twice')
-        elif response['inserted']:
-            pchtrakt.logger.info(' [traktAPI] Movie was marked')
-        return 1
+    if 'action' in response:
+        if response['action'] == 'scrobble':
+            return 1
     return 0
 
 def showIsSeen(myMedia, SeenTime):
@@ -242,13 +240,11 @@ def showIsSeen(myMedia, SeenTime):
                                                     myMedia.parsedInfo.year,
 													str(myMedia.parsedInfo.season_number),
                                                     str(myMedia.parsedInfo.episode_numbers[myMedia.idxEpisode]),
+                                                    myMedia.oStatus.percent,
                                                     str(SeenTime))
-    if response:
-        if response['message'] == '0 episodes marked as seen':
-            pchtrakt.logger.info(' [traktAPI] Show has already been marked as seen')
-        elif response['message'] == '1 episodes marked as seen':
-            pchtrakt.logger.info(' [traktAPI] %s ' ,response['message'])
-        return 1
+    if 'action' in response:
+        if response['action'] == 'scrobble':
+            return 1
     return 0
 
 def videoStatusHandleMovie(myMedia):

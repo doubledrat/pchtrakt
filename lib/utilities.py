@@ -328,13 +328,6 @@ def getWatchedTVShowsFromTrakt(daemon=False):
         Debug("Error in request from 'getWatchedTVShowsFromTrakt()'")
     return data
 
-# set episodes seen on trakt
-def setEpisodesSeenOnTrakt(tvdb_id, title, year, season, episode, SeenTime):
-    responce = trakt_api('POST', '/show/episode/seen/%%API_KEY%%', {'tvdb_id': tvdb_id, 'title': title, 'year': year, 'episodes':[{'episode': episode, 'season': season, 'last_played': SeenTime}]})
-    if responce == None:
-        Debug("Error in request from 'setEpisodeSeenOnTrakt()'")
-    return responce
-
 # set episodes in library on trakt
 def setEpisodesInLibraryOnTrakt(tvdb_id, title, year, episodes):
     data = traktJsonRequest('POST', '/show/episode/library/%%API_KEY%%', {'tvdb_id': tvdb_id, 'title': title, 'year': year, 'episodes': episodes})
@@ -348,14 +341,6 @@ def setEpisodesUnseenOnTrakt(tvdb_id, title, year, episodes):
     if data == None:
         Debug("Error in request from 'setEpisodesUnseenOnTrakt()'")
     return data
-
-# set movies seen on trakt
-#  - movies, required fields are 'plays', 'last_played' and 'title', 'year' or optionally 'imdb_id'
-def setMoviesSeenOnTrakt(imdb_id, title, year, SeenTime):
-    responce = trakt_api('POST', '/movie/seen/%%API_KEY%%', {'movies': [{'imdb_id': imdb_id, 'title': title, 'year': year, 'plays': '1', 'last_played': SeenTime}]})#, passVersions=True
-    if responce == None:
-        Debug("Error in request from 'setMoviesSeenOnTrakt()'")
-    return responce
 
 # set movies unseen on trakt
 #  - movies, required fields are 'plays', 'last_played' and 'title', 'year' or optionally 'imdb_id'
@@ -640,7 +625,7 @@ def cancelWatchingMovieOnTrakt(myMedia):
 
 # tell trakt that the user has stopped an episode
 def cancelWatchingEpisodeOnTrakt(myMedia):
-    responce = trakt_apiv2('/scrobble/stop', {"show": {"title": myMedia.parsedInfoOld.name, "year": myMedia.parsedInfoOld.year}, "episode": {"season": myMedia.parsedInfoOld.season_number, "number": str(myMedia.parsedInfoOld.episode_numbers).replace('[','').replace(']','')}, "ids": {"tvdb": myMedia.parsedInfoOld.id,}, "progress": myMedia.parsedInfoOld.percent, "app_version": "1.0", "app_date": "2014-09-22"}, auth=True)
+    responce = trakt_apiv2('/scrobble/stop', {"show": {"title": myMedia.parsedInfoOld.name, "year": myMedia.parsedInfoOld.year}, "episode": {"season": myMedia.parsedInfoOld.season_number, "number": str(myMedia.parsedInfoOld.episode_numbers).replace('[','').replace(']','')}, "ids": {"tvdb": myMedia.parsedInfoOld.id}, "progress": myMedia.parsedInfoOld.percent, "app_version": "1.0", "app_date": "2014-09-22"}, auth=True)
     #Debug('[traktAPI] ' + str(responce))
     if responce == None:
         Debug("[traktAPI] Error in request from 'cancelWatchingEpisodeOnTrakt()'")
@@ -656,11 +641,30 @@ def scrobbleMovieOnTrakt(imdb_id, title, year, duration, percent):
 
 # tell trakt that the user has finished watching an episode
 def scrobbleEpisodeOnTrakt(tvdb_id, title, year, season, episode, duration, percent):
-    responce = trakt_apiv2('/scrobble/start', {"show": {"title": title, "year": year}, "episode": {"season": season, "number": episode}, "ids": {"tvdb": tvdb_id,}, "progress": percent, "app_version": "1.0", "app_date": "2014-09-22"}, auth=True)
+    responce = trakt_apiv2('/scrobble/start', {"show": {"title": title, "year": year}, "episode": {"season": season, "number": episode}, "ids": {"tvdb": tvdb_id}, "progress": percent, "app_version": "1.0", "app_date": "2014-09-22"}, auth=True)
     #Debug('[traktAPI] ' + str(responce))
     if responce == None:
         Debug("[traktAPI] Error in request from 'scrobbleEpisodeOnTrakt()'")
     return responce
+
+# set episodes seen on trakt
+def setEpisodesSeenOnTrakt(tvdb_id, title, year, season, episode, percent, SeenTime):
+    #{    "show": {      "title": "Breaking Bad"    },    "episode": {      "season": 1,      "number": 1    },    "progress": 85,    "app_version": "1.0",    "app_date": "2014-09-22"  }
+    responce = trakt_apiv2('/scrobble/stop', {"show": {"title": title, "year": year}, "episode": {"season": season, "number": episode}, "ids": {"tvdb": tvdb_id}, "progress": percent, "app_version": "1.0", "app_date": "2014-09-22"}, auth=True)
+    if responce == None:
+        Debug("Error in request from 'setEpisodeSeenOnTrakt()'")
+    return responce
+
+# set movies seen on trakt
+def setMoviesSeenOnTrakt(imdb_id, title, year, percent, SeenTime):
+    responce = trakt_apiv2('/scrobble/stop', {"movie": {"title": title, "year": year, "ids": {"imdb": imdb_id}}, "progress": percent, "app_version": "1.0", "app_date": "2014-09-22"}, auth=True)
+    if responce == None:
+        Debug("Error in request from 'setMoviesSeenOnTrakt()'")
+    return responce
+
+
+
+
 
 ###############################
 ########## YAMJ3 API ##########
