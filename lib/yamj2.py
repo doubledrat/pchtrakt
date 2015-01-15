@@ -836,8 +836,8 @@ def trakt_shows_watched_to_YAMJ():
         for show in YAMJ_shows.values():
             if 'imdbnumber' in show:
                 if show['imdbnumber'].startswith('tt'):
-                    if show['imdbnumber'] in imdb_ids.keys():
-                        trakt_show = trakt_shows[imdb_ids[show['imdbnumber']]]
+                    if search(imdb_ids.keys(), show['imdbnumber']):
+                        trakt_show = trakt_shows[imdb_ids[int(show['imdbnumber'])]]
 
                         YAMJ_show = {'title': show['title'], 'episodes': []}
 
@@ -857,8 +857,8 @@ def trakt_shows_watched_to_YAMJ():
                             trakt_shows_seen.append(YAMJ_show)
 
                 else:
-                    if show['imdbnumber'] in tvdb_ids.keys():
-                        trakt_show = trakt_shows[tvdb_ids[show['imdbnumber']]]
+                    if search(tvdb_ids.keys(), int(show['imdbnumber'])):
+                        trakt_show = trakt_shows[tvdb_ids[int(show['imdbnumber'])]]
 
                         YAMJ_show = {'title': show['title'], 'episodes': []}
 
