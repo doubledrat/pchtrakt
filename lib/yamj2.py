@@ -511,7 +511,6 @@ def get_trakt_shows():
     # Seen
     url = '/users/%s/watched/shows' % (TraktUsername)
     seen_shows = trakt_apiv2(url)
-
     for show in seen_shows:
         for season in show['seasons']:
             for episode in season['episodes']:
@@ -534,10 +533,19 @@ def get_trakt_shows():
                         except Exception as e:
                             pass
 
-                    elif show['show']['title'] == trakt_show['title']:
-                        for trakt_episode in trakt_show['episodes']:
-                            if trakt_episode['season'] == season['number'] and trakt_episode['episode'] == episode['number']:
-                                trakt_episode['plays'] = 1
+                    else:
+                        try:
+                            if show['show']['title'] == trakt_show['title']:
+                                for trakt_episode in trakt_show['episodes']:
+                                    if trakt_episode['season'] == season['number'] and trakt_episode['episode'] == episode['number']:
+                                        trakt_episode['plays'] = 1
+                        except:
+                            if show['show']['title'] == trakt_show['shows'][0]['title']:
+                                for trakt_episode in trakt_show['episodes']:
+                                    if trakt_episode['season'] == season['number'] and trakt_episode['episode'] == episode['number']:
+                                        trakt_episode['plays'] = 1
+                        
+                        
 
 def convert_YAMJ_show_to_trakt(show):
     #{"shows": [{"title": "The Walking Dead", "year": 2010, "ids": {"tvdb": 153021, "imdb": "tt1520211", "tmdb": 1402, "tvrage": 25056}, "seasons": [{"number": 1, "episodes": [{"number": 1}, {"number": 2}]}]}]}
@@ -634,7 +642,7 @@ def YAMJ_shows_to_trakt():
                         for episode in trakt_show['episodes']:
                             episode['plays'] = 0
 
-                        trakt_shows.append(trakt_show)
+                        #trakt_shows.append(trakt_show)
 
                     else:
                         t_index = imdb_ids.get(int(show['imdbnumber']))
@@ -666,7 +674,7 @@ def YAMJ_shows_to_trakt():
                             for episode in season['episodes']:
                                 episode['plays'] = 0
 
-                        trakt_shows.append(trakt_show)
+                        #trakt_shows.append(trakt_show)
 
                     else:
                         t_index = tvdb_ids.get(int(show['imdbnumber']))

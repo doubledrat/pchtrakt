@@ -222,7 +222,7 @@ def trakt_apiv2(url, data = None, params=None, auth=True, cache_limit=.25, cache
                         if auth: headers.update({'trakt-user-login': TraktUsername, 'trakt-user-token': pchtrakt.token})
                     Debug("[traktAPI] Request URL %s, header: %s, data: %s" % (url, headers, data))
                     request = Request(url, data = json_data, headers = headers)
-                    result = urlopen(request, timeout = 60).read()
+                    result = urlopen(request, timeout = 120).read()
                     break
                 else:
                     pchtrakt.token = login()
