@@ -1,18 +1,18 @@
 # -*- coding: utf-8 -*-
 
-from pchtrakt.config import *
-from lib.utilities import Debug, trakt_apiv2
-from xml.etree import ElementTree
-from urllib import unquote_plus
-#from pchtrakt.scrobble import watchedFileCreation
 import re
 import os
 import copy
 
-import time
-#config_file = 'pchtrakt.ini'
+from pchtrakt.config import *
+from lib.utilities import Debug, trakt_apiv2
+from xml.etree import ElementTree
+from urllib import unquote_plus
+
+from time import strftime
+
+# Set variables
 name = YamjPath + 'CompleteMovies.xml'
-#name = 'D:\\test\\CompleteMovies.xml'
 YAMJ_movies = []
 YAMJ_movies_seen = []
 YAMJ_movies_unseen = []
@@ -54,9 +54,6 @@ def YAMJSync():
     del trakt_movies[:]
     del trakt_shows[:]
     tree = ''
-    #config.set('YAMJ2', 'boot_time_sync', '-1')
-    #with open(config_file, 'w') as configfile:
-    #    config.write(configfile)
 
 def get_YAMJ_movies(tree):
     pchtrakt.logger.info(' [YAMJ] Getting movies from YAMJ')
@@ -86,7 +83,7 @@ def get_YAMJ_movies(tree):
             
             if watched == 'true':
                 if watchedDate == 'UNKNOWN' or watchedDate == '0':
-                    watchedDate = time.strftime("%Y-%m-%d %H:%M:%S")
+                    watchedDate = strftime("%Y-%m-%d %H:%M:%S")
                 YAMJ_movie['playcount'] = 1
                 YAMJ_movie['date'] = watchedDate
             else:
@@ -103,7 +100,8 @@ def get_trakt_movies():
     pchtrakt.logger.info(' [YAMJ] Getting movies from trakt.tv')
 
     # Collection
-    url = '/users/%s/collection/movies' % (TraktUsername)
+    url = '/sync/collection/movies'
+    #url = '/users/%s/collection/movies' % (TraktUsername)
     movies = trakt_apiv2(url)
     
     for movie in movies:
@@ -128,7 +126,8 @@ def get_trakt_movies():
     #response = trakt_api('POST', url, params)
 
     # Seen
-    url = '/users/%s/watched/movies' % (TraktUsername)
+    url = '/sync/watched/movies'
+    #url = '/users/%s/watched/movies' % (TraktUsername)
     seen_movies = trakt_apiv2(url)
     
     # Add playcounts to trakt collection
@@ -233,8 +232,6 @@ def YAMJ_movies_to_trakt():
 
     if YAMJ_movies_to_trakt:
         pchtrakt.logger.info(' [YAMJ] Checking for %s movies will be added to trakt.tv collection' % len(YAMJ_movies_to_trakt))
-        #data = {'movies': [{'title': 'Batman Begins', 'year': 2005, 'ids': {'trakt': 1, 'slug': 'batman-begins-2005', 'imdb': 'tt0372784', 'tmdb': 272}}]}
-        #{'movies': [{'title': 'Batman Begins', 'year': 2005, 'ids': {'imdb': 'tt0372784'}}, {"ids": {"imdb": "tt0000111"}}]}
         for i in range(len(YAMJ_movies_to_trakt)):
             #convert YAMJ movie into something trakt will understand
             YAMJ_movies_to_trakt[i] = convert_YAMJ_movie_to_trakt(YAMJ_movies_to_trakt[i])
@@ -301,8 +298,6 @@ def YAMJ_movies_watched_to_trakt():
 
     if YAMJ_movies_to_trakt:
         pchtrakt.logger.info(' [YAMJ] %s movies playcount will be updated on trakt.tv' % len(YAMJ_movies_to_trakt))
-        #{"movies": [{"watched_at": "2010-10-01 12:34:00", "title": "Batman Begins", "year": 2005, "ids": {"imdb": "tt0372784"}}]}
-        #            {'watched_at': '2015-01-01 01:31:15', 'title': 'Bitter Victory', 'year': '1957', 'ids': {'imdb': 'tt0050126'}}
         # Send request to update playcounts on trakt.tv
         url = '/sync/history'
         params = {'movies': YAMJ_movies_to_trakt}
@@ -369,7 +364,15 @@ def get_YAMJ_shows(tree):
     for movie in tree.findall('movies'):
         if movie.get('isTV') == 'true':
             title = movie.find('originalTitle').text.encode('utf-8')
-            id = movie.find('id').text
+            if len(movie.findall('id')) >1:
+                ida = movie.findall('id')[0].text
+                idb = movie.findall('id')[1].text
+                if idb.startswith('tt'):
+                    id = ida
+                else:
+                    id = idb
+            else:
+                id = movie.find('id').text
             zpath = "files/file"
             for x in movie.findall(zpath):
                 watchedDate = x.find('watchedDateString').text
@@ -418,70 +421,14 @@ def get_YAMJ_shows(tree):
                             ep['double'] = "False"
                             ep['path'] = path
                             shows = shows['episodes'].append(ep)
-                            
-def get_YAMJ_shows_new(tree):
-    pchtrakt.logger.info(' [YAMJ] Getting TV shows from YAMJ2')
-    for movie in tree.findall('movies'):
-        if movie.get('isTV') == 'true':
-            title = movie.find('originalTitle').text.encode('utf-8')
-            id = movie.find('id').text
-            zpath = "files/file"
-            for x in movie.findall(zpath):
-                watchedDate = x.find('watchedDateString').text
-                firstPart = x.get('firstPart')
-                lastPart = x.get('lastPart')
-                season = int(x.find('info').attrib['season'])
-                path = unquote_plus(x.find('fileURL').text).decode('utf-8', 'replace')
-                if x.find('watched').text == 'true':
-                    watched = 1
-                else:
-                    watched = 0
-
-                if title not in YAMJ_shows:
-                    shows = YAMJ_shows[title] = {'ids':{}, 'seasons': [{'episodes': []}]}  # new show dictionary
-                else:
-                    shows = YAMJ_shows[title]
-                if 'title' in shows and title in shows['title']:
-                    if firstPart != lastPart:
-                        for eps in firstPart, lastPart:
-                            ep = {'seasons': [{'number': season, 'episodes': [{'number': int(eps), 'date': watchedDate}]}]}
-                            ep['playcount'] = watched
-                            ep['double'] = "True"
-                            ep['path'] = path
-                            shows['seasons'].append(ep)
-                    else:
-                        ep = {'seasons': [{'number': season, 'episodes': [{'number': int(firstPart), 'date': watchedDate}]}]}
-                        ep['playcount'] = watched
-                        ep['double'] = "False"
-                        ep['path'] = path
-                        shows['seasons'].append(ep)
-                else:
-                    if id != "0":
-                        shows['ids']['imdbnumber'] = id
-                    if title:
-                        shows['title'] = title
-                        if firstPart != lastPart:
-                            for eps in firstPart, lastPart:
-                                ep = {'seasons': [{'number': season, 'episodes': [{'number': int(eps), 'date': watchedDate}]}]}
-                                ep['playcount'] = watched
-                                ep['double'] = "True"
-                                ep['path'] = path
-                                shows['seasons'].append(ep)
-                        else:
-                            ep = {'seasons': [{'number': season, 'episodes': [{'number': int(firstPart)}]}]}
-
-                            ep['playcount'] = watched
-                            ep['double'] = "False"
-                            ep['path'] = path
-                            shows = shows['seasons'].append(ep)
 
 
 def get_trakt_shows():
     pchtrakt.logger.info(' [YAMJ] Getting TV shows from trakt')
 
     # Collection
-    url = '/users/%s/collection/shows' % (TraktUsername)
-    #url = '/sync/collection/shows'
+    #url = '/users/%s/collection/shows' % (TraktUsername)
+    url = '/sync/collection/shows'
 
     collection_shows = trakt_apiv2(url)
     
@@ -509,8 +456,10 @@ def get_trakt_shows():
         trakt_shows.append(trakt_show)
 
     # Seen
-    url = '/users/%s/watched/shows' % (TraktUsername)
+    url = '/sync/watched/shows'
+    #url = '/users/%s/watched/shows' % (TraktUsername)
     seen_shows = trakt_apiv2(url)
+    show = ''
     for show in seen_shows:
         for season in show['seasons']:
             for episode in season['episodes']:
@@ -548,7 +497,6 @@ def get_trakt_shows():
                         
 
 def convert_YAMJ_show_to_trakt(show):
-    #{"shows": [{"title": "The Walking Dead", "year": 2010, "ids": {"tvdb": 153021, "imdb": "tt1520211", "tmdb": 1402, "tvrage": 25056}, "seasons": [{"number": 1, "episodes": [{"number": 1}, {"number": 2}]}]}]}
     ids = {}
 
     trakt_show = {'shows': []}
@@ -575,7 +523,6 @@ def convert_YAMJ_show_to_trakt(show):
             tmp["number"] = i
             tmp["episodes"] = []
             for j in ep[i]:
-                tmp["episodes"].append({"number":j})
                 if 'watched_at' in show['episodes'][y]:
                     tmp["episodes"].append({"number":j, 'watched_at': show['episodes'][y]['watched_at']})
                 else:
@@ -638,7 +585,7 @@ def YAMJ_shows_to_trakt():
                     if search(imdb_ids, show['imdbnumber']) == False:#if not show['imdbnumber'] in imdb_ids:
                         YAMJ_shows_to_trakt.append(show)
 
-                        trakt_show = convert_YAMJ_show_to_trakt(show)
+                        #trakt_show = convert_YAMJ_show_to_trakt(show)
                         for episode in trakt_show['episodes']:
                             episode['plays'] = 0
 
@@ -669,10 +616,10 @@ def YAMJ_shows_to_trakt():
                     if searchtv(tvdb_ids, show['imdbnumber']) == False:# if not show['imdbnumber'] in tvdb_ids:
                         YAMJ_shows_to_trakt.append(show)
 
-                        trakt_show = convert_YAMJ_show_to_trakt(show)
-                        for season in trakt_show['shows'][0]['seasons']:
-                            for episode in season['episodes']:
-                                episode['plays'] = 0
+                        #trakt_show = convert_YAMJ_show_to_trakt(show)
+                        #for season in trakt_show['shows'][0]['seasons']:
+                        #    for episode in season['episodes']:
+                        #        episode['plays'] = 0
 
                         #trakt_shows.append(trakt_show)
 
@@ -917,8 +864,10 @@ def WatchedYAMJ(watched):
                     f.close()
                     msg = ' [Pchtrakt] I have created the file {0}'.format(path)
                     pchtrakt.logger.info(msg)
-                except:
-                    continue
+                except BaseException as e:
+                        pchtrakt.logger.info(u" [Pchtrakt] Error writing file: %s" % str(e))
+                        continue
+            Debug('[Pchtrakt] {0} already present'.format(path))
 
 def WatchedYAMJtv(watched):
     pchtrakt.logger.info(' [YAMJ] Start to create watched files')
@@ -947,5 +896,7 @@ def WatchedYAMJtv(watched):
                         f.close()
                         msg = ' [Pchtrakt] I have created the file {0}'.format(path)
                         pchtrakt.logger.info(msg)
-                    except:
+                    except BaseException as e:
+                        pchtrakt.logger.info(u" [Pchtrakt] Error writing file: %s" % str(e))
                         continue
+                Debug('[Pchtrakt] {0} already present'.format(path))

@@ -6,11 +6,11 @@ from time import sleep, time
 from httplib import HTTPException, BadStatusLine
 #from sha import new as sha1
 
-from urllib2 import urlopen, Request, URLError, HTTPError
+#from urllib2 import urlopen, Request, URLError, HTTPError
 
 from urllib import quote_plus, urlencode
 #import base64
-#import copy
+import urllib2
 import pchtrakt
 import re
 import os
@@ -21,19 +21,10 @@ import ssl
 if hasattr(ssl, '_create_unverified_context'):
     ssl._create_default_https_context = ssl._create_unverified_context
 
-
-#trakt_api=Trakt_API(TraktUsername,TraktPwd, token)
 TEMP_ERRORS=[500, 502, 503, 504, 520, 521, 522, 524]
 
-#V2_API_KEY='49e6907e6221d3c7e866f9d4d890c6755590cf4aa92163e8490a17753b905e57'
-#V2_API_KEY='eb41e95243d8c95152ed72a1fc0394c93cb785cb33aed609fdde1a07454584b4'
 V2_API_KEY='a18b7486b102e402e5a627fa3b56b5d54697ec49c05ab9375c85891a48766030'
 BASE_URL='https://api.trakt.tv'
-
-#apikey='def6943c09e19dccb4df715bd4c9c6c74bc3b6d7'
-#pwdsha1=sha1(TraktPwd).hexdigest()
-# headers = {'Accept-Encoding': 'gzip, deflate, compress', 'Accept': '*/*', 'User-Agent': 'CPython/2.7.6 Unknown/Unknown'}
-
   
 __author__ = "Ralph-Gordon Paul, Adrian Cowan"
 __credits__ = ["Ralph-Gordon Paul", "Adrian Cowan", "Justin Nemeth", "Sean Rudford"]
@@ -195,18 +186,28 @@ def login():
         if not TraktUsername or not TraktPwd:
             Debug("[traktAPI] Check username and password")
             return ''
-        data = {'login': TraktUsername, 'password': TraktPwd}
-        response = trakt_apiv2(url, data, cached=False)
-        if 'token' in response:
-            Debug("[traktAPI] Token recieved '%s'" % (response['token']))
-        return response['token']
-    else:
-        return pchtrakt.token 
+        try:
+            headers = {'Content-Type': 'application/json', 'trakt-api-key': V2_API_KEY, 'trakt-api-version': '2'}
+            data = json.dumps({'login': TraktUsername, 'password': TraktPwd})
+            request = urllib2.Request('https://api.trakt.tv/auth/login', data=data, headers=headers)
+            response = urllib2.urlopen(request, timeout=10).read()
+            #response.close()
+            #result = response.read()
+            result = json.loads(response)
+            if 'token' in response:
+                auth = result['token']
+                Debug("[traktAPI] Token recieved")
+            else:
+                auth = ''
+            #response.close()
+            return auth
+        except BaseException as e:
+            pchtrakt.logger.info(u" [traktAPI] trakt.auth ##Error: %s" % str(e))
 
 
-def trakt_apiv2(url, data = None, params=None, auth=True, cache_limit=.25, cached=True, sync=False):
+def trakt_apiv2(url, data=None, params=None, auth=True, cache_limit=.25, cached=True, sync=False):
     json_data=json.dumps(data) if data else None
-    headers = {'Content-Type': 'application/json', 'trakt-api-key': V2_API_KEY, 'trakt-api-version': 2}
+    headers = {'Content-Type': 'application/json', 'trakt-api-key': V2_API_KEY, 'trakt-api-version': '2'}
     url = '%s%s' % (BASE_URL, url) 
     if params: url = url + '?' + urlencode(params) 
     if data:
@@ -215,14 +216,13 @@ def trakt_apiv2(url, data = None, params=None, auth=True, cache_limit=.25, cache
     login_retry=False
     while True:
             try:
-                if (pchtrakt.token == '' and url.endswith('login')) or pchtrakt.token != '':
-                    if url.endswith('login'):
-                        if auth: headers.update({'trakt-user-login': TraktUsername})
-                    else:
-                        if auth: headers.update({'trakt-user-login': TraktUsername, 'trakt-user-token': pchtrakt.token})
+                if pchtrakt.token != '':
+                    if auth: headers.update({'trakt-user-login': TraktUsername, 'trakt-user-token': pchtrakt.token})
                     Debug("[traktAPI] Request URL %s, header: %s, data: %s" % (url, headers, data))
-                    request = Request(url, data = json_data, headers = headers)
-                    result = urlopen(request, timeout = 120).read()
+                    request = urllib2.Request(url, data = json_data, headers = headers)
+                    result = urllib2.urlopen(request, timeout = 120).read()
+                    #result = response
+                    #response.close()
                     break
                 else:
                     pchtrakt.token = login()
@@ -609,7 +609,7 @@ def watchingMovieOnTrakt(imdb_id, title, year, duration, percent):
 
 # tell trakt that the user is watching an episode
 def watchingEpisodeOnTrakt(tvdb_id, title, year, season, episode, duration, percent):
-    responce = trakt_apiv2('/scrobble/start', {"show": {"title": title, "year": year}, "episode": {"season": season, "number": episode}, "ids": {"tvdb": tvdb_id,}, "progress": percent, "app_version": "1.0", "app_date": "2014-09-22"}, auth=True)
+    responce = trakt_apiv2('/scrobble/start', {"show": {"title": title, "year": year}, "episode": {"season": season, "number": episode}, "ids": {"tvdb": tvdb_id}, "progress": percent, "app_version": "1.0", "app_date": "2014-09-22"}, auth=True)
     #Debug('[traktAPI] ' + str(responce))
     if responce == None:
         Debug("[traktAPI] Error in request from 'watchingEpisodeOnTrakt()'")
