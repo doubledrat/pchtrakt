@@ -196,7 +196,7 @@ def login():
             result = json.loads(response)
             if 'token' in response:
                 auth = result['token']
-                Debug("[traktAPI] Token recieved")
+                Debug("[traktAPI] Token received")
             else:
                 auth = ''
             #response.close()

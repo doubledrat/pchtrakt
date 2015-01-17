@@ -34,6 +34,11 @@ def YAMJSync():
                 YAMJ_movies_watched_to_trakt()
                 if markYAMJ:
                     trakt_movies_watched_to_YAMJ()
+            del YAMJ_movies[:]
+            del YAMJ_movies_seen[:]
+            del YAMJ_movies_unseen[:]
+            del trakt_movies[:]
+
         if YAMJusc or YAMJusw:
             global YAMJ_shows
             YAMJ_shows = {}
@@ -118,6 +123,8 @@ def get_trakt_movies():
 
         trakt_movies.append(trakt_movie)
 
+    movies = ''
+
     #Clean from collection, keep commented
     #url = '/movie/unlibrary/' + TraktAPI
     #params = {'movies': trakt_movies}
@@ -153,6 +160,8 @@ def get_trakt_movies():
         if not 'plays' in movie:
             movie['plays'] = 0
 
+    seen_movies = ''
+
 def convert_YAMJ_movie_to_trakt(movie, watched_at = False):
     ids = {}
     trakt_movie = {}
@@ -162,8 +171,6 @@ def convert_YAMJ_movie_to_trakt(movie, watched_at = False):
             ids['imdb'] = movie['imdbnumber']
         else:
             ids['tmdb'] = movie['imdbnumber']
-
-
 
     if watched_at:
         try:
@@ -315,8 +322,6 @@ def YAMJ_movies_watched_to_trakt():
 
 def trakt_movies_watched_to_YAMJ():
     pchtrakt.logger.info(' [YAMJ] Comparing trakt.tv watched movies against YAMJ')
-
-
     trakt_movies_seen = []
 
     if trakt_movies and YAMJ_movies_unseen:#YAMJ_movies:
@@ -357,6 +362,7 @@ def trakt_movies_watched_to_YAMJ():
         WatchedYAMJ(trakt_movies_seen)
     else:
         pchtrakt.logger.info(' [YAMJ] No watched files ned to be created')
+    trakt_movies_seen = []
 
 def get_YAMJ_shows(tree):
     pchtrakt.logger.info(' [YAMJ] Getting TV shows from YAMJ2')
@@ -453,6 +459,8 @@ def get_trakt_shows():
         #response = trakt_api('post', url, trakt_show)
         trakt_shows.append(trakt_show)
 
+    collection_shows = ''
+
     # Seen
     url = '/sync/watched/shows'
     #url = '/users/%s/watched/shows' % (TraktUsername)
@@ -491,7 +499,10 @@ def get_trakt_shows():
                                 for trakt_episode in trakt_show['episodes']:
                                     if trakt_episode['season'] == season['number'] and trakt_episode['episode'] == episode['number']:
                                         trakt_episode['plays'] = 1
-                        
+
+    seen_shows = ''
+    show = ''
+
 def convert_YAMJ_show_to_trakt(show):
     ids = {}
 
