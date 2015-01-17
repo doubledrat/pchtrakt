@@ -182,7 +182,6 @@ def convert_YAMJ_movie_to_trakt(movie, watched_at = False):
     trakt_movie = test
     return trakt_movie
 
-
 def YAMJ_movies_to_trakt():
     pchtrakt.logger.info(' [YAMJ] Checking for YAMJ movies that are not in trakt.tv collection')
     YAMJ_movies_to_trakt = []
@@ -422,7 +421,6 @@ def get_YAMJ_shows(tree):
                             ep['path'] = path
                             shows = shows['episodes'].append(ep)
 
-
 def get_trakt_shows():
     pchtrakt.logger.info(' [YAMJ] Getting TV shows from trakt')
 
@@ -494,8 +492,6 @@ def get_trakt_shows():
                                     if trakt_episode['season'] == season['number'] and trakt_episode['episode'] == episode['number']:
                                         trakt_episode['plays'] = 1
                         
-                        
-
 def convert_YAMJ_show_to_trakt(show):
     ids = {}
 
