@@ -367,52 +367,36 @@ class YAMJSyncMain:
     def get_YAMJ_shows(self):
         pchtrakt.logger.info(' [YAMJ] Getting TV shows from YAMJ2')
         for movie in self.tree.findall('movies'):
-            if movie.get('isTV') == 'true':
-                title = movie.find('originalTitle').text.encode('utf-8')
-                if len(movie.findall('id')) >1:
-                    ida = movie.findall('id')[0].text
-                    idb = movie.findall('id')[1].text
-                    if idb.startswith('tt'):
-                        id = ida
-                    else:
-                        id = idb
-                else:
-                    id = movie.find('id').text
-                zpath = "files/file"
-                for x in movie.findall(zpath):
-                    watchedDate = x.find('watchedDateString').text
-                    firstPart = x.get('firstPart')
-                    lastPart = x.get('lastPart')
-                    season = int(x.find('info').attrib['season'])
-                    path = unquote_plus(x.find('fileURL').text).decode('utf-8', 'replace')
-                    if x.find('watched').text == 'true':
-                        watched = 1
-                    else:
-                        watched = 0
-    
-                    if title not in self.YAMJ_shows:
-                        shows = self.YAMJ_shows[title] = {'episodes': []}  # new show dictionary
-                    else:
-                        shows = self.YAMJ_shows[title]
-                    if 'title' in shows and title in shows['title']:
-                        if firstPart != lastPart:
-                            for eps in firstPart, lastPart:
-                                ep = {'episode': int(eps), 'season': season, 'date': watchedDate}
-                                ep['playcount'] = watched
-                                ep['double'] = "True"
-                                ep['path'] = path
-                                shows['episodes'].append(ep)
+            try:
+                if movie.get('isTV') == 'true':
+                    title = movie.find('originalTitle').text.encode('utf-8')
+                    if len(movie.findall('id')) >1:
+                        ida = movie.findall('id')[0].text
+                        idb = movie.findall('id')[1].text
+                        if idb.startswith('tt'):
+                            id = ida
                         else:
-                            ep = {'episode': int(firstPart), 'season': season, 'date': watchedDate}
-                            ep['playcount'] = watched
-                            ep['double'] = "False"
-                            ep['path'] = path
-                            shows['episodes'].append(ep)
+                            id = idb
                     else:
-                        if id != "0":
-                            shows['imdbnumber'] = id
-                        if title:
-                            shows['title'] = title
+                        id = movie.find('id').text
+                    zpath = "files/file"
+
+                    for x in movie.findall(zpath):
+                        watchedDate = x.find('watchedDateString').text
+                        firstPart = x.get('firstPart')
+                        lastPart = x.get('lastPart')
+                        season = int(x.find('info').attrib['season'])
+                        path = unquote_plus(x.find('fileURL').text).decode('utf-8', 'replace')
+                        if x.find('watched').text == 'true':
+                            watched = 1
+                        else:
+                            watched = 0
+    
+                        if title not in self.YAMJ_shows:
+                            shows = self.YAMJ_shows[title] = {'episodes': []}  # new show dictionary
+                        else:
+                            shows = self.YAMJ_shows[title]
+                        if 'title' in shows and title in shows['title']:
                             if firstPart != lastPart:
                                 for eps in firstPart, lastPart:
                                     ep = {'episode': int(eps), 'season': season, 'date': watchedDate}
@@ -425,8 +409,28 @@ class YAMJSyncMain:
                                 ep['playcount'] = watched
                                 ep['double'] = "False"
                                 ep['path'] = path
-                                shows = shows['episodes'].append(ep)
-        
+                                shows['episodes'].append(ep)
+                        else:
+                            if id != "0":
+                                shows['imdbnumber'] = id
+                            if title:
+                                shows['title'] = title
+                                if firstPart != lastPart:
+                                    for eps in firstPart, lastPart:
+                                        ep = {'episode': int(eps), 'season': season, 'date': watchedDate}
+                                        ep['playcount'] = watched
+                                        ep['double'] = "True"
+                                        ep['path'] = path
+                                        shows['episodes'].append(ep)
+                                else:
+                                    ep = {'episode': int(firstPart), 'season': season, 'date': watchedDate}
+                                    ep['playcount'] = watched
+                                    ep['double'] = "False"
+                                    ep['path'] = path
+                                    shows = shows['episodes'].append(ep)
+            except:
+                continue
+
     def get_trakt_shows(self):
         pchtrakt.logger.info(' [YAMJ] Getting TV shows from trakt')
 
