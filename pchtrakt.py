@@ -26,12 +26,7 @@
 
 import sys
 import getopt
-#import pchtrakt
-#This needed?
-#pchtrakt.SYS_ENCODING = None
-#reload(sys)
-#sys.setdefaultencoding("ANSI_X3.4-1968")
-#pchtrakt.SYS_ENCODING = 'ANSI_X3.4-1968'
+
 if not hasattr(sys, "setdefaultencoding"):
 	reload(sys)
 
@@ -46,9 +41,16 @@ from time import sleep, time
 from lib.tvdb_api import tvdb_api
 from lib.tvdb_api import tvdb_exceptions
 from lib.utilities import Debug, checkSettings
-from lib.oversight import OversightSync
-from lib.yamj2 import YAMJSync
-from lib import pylast
+
+if SyncCheck >= 0:
+    from lib.oversight import OversightSync
+
+if YAMJSyncCheck >= 0:
+    from lib.yamj2 import YAMJSyncMain
+
+if BetaSeriesScrobbleTvShow:
+    from lib import pylast
+
 from xml.etree import ElementTree
 from httplib import HTTPException, BadStatusLine
 
@@ -191,8 +193,6 @@ def Reset():
 
 def doWork():
     pchtrakt.problem = ''
-    #myMedia.ScrobResult = 0
-    #if myMedia.oStatus.percent != 0:
     if hasattr(myMedia, 'parsedInfoOld'):
         myMedia.parsedInfoOld.percent = myMedia.oStatus.percent
     myMedia.oStatus = pchtrakt.oPchRequestor.getStatus(ipPch, 10)
@@ -227,12 +227,10 @@ def doWork():
                                           EnumStatus.UNKNOWN,
                                           EnumStatus.PAUSE]:
             pchtrakt.allowedPauseTime = TraktMaxPauseTime
-            #if myMedia.oStatus.status != EnumStatus.LOAD:
             if myMedia.parsedInfo == None:
                 #Debug('[Pchtrakt] status: ' + myMedia.oStatus.status)
                 Debug('[Pchtrakt] full path: ' + myMedia.oStatus.fullPath)
                 #msg = ' [Pchtrakt] File: {0}'.format(myMedia.oStatus.fileName)
-                #msg = ' [Pchtrakt] %s File %s' % myMedia.oStatus.fileName, myMedia.oStatus.status
                 pchtrakt.logger.info(' [Pchtrakt] %s File %s' % (myMedia.oStatus.status, myMedia.oStatus.fileName))
                 myMedia.parsedInfo = pchtrakt.mediaparser.parse(myMedia.oStatus.fullPath)
                 pchtrakt.Ttime = myMedia.oStatus.totalTime
@@ -308,8 +306,10 @@ def starttvdbWait():
 def StartUP():
     if pchtrakt.online:
         checkUpdate('first')
-        OversightSync()
-        YAMJSync()
+        if SyncCheck >= 0:
+            OversightSync()
+        if YAMJSyncCheck >= 0:
+            YAMJSyncMain().YAMJSync()
         if os.path.isfile('missed.scrobbles'):
             pchtrakt.logger.info(' [Pchtrakt] Found missed scrobbles, updating trakt.tv')
             with open('missed.scrobbles','r+') as f:

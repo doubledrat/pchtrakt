@@ -21,6 +21,7 @@ import ssl
 if hasattr(ssl, '_create_unverified_context'):
     ssl._create_default_https_context = ssl._create_unverified_context
 
+
 TEMP_ERRORS=[500, 502, 503, 504, 520, 521, 522, 524]
 
 V2_API_KEY='a18b7486b102e402e5a627fa3b56b5d54697ec49c05ab9375c85891a48766030'
@@ -180,7 +181,7 @@ def getYamj3Connection(url, timeout = 60):
 
 
 def login():
-    if pchtrakt.token == '':
+    if pchtrakt.token == '' or pchtrakt.token is None:
         Debug("[traktAPI] Getting auth token")
         url = '/auth/login'
         if not TraktUsername or not TraktPwd:
@@ -190,7 +191,7 @@ def login():
             headers = {'Content-Type': 'application/json', 'trakt-api-key': V2_API_KEY, 'trakt-api-version': '2'}
             data = json.dumps({'login': TraktUsername, 'password': TraktPwd})
             request = urllib2.Request('https://api.trakt.tv/auth/login', data=data, headers=headers)
-            response = urllib2.urlopen(request, timeout=10).read()
+            response = urllib2.urlopen(request, timeout=30).read()
             #response.close()
             #result = response.read()
             result = json.loads(response)
@@ -216,7 +217,7 @@ def trakt_apiv2(url, data=None, params=None, auth=True, cache_limit=.25, cached=
     login_retry=False
     while True:
             try:
-                if pchtrakt.token != '':
+                if pchtrakt.token is not None and pchtrakt.token != '':
                     if auth: headers.update({'trakt-user-login': TraktUsername, 'trakt-user-token': pchtrakt.token})
                     Debug("[traktAPI] Request URL %s, header: %s, data: %s" % (url, headers, data))
                     request = urllib2.Request(url, data = json_data, headers = headers)
@@ -227,20 +228,24 @@ def trakt_apiv2(url, data=None, params=None, auth=True, cache_limit=.25, cached=
                 else:
                     pchtrakt.token = login()
                     continue
-            except URLError as e:
-                Debug("[traktAPI] ERROR %s" % (e))
-                if isinstance(e, HTTPError):
-                    if e.code == 401:
-                        #if login_retry or url.endswith('login'):
-                        pchtrakt.token = login()
-                        login_retry=True
-                        continue
-                    if e.code == 504:
-                        if login_retry or url.endswith('login'):
-                            raise
-                        else:
-                            pchtrakt.token = login()
-                            login_retry=True
+            #except URLError as e:
+            #    Debug("[traktAPI] ERROR %s" % (e))
+            #    if isinstance(e, HTTPError):
+            #        if e.code == 401:
+            #            #if login_retry or url.endswith('login'):
+            #            pchtrakt.token = login()
+            #            login_retry=True
+            #            continue
+            #        if e.code == 504:
+            #            if login_retry or url.endswith('login'):
+            #                raise
+            #            else:
+            #                pchtrakt.token = login()
+            #                login_retry=True
+            except BaseException as e:
+                pchtrakt.logger.info(u" [traktAPI] trakt.auth ##Error: %s" % str(e))
+                pchtrakt.token = login()
+                login_retry=True
 
     if result:
         response=json.loads(result)
