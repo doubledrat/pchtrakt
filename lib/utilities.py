@@ -25,7 +25,7 @@ if hasattr(ssl, '_create_unverified_context'):
 TEMP_ERRORS=[500, 502, 503, 504, 520, 521, 522, 524]
 
 V2_API_KEY='a18b7486b102e402e5a627fa3b56b5d54697ec49c05ab9375c85891a48766030'
-BASE_URL='https://api.trakt.tv'
+BASE_URL='https://api-v2launch.trakt.tv'
   
 __author__ = "Ralph-Gordon Paul, Adrian Cowan"
 __credits__ = ["Ralph-Gordon Paul", "Adrian Cowan", "Justin Nemeth", "Sean Rudford"]
