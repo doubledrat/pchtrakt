@@ -1,162 +1,298 @@
 # -*- coding: utf-8 -*-
 # From https://github.com/Manromen/script.TraktUtilities
 
-import os, sys
-import time, socket
 from pchtrakt.config import *
+from time import sleep, time
+from httplib import HTTPException, BadStatusLine
+#from sha import new as sha1
+
+#from urllib2 import urlopen, Request, URLError, HTTPError
+
+from urllib import quote_plus, urlencode
+#import base64
+import urllib2
 import pchtrakt
-try: import simplejson as json
-except ImportError: import json
+import re
+import os
+import json
+import xml.etree.cElementTree as etree
 
-from nbhttpconnection import *
-from hashlib import sha1
-import urllib, re
+import ssl
+if hasattr(ssl, '_create_unverified_context'):
+    ssl._create_default_https_context = ssl._create_unverified_context
 
-try:
-    # Python 3.0 +
-    import http.client as httplib
-except ImportError:
-    # Python 2.7 and earlier
-    import httplib
+
+TEMP_ERRORS=[500, 502, 503, 504, 520, 521, 522, 524]
+
+V2_API_KEY='a18b7486b102e402e5a627fa3b56b5d54697ec49c05ab9375c85891a48766030'
+BASE_URL='https://api-v2launch.trakt.tv'
   
 __author__ = "Ralph-Gordon Paul, Adrian Cowan"
-__credits__ = ["Ralph-Gordon Paul", "Adrian Cowan", "Justin Nemeth",  "Sean Rudford"]
+__credits__ = ["Ralph-Gordon Paul", "Adrian Cowan", "Justin Nemeth", "Sean Rudford"]
 __license__ = "GPL"
 __maintainer__ = "Ralph-Gordon Paul"
 __email__ = "ralph-gordon.paul@uni-duesseldorf.de"
 __status__ = "Production"
 
-username = TraktUsername
-apikey = 'def6943c09e19dccb4df715bd4c9c6c74bc3b6d7'
-pwdsha1 = sha1(TraktPwd).hexdigest()
+def getIDFromNFO(type, file):
+    if not isfile(file):
+        pchtrakt.logger.info(" [Pchtrakt] Show dir doesn't exist, can't load NFO")
+        raise exceptions.NoNFOException("The show dir doesn't exist, no NFO could be loaded")
 
-headers = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/plain"}
 
-class TraktError(Exception):
-    pass
-class AuthenticationTraktError(TraktError):
-    def __init__(self):
-        Exception.__init__(self, 'Trakt.tv - Login or password incorrect')
-class MaxScrobbleError(TraktError):
-	def __init__(self):
-		Exception.__init__(self, 'Trakt.tv - Shows per hour limit reached')
+    pchtrakt.logger.info(' [Pchtrakt] Loading info from NFO')
+    id = ''
+    try:
+        
+        if type == 'TV':
+            xmlFileObj = open (file, 'r')
+            showXML = etree.ElementTree(file=xmlFileObj)
+            xmlFileObj.close()
+            name = None
+            for find in showXML.iter('id'):
+                if find.attrib == {'moviedb': 'tvdb'}:
+                    name = find.text
+                    break
+            if name != None:
+                id = name
+            elif showXML.findtext('id'):
+                id = showXML.findtext('id')
+            else:
+                return ''
+        if type != 'TV':
+            xmlFileObj = open (file, 'r')
+            txt = xmlFileObj.read()
+            id = re.findall('(tt\d{4,7})', txt)[0]
+            xmlFileObj.close()
+        return id
+    except Exception, e:
+        Debug('[traktAPI] id:%s' % id)
+        return id
 
-def Debug(msg, force=False):
-    myMsg = unicode(msg)
-    if (pchtrakt.debug or force):
+
+def toUnicode(original, *args):
+    try:
+        if isinstance(original, unicode):
+            return original
+        else:
+            try:
+                return unicode(original, *args)
+            except:
+                try:
+                    return ek(original, *args)
+                except:
+                    raise
+    except:
+        log.error('Unable to decode value "%s..." : %s ', (repr(original)[:20], traceback.format_exc()))
+        ascii_text = str(original).encode('string_escape')
+        return toUnicode(ascii_text)
+
+def getExt(filename):
+    return os.path.splitext(filename)[1][1:]
+
+def getNfo(files):
+    extensions = {
+        'nfo': ['nfo', 'txt', 'tag']
+    }
+    return set(filter(lambda s: getExt(s.lower()) in extensions['nfo'], files))
+
+def ss(original, *args):
+
+
+    u_original = toUnicode(original, *args)
+    try:
+        return u_original.encode('UTF-8')
+    except Exception, e:
+        pchtrakt.logger.warning('[PchTrakt] Failed ss encoding char, force UTF8: %s', e)
+        return u_original.encode('UTF-8')
+
+
+def sp(path, *args):
+    if not path or len(path) == 0:
+        return path
+    if os.path.sep == '/' and '\\' in path:
+        path = '/' + path.replace(':', '').replace('\\', '/')
+    path = os.path.normpath(ss(path, *args))
+    if path != os.path.sep:
+        path = path.rstrip(os.path.sep)
+    if len(path) == 2 and path[1] == ':':
+        path = path + os.path.sep
+    path = re.sub('^//', '/', path)
+    return path
+
+
+def scrobbleMissed():
+    pchtrakt.logger.info('started TEST ' + pchtrakt.lastpath)
+    #self.path = pchtrakt.lastpath
+    ctime = time()
+    pchtrakt.missed = {}
+    #if pchtrakt.online:
+    if os.path.isfile('missed.scrobbles'):
+        with open('missed.scrobbles','r+') as f:
+            pchtrakt.missed = json.load(f)
+    pchtrakt.missed[pchtrakt.lastPath]={"Totaltime": int(pchtrakt.Ttime), "Totallength": int(ctime)}
+    with open('missed.scrobbles','w') as f:
+        json.dump(pchtrakt.missed, f, separators=(',',':'), indent=4)
+
+def Debug(myMsg):
+    if use_debug:
         try:
-            print myMsg
+            pchtrakt.logger.debug(myMsg)
         except UnicodeEncodeError:
-            print myMsg.encode( "utf-8", "replace" )
+            myMsg = myMsg.encode("utf-8", "replace")
+            pchtrakt.logger.info(myMsg)
 
 def checkSettings(daemon=False):
-    if username != 'your_trakt_login':
-        data = traktJsonRequest('POST', '/account/test/%%API_KEY%%', silent=True)
-        if data == None: #Incorrect trakt login details
+    if TraktUsername != 'your_trakt_login':
+        data = traktJsonRequest('POST', '/account/test/%%API_KEY%%')#data = traktJsonRequest('POST', '/account/test/%%API_KEY%%', silent=True)
+        if data == None:  # Incorrect trakt login details
             return False
-        print('True')  
+        #print('True')  
         return True
 
-# SQL string quote escaper
 def xcp(s):
+    # SQL string quote escaper
     return re.sub('''(['])''', r"''", str(s))
 
-# get a connection to trakt
-def getTraktConnection():
-    try:
-        conn = httplib.HTTPConnection('api.trakt.tv')
-    except socket.timeout:
-        Debug("getTraktConnection: can't connect to trakt - timeout")
-        # notification("Trakt Utilities", __language__(1108).encode( "utf-8", "ignore" ) + ": timeout") # can't connect to trakt
-        return None
-    return conn
-    
-# make a JSON api request to trakt
-# method: http method (GET or POST)
-# req: REST request (ie '/user/library/movies/all.json/%%API_KEY%%/%%USERNAME%%')
-# args: arguments to be passed by POST JSON (only applicable to POST requests), default:{}
-# returnStatus: when unset or set to false the function returns None apon error and shows a notification,
-#   when set to true the function returns the status and errors in ['error'] as given to it and doesn't show the notification,
-#   use to customise error notifications
-# anon: anonymous (dont send username/password), default:False
-# connection: default it to make a new connection but if you want to keep the same one alive pass it here
-# silent: default is False, when true it disable any error notifications (but not debug messages)
-# passVersions: default is False, when true it passes extra version information to trakt to help debug problems
-def traktJsonRequest(method, req, args={}, returnStatus=False, anon=False, conn=False, silent=False, passVersions=False):
-    closeConnection = False
-    if not conn:
-        conn = getTraktConnection()
-        closeConnection = True
-    if conn == None:
-        if returnStatus:
-            data = {}
-            data['status'] = 'failure'
-            data['error'] = 'Unable to connect to trakt'
-            return data
-        return None
-    try:
-        req = req.replace("%%API_KEY%%",apikey)
-        req = req.replace("%%USERNAME%%",username)
-        if method == 'POST':
-            if not anon:
-                args['username'] = username
-                args['password'] = pwdsha1
-            if passVersions:
-                args['plugin_version'] = 0 #__settings__.getAddonInfo("version")
-                args['media_center'] = 'popcorn hour' #Todo get pch version
-                args['media_center_version'] = 0 
-                args['media_center_date'] = '10/01/2012' 
-            jdata = json.dumps(args)
-            conn.request('POST', req, jdata)
-            
-        elif method == 'GET':
-            conn.request('GET', req)
+def getYamj3Connection(url, timeout = 60):
+    # get a connection to YAMJ3
+    data = None
+    args = None
+    req = Request(url, headers = headers)
+    if use_debug:
+        t1 = time()
+    response = urlopen(req, timeout = timeout)
+    if use_debug:
+        t2 = time()
+        #Debug("[traktAPI] getTraktConnection(): response.read()")
+    if pchtrakt.online == 1:
+        if pchtrakt.StopTrying:
+            if response.msg == "OK":
+                data = '{"status": "success", "message": "set watched"}'
         else:
-            return None
-        # print "trakt json url: "+req
-        # print "json: " + jdata
-    except socket.error:
-        Debug("traktQuery: can't connect to trakt")
-        # if not silent: notification("Trakt Utilities", __language__(1108).encode( "utf-8", "ignore" )) # can't connect to trakt
-        if returnStatus:
-            data = {}
-            data['status'] = 'failure'
-            data['error'] = 'Socket error, unable to connect to trakt'
-            return data;
-        return None
-   
-    response = conn.getresponse()
-    
-    try:
-        raw = response.read()
-        data = json.loads(raw)
-    except ValueError:
-        Debug("traktQuery: Bad JSON responce: "+raw)
-        if returnStatus:
-            data = {}
-            data['status'] = 'failure'
-            data['error'] = 'Bad responce from trakt'
-            return data
-        # if not silent: notification("Trakt Utilities", __language__(1109).encode( "utf-8", "ignore" ) + ": Bad responce from trakt") # Error
-        return None
+            data = response.read()
+        if use_debug:
+            #Debug("[traktAPI] Response Code: %i" % response.getcode())
+            Debug("[traktAPI] Response Time: %0.2f ms" % ((t2 - t1) * 1000))
+            #Debug("[traktAPI] Response Headers: %s" % str(response.info().dict))
+    else:
+        data = '{"status": "success", "message": "fake scrobble"}'
+    return data
 
-    if closeConnection:
-        conn.close()        
+
+def login():
+    if pchtrakt.token == '' or pchtrakt.token is None:
+        Debug("[traktAPI] Getting auth token")
+        url = '/auth/login'
+        if not TraktUsername or not TraktPwd:
+            Debug("[traktAPI] Check username and password")
+            return ''
+        try:
+            headers = {'Content-Type': 'application/json', 'trakt-api-key': V2_API_KEY, 'trakt-api-version': '2'}
+            data = json.dumps({'login': TraktUsername, 'password': TraktPwd})
+            request = urllib2.Request('https://api.trakt.tv/auth/login', data=data, headers=headers)
+            response = urllib2.urlopen(request, timeout=30).read()
+            #response.close()
+            #result = response.read()
+            result = json.loads(response)
+            if 'token' in response:
+                auth = result['token']
+                Debug("[traktAPI] Token received")
+            else:
+                auth = ''
+            #response.close()
+            return auth
+        except BaseException as e:
+            pchtrakt.logger.info(u" [traktAPI] trakt.auth ##Error: %s" % str(e))
+
+
+def trakt_apiv2(url, data=None, params=None, auth=True, cache_limit=.25, cached=True, sync=False):
+    json_data=json.dumps(data) if data else None
+    headers = {'Content-Type': 'application/json', 'trakt-api-key': V2_API_KEY, 'trakt-api-version': '2'}
+    url = '%s%s' % (BASE_URL, url) 
+    if params: url = url + '?' + urlencode(params) 
+    if data:
+        if 'password' in data:
+            data['password'] = 'xXx'
+    login_retry=False
+    while True:
+            try:
+                if pchtrakt.token is not None and pchtrakt.token != '':
+                    if auth: headers.update({'trakt-user-login': TraktUsername, 'trakt-user-token': pchtrakt.token})
+                    Debug("[traktAPI] Request URL %s, header: %s, data: %s" % (url, headers, data))
+                    request = urllib2.Request(url, data = json_data, headers = headers)
+                    result = urllib2.urlopen(request, timeout = 120).read()
+                    #result = response
+                    #response.close()
+                    break
+                else:
+                    pchtrakt.token = login()
+                    continue
+            #except URLError as e:
+            #    Debug("[traktAPI] ERROR %s" % (e))
+            #    if isinstance(e, HTTPError):
+            #        if e.code == 401:
+            #            #if login_retry or url.endswith('login'):
+            #            pchtrakt.token = login()
+            #            login_retry=True
+            #            continue
+            #        if e.code == 504:
+            #            if login_retry or url.endswith('login'):
+            #                raise
+            #            else:
+            #                pchtrakt.token = login()
+            #                login_retry=True
+            except BaseException as e:
+                pchtrakt.logger.info(u" [traktAPI] trakt.auth ##Error: %s" % str(e))
+                pchtrakt.token = login()
+                login_retry=True
+
+    if result:
+        response=json.loads(result)
+
+        if 'status' in response and response['status']=='failure':
+            if 'message' in response: raise TraktError(response['message'])
+            if 'error' in response: raise TraktError(response['error'])
+            else: raise TraktError()
+        else:
+            return response
+
+def yamj3JsonRequest(url):
+    raw = None
+    url = 'http://%s/yamj3/%s' % (apiurl, url)
+    Debug("[YAMJ3API] Starting lookup.")
+    Debug("[YAMJ3API] Request URL '%s'" % (url))
+    raw = getYamj3Connection(url)
+    if not raw:
+        Debug("[YAMJ3API] JSON Response empty")
+        return None
+    data = json.loads(raw)
+    Debug("[YAMJ3API] JSON response: '%s'" % (str(data)))
         
+    if data is None:
+        Debug("[YAMJ3API] JSON Request failed, data is empty.")
+        return None
+    
     if 'status' in data:
         if data['status'] == 'failure':
-            print "traktQuery: Error: " + str(data['error'])
+            Debug("[YAMJ3API] Error: " + str(data['error']))
+            if data['error'] == 'episode not found':
+                raise NotFoundError()
             if data['error'] == 'failed authentication':
                 raise AuthenticationTraktError()
             if data['error'] == 'shows per hour limit reached':
-                raise MaxScrobbleError()
-            if returnStatus:
-                return data;
-            #if not silent: notification("Trakt Utilities", __language__(1109).encode( "utf-8", "ignore" ) + ": " + str(data['error'])) # Error
+                #scrobbleMissed()
+                data = {'status': 'success', 'message': 'shows per hour limit reached - added item to off-line list'}
+                return data#raise MaxScrobbleError()
+            if data['error'] == 'movies per hour limit reached':
+                #scrobbleMissed()
+                data = {'status': 'success', 'message': 'movies per hour limit reached - added item to off-line list'}
+                #{u'status': u'success', u'movie': {u'year': u'1998', u'tmdb_id': u'12229', u'imdb_id': u'tt0122515', u'title': u'The Acid House'}, u'twitter': False, u'tumblr': False, u'facebook': False, u'message': u'watching The Acid House (1998)'}
+                return data
+            #raise MaxScrobbleError()
             return None
-    
     return data
-   
+
 # get movies from trakt server
 def getMoviesFromTrakt(daemon=False):
     data = traktJsonRequest('POST', '/user/library/movies/all.json/%%API_KEY%%/%%USERNAME%%')
@@ -197,13 +333,6 @@ def getWatchedTVShowsFromTrakt(daemon=False):
         Debug("Error in request from 'getWatchedTVShowsFromTrakt()'")
     return data
 
-# set episodes seen on trakt
-def setEpisodesSeenOnTrakt(tvdb_id, title, year, episodes):
-    data = traktJsonRequest('POST', '/show/episode/seen/%%API_KEY%%', {'tvdb_id': tvdb_id, 'title': title, 'year': year, 'episodes': episodes})
-    if data == None:
-        Debug("Error in request from 'setEpisodeSeenOnTrakt()'")
-    return data
-
 # set episodes in library on trakt
 def setEpisodesInLibraryOnTrakt(tvdb_id, title, year, episodes):
     data = traktJsonRequest('POST', '/show/episode/library/%%API_KEY%%', {'tvdb_id': tvdb_id, 'title': title, 'year': year, 'episodes': episodes})
@@ -216,14 +345,6 @@ def setEpisodesUnseenOnTrakt(tvdb_id, title, year, episodes):
     data = traktJsonRequest('POST', '/show/episode/unseen/%%API_KEY%%', {'tvdb_id': tvdb_id, 'title': title, 'year': year, 'episodes': episodes})
     if data == None:
         Debug("Error in request from 'setEpisodesUnseenOnTrakt()'")
-    return data
-
-# set movies seen on trakt
-#  - movies, required fields are 'plays', 'last_played' and 'title', 'year' or optionally 'imdb_id'
-def setMoviesSeenOnTrakt(movies):
-    data = traktJsonRequest('POST', '/movie/seen/%%API_KEY%%', {'movies': movies})
-    if data == None:
-        Debug("Error in request from 'setMoviesSeenOnTrakt()'")
     return data
 
 # set movies unseen on trakt
@@ -335,10 +456,10 @@ def removeTVShowsFromWatchlist(data):
         Debug("Error in request from 'removeMoviesFromWatchlist()'")
     return data
 
-#Set the rating for a movie on trakt, rating: "hate" = Weak sauce, "love" = Totaly ninja
+# Set the rating for a movie on trakt, rating: "hate" = Weak sauce, "love" = Totaly ninja
 def rateMovieOnTrakt(imdbid, title, year, rating):
     if not (rating in ("love", "hate", "unrate")):
-        #add error message
+        # add error message
         return
     
     Debug("Rating movie:" + rating)
@@ -354,12 +475,12 @@ def rateMovieOnTrakt(imdbid, title, year, rating):
     
     return data
 
-#Get the rating for a movie from trakt
+# Get the rating for a movie from trakt
 def getMovieRatingFromTrakt(imdbid, title, year):
     if imdbid == "" or imdbid == None:
-        return None #would be nice to be smarter in this situation
+        return None  # would be nice to be smarter in this situation
     
-    data = traktJsonRequest('POST', '/movie/summary.json/%%API_KEY%%/'+str(imdbid))
+    data = traktJsonRequest('POST', '/movie/summary.json/%%API_KEY%%/' + str(imdbid))
     if data == None:
         Debug("Error in request from 'getMovieRatingFromTrakt()'")
         return None
@@ -367,14 +488,14 @@ def getMovieRatingFromTrakt(imdbid, title, year):
     if 'rating' in data:
         return data['rating']
         
-    print data
+    #print data
     Debug("Error in request from 'getMovieRatingFromTrakt()'")
     return None
 
-#Set the rating for a tv episode on trakt, rating: "hate" = Weak sauce, "love" = Totaly ninja
+# Set the rating for a tv episode on trakt, rating: "hate" = Weak sauce, "love" = Totaly ninja
 def rateEpisodeOnTrakt(tvdbid, title, year, season, episode, rating):
     if not (rating in ("love", "hate", "unrate")):
-        #add error message
+        # add error message
         return
     
     Debug("Rating episode:" + rating)
@@ -390,12 +511,12 @@ def rateEpisodeOnTrakt(tvdbid, title, year, season, episode, rating):
     
     return data
     
-#Get the rating for a tv episode from trakt
+# Get the rating for a tv episode from trakt
 def getEpisodeRatingFromTrakt(tvdbid, title, year, season, episode):
     if tvdbid == "" or tvdbid == None:
-        return None #would be nice to be smarter in this situation
+        return None  # would be nice to be smarter in this situation
     
-    data = traktJsonRequest('POST', '/show/episode/summary.json/%%API_KEY%%/'+str(tvdbid)+"/"+season+"/"+episode)
+    data = traktJsonRequest('POST', '/show/episode/summary.json/%%API_KEY%%/' + str(tvdbid) + "/" + season + "/" + episode)
     if data == None:
         Debug("Error in request from 'getEpisodeRatingFromTrakt()'")
         return None
@@ -403,14 +524,14 @@ def getEpisodeRatingFromTrakt(tvdbid, title, year, season, episode):
     if 'rating' in data:
         return data['rating']
         
-    print data
+    #print data
     Debug("Error in request from 'getEpisodeRatingFromTrakt()'")
     return None
 
-#Set the rating for a tv show on trakt, rating: "hate" = Weak sauce, "love" = Totaly ninja
+# Set the rating for a tv show on trakt, rating: "hate" = Weak sauce, "love" = Totaly ninja
 def rateShowOnTrakt(tvdbid, title, year, rating):
     if not (rating in ("love", "hate", "unrate")):
-        #add error message
+        # add error message
         return
     
     Debug("Rating show:" + rating)
@@ -426,12 +547,12 @@ def rateShowOnTrakt(tvdbid, title, year, rating):
     
     return data
 
-#Get the rating for a tv show from trakt
+# Get the rating for a tv show from trakt
 def getShowRatingFromTrakt(tvdbid, title, year):
     if tvdbid == "" or tvdbid == None:
-        return None #would be nice to be smarter in this situation
+        return None  # would be nice to be smarter in this situation
     
-    data = traktJsonRequest('POST', '/show/summary.json/%%API_KEY%%/'+str(tvdbid))
+    data = traktJsonRequest('POST', '/show/summary.json/%%API_KEY%%/' + str(tvdbid))
     if data == None:
         Debug("Error in request from 'getShowRatingFromTrakt()'")
         return None
@@ -439,7 +560,7 @@ def getShowRatingFromTrakt(tvdbid, title, year):
     if 'rating' in data:
         return data['rating']
         
-    print data
+    #print data
     Debug("Error in request from 'getShowRatingFromTrakt()'")
     return None
 
@@ -483,63 +604,90 @@ def getWatchingFromTraktForUser(name):
 ##### Scrobbling to trakt #####
 ###############################
 
-#tell trakt that the user is watching a movie
+# tell trakt that the user is watching a movie
 def watchingMovieOnTrakt(imdb_id, title, year, duration, percent):
-    responce = traktJsonRequest('POST', '/movie/watching/%%API_KEY%%', {'imdb_id': imdb_id, 'title': title, 'year': year, 'duration': duration, 'progress': percent}, passVersions=True)
-    print responce
+    responce = trakt_apiv2('/scrobble/start', {"movie": {"title": title, "year": year, "ids": {"imdb": imdb_id}}, "progress": percent, "app_version": "1.0", "app_date": "2014-09-22"}, auth=True)
+    #Debug('[traktAPI] ' + str(responce))
     if responce == None:
-        Debug("Error in request from 'watchingMovieOnTrakt()'")
+        Debug("[traktAPI] Error in request from 'watchingMovieOnTrakt()'")
     return responce
 
-#tell trakt that the user is watching an episode
+# tell trakt that the user is watching an episode
 def watchingEpisodeOnTrakt(tvdb_id, title, year, season, episode, duration, percent):
-    responce = traktJsonRequest('POST', '/show/watching/%%API_KEY%%', {'tvdb_id': tvdb_id, 'title': title, 'year': year, 'season': season, 'episode': episode, 'duration': duration, 'progress': percent}, passVersions=True)
+    responce = trakt_apiv2('/scrobble/start', {"show": {"title": title, "year": year}, "episode": {"season": season, "number": episode}, "ids": {"tvdb": tvdb_id}, "progress": percent, "app_version": "1.0", "app_date": "2014-09-22"}, auth=True)
+    #Debug('[traktAPI] ' + str(responce))
     if responce == None:
-        print "Error in request from 'watchingEpisodeOnTrakt()'"
+        Debug("[traktAPI] Error in request from 'watchingEpisodeOnTrakt()'")
     return responce
 
-#tell trakt that the user has stopped watching a movie
-def cancelWatchingMovieOnTrakt():
-    responce = traktJsonRequest('POST', '/movie/cancelwatching/%%API_KEY%%')
+# tell trakt that the user has stopped watching a movie
+def cancelWatchingMovieOnTrakt(myMedia):
+    responce = trakt_apiv2('/scrobble/stop', {"movie": {"title": myMedia.parsedInfoOld.name, "year": myMedia.parsedInfoOld.year, "ids": {"imdb": myMedia.parsedInfoOld.id}}, "progress": myMedia.parsedInfoOld.percent, "app_version": "1.0", "app_date": "2014-09-22"}, auth=True)
+    #Debug('[traktAPI] ' + str(responce))
     if responce == None:
-        Debug("Error in request from 'cancelWatchingMovieOnTrakt()'")
+        Debug("[traktAPI] Error in request from 'cancelWatchingMovieOnTrakt()'")
     return responce
 
-#tell trakt that the user has stopped an episode
-def cancelWatchingEpisodeOnTrakt():
-    responce = traktJsonRequest('POST', '/show/cancelwatching/%%API_KEY%%')
+# tell trakt that the user has stopped an episode
+def cancelWatchingEpisodeOnTrakt(myMedia):
+    responce = trakt_apiv2('/scrobble/stop', {"show": {"title": myMedia.parsedInfoOld.name, "year": myMedia.parsedInfoOld.year}, "episode": {"season": myMedia.parsedInfoOld.season_number, "number": str(myMedia.parsedInfoOld.episode_numbers).replace('[','').replace(']','')}, "ids": {"tvdb": myMedia.parsedInfoOld.id}, "progress": myMedia.parsedInfoOld.percent, "app_version": "1.0", "app_date": "2014-09-22"}, auth=True)
+    #Debug('[traktAPI] ' + str(responce))
     if responce == None:
-        Debug("Error in request from 'cancelWatchingEpisodeOnTrakt()'")
+        Debug("[traktAPI] Error in request from 'cancelWatchingEpisodeOnTrakt()'")
     return responce
 
-#tell trakt that the user has finished watching an movie
+# tell trakt that the user has finished watching an movie
 def scrobbleMovieOnTrakt(imdb_id, title, year, duration, percent):
-    responce = traktJsonRequest('POST', '/movie/scrobble/%%API_KEY%%', {'imdb_id': imdb_id, 'title': title, 'year': year, 'duration': duration, 'progress': percent}, passVersions=True)
+    responce = trakt_apiv2('/scrobble/start', {"movie": {"title": title, "year": year, "ids": {"imdb": imdb_id}}, "progress": percent, "app_version": "1.0", "app_date": "2014-09-22"}, auth=True)
+    #Debug('[traktAPI] ' + str(responce))
     if responce == None:
-        Debug("Error in request from 'scrobbleMovieOnTrakt()'")
+        Debug("[traktAPI] Error in request from 'scrobbleMovieOnTrakt()'")
     return responce
 
-#tell trakt that the user has finished watching an episode
+# tell trakt that the user has finished watching an episode
 def scrobbleEpisodeOnTrakt(tvdb_id, title, year, season, episode, duration, percent):
-    responce = traktJsonRequest('POST', '/show/scrobble/%%API_KEY%%', {'tvdb_id': tvdb_id, 'title': title, 'year': year, 'season': season, 'episode': episode, 'duration': duration, 'progress': percent}, passVersions=True)
+    responce = trakt_apiv2('/scrobble/start', {"show": {"title": title, "year": year}, "episode": {"season": season, "number": episode}, "ids": {"tvdb": tvdb_id}, "progress": percent, "app_version": "1.0", "app_date": "2014-09-22"}, auth=True)
+    #Debug('[traktAPI] ' + str(responce))
     if responce == None:
-        Debug("Error in request from 'scrobbleEpisodeOnTrakt()'")
+        Debug("[traktAPI] Error in request from 'scrobbleEpisodeOnTrakt()'")
     return responce
 
-            
-            
-"""
-ToDo:
+# set episodes seen on trakt
+def setEpisodesSeenOnTrakt(tvdb_id, title, year, season, episode, percent, SeenTime):
+    #{    "show": {      "title": "Breaking Bad"    },    "episode": {      "season": 1,      "number": 1    },    "progress": 85,    "app_version": "1.0",    "app_date": "2014-09-22"  }
+    responce = trakt_apiv2('/scrobble/stop', {"show": {"title": title, "year": year}, "episode": {"season": season, "number": episode}, "ids": {"tvdb": tvdb_id}, "progress": percent, "app_version": "1.0", "app_date": "2014-09-22"}, auth=True)
+    if responce == None:
+        Debug("Error in request from 'setEpisodeSeenOnTrakt()'")
+    return responce
+
+# set movies seen on trakt
+def setMoviesSeenOnTrakt(imdb_id, title, year, percent, SeenTime):
+    responce = trakt_apiv2('/scrobble/stop', {"movie": {"title": title, "year": year, "ids": {"imdb": imdb_id}}, "progress": percent, "app_version": "1.0", "app_date": "2014-09-22"}, auth=True)
+    if responce == None:
+        Debug("Error in request from 'setMoviesSeenOnTrakt()'")
+    return responce
 
 
-"""
 
 
-"""
-for later:
-First call "Player.GetActivePlayers" to determine the currently active player (audio, video or picture).
-If it is audio or video call Audio/VideoPlaylist.GetItems and read the "current" field to get the position of the
-currently playling item in the playlist. The "items" field contains an array of all items in the playlist and "items[current]" is
-the currently playing file. You can also tell jsonrpc which fields to return for every item in the playlist and therefore you'll have all the information you need.
 
-"""
+###############################
+########## YAMJ3 API ##########
+###############################
+
+# get genres of file from YAMJ3 API
+def getgenres(yamjname):
+    responce = yamj3JsonRequest('api/genre?filename={0}'.format(quote_plus(yamjname)))
+    #Debug('[YAMJ3API] ' + str(responce))
+    if responce == None:
+        Debug("[YAMJ3API] Error in request from 'scrobbleEpisodeOnTrakt()'")
+    return responce
+
+# get genres of file from YAMJ3 API
+def watched(pchtrakt):
+    yamjname = pchtrakt.lastName.encode('utf-8', 'replace')
+    responce = yamj3JsonRequest('api/watched?filename={0}?watched={1}'.format(quote_plus(yamjname), str(pchtrakt.lastPercent)))
+    #Debug('[YAMJ3API] ' + str(responce))
+    if responce == None:
+        Debug("[YAMJ3API] Error in request from 'scrobbleEpisodeOnTrakt()'")
+    return responce
