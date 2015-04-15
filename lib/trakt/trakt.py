@@ -10,8 +10,22 @@ class TraktAPI():
     def __init__(self, disable_ssl_verify=False, timeout=30):
         self.V2_API_KEY='a18b7486b102e402e5a627fa3b56b5d54697ec49c05ab9375c85891a48766030'
         self.TRAKT_API_SECRET='b51096526453c72b7dffe868733abda66276d83544bbd5ba9e6093dffc0cab30'
-        self.TRAKT_ACCESS_TOKEN = TRAKT_ACCESS_TOKEN
-        self.TRAKT_REFRESH_TOKEN = TRAKT_REFRESH_TOKEN
+        try:
+            if pchtrakt.config.TRAKT_ACCESS_TOKEN == None:
+                config=ConfigParser.RawConfigParser()
+                config.read(r'pchtrakt.ini')
+                self.TRAKT_ACCESS_TOKEN = config.get('Trakt','api_token')
+                if self.TRAKT_ACCESS_TOKEN == 'None':
+                    self.TRAKT_ACCESS_TOKEN = None
+                self.TRAKT_REFRESH_TOKEN = config.get('Trakt','refresh_token')
+                if self.TRAKT_REFRESH_TOKEN == 'None':
+                    self.TRAKT_REFRESH_TOKEN = None
+            else:
+                self.TRAKT_ACCESS_TOKEN = pchtrakt.config.TRAKT_ACCESS_TOKEN
+                self.TRAKT_REFRESH_TOKEN = pchtrakt.config.TRAKT_REFRESH_TOKEN
+        except:
+            self.TRAKT_ACCESS_TOKEN = None
+            self.TRAKT_REFRESH_TOKEN = None
         self.verify = not disable_ssl_verify
         self.timeout = timeout if timeout else None
         self.api_url = 'https://api-v2launch.trakt.tv/'
