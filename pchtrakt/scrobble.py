@@ -1,5 +1,4 @@
 from sys import version_info
-#from os.path import isfile
 from os.path import isfile, isdir
 from os import listdir
 from os import rename
@@ -14,19 +13,6 @@ from pchtrakt.config import *
 from time import sleep, time
 import pchtrakt
 import glob
-#import re
-#from pchtrakt.pch import EnumStatus
-#import codecs
-#import lib.connector
-#from time import time
-#import json
-#from os import listdir#use glob instead? or switch both to list dir?
-#import fileinput
-#from pchtrakt.pch import decode_string, utf8_encoded
-#class EnumScrobbleResult:
-#    KO = 0
-#    TRAKTOK = 1
-#    BETASERIESOK= 2
 
 class OutToMainLoop(Exception):
     pass
@@ -141,7 +127,6 @@ def videoStopped(myMedia):
     if (TraktScrobbleTvShow or TraktScrobbleMovie) and (not pchtrakt.online and pchtrakt.watched):
         pchtrakt.logger.info(' [Pchtrakt] saving off-line scrobble')
         scrobbleMissed()
-    #pchtrakt.logger.info(' [Pchtrakt] Waiting for a file to start.....')
 
 def showStillRunning(myMedia):
     showStarted(myMedia)
@@ -150,7 +135,6 @@ def movieStillRunning(myMedia):
     movieStarted(myMedia)
 
 def showIsEnding(myMedia):
-    #Debug("myMedia.ScrobResult" + str(myMedia.ScrobResult))
     if BetaSeriesScrobbleTvShow:
         result = 0
         msg = ' [BetaSAPI] Video is '
@@ -167,7 +151,7 @@ def showIsEnding(myMedia):
                 bs.destroyToken(token)
                 msg += 'ending: '
             else:
-                bs.destroyToken(token)#added this but not sure if needed
+                bs.destroyToken(token)
                 msg += 'already watched: '
             if result or isWatched:
                 result = 1
@@ -200,7 +184,6 @@ def showIsEnding(myMedia):
                                                     str(myMedia.oStatus.totalTime),
                                                     str(myMedia.oStatus.percent))
         if response:
-            #if response['message'] != 'fake scrobble':
             msg = ' [traktAPI] Tv Show is ending: - %s ' %(response)
             pchtrakt.logger.info(msg)
             result = 1
@@ -320,8 +303,8 @@ def videoStatusHandle(myMedia):
         videoStatusHandleMovie(myMedia)
     else:
         pchtrakt.StopTrying = 1
-    pchtrakt.lastPath = myMedia.oStatus.fullPath#check if needed
-    pchtrakt.lastName = myMedia.oStatus.fileName#check if needed
+    pchtrakt.lastPath = myMedia.oStatus.fullPath
+    pchtrakt.lastName = myMedia.oStatus.fileName
     pchtrakt.lastPercent = myMedia.oStatus.percent
 
 def isIgnored(myMedia):
@@ -329,25 +312,23 @@ def isIgnored(myMedia):
     ignored = isKeywordIgnored(myMedia.oStatus.fileName)
     if not ignored and ignored_repertory[0] != '':
         for el in myMedia.oStatus.fullPath.replace('/opt/sybhttpd/localhost.drives/', '').split('/'):
-            #if el != '':
             Debug("[Pchtrakt] Checking if %s is an ignored folder" % el)
             if el in ignored_repertory:
                 msg = ' [Pchtrakt] This video is in a ignored repertory: {0}'.format(el) + ' Waiting for next file to start.'
                 pchtrakt.logger.info(msg)
                 ignored = True
                 break
-    #Debug("[Pchtrakt] Finished Checking folders")
     if not ignored and YamjIgnoredCategory[0] != '':
         if YamjPath != "/":
             #YAMJ2 Genre
-            file = myMedia.oStatus.fileName.encode('utf-8', 'replace').rsplit('.',1)[0] + '.xml'#file = unicode(myMedia.oStatus.fileName.rsplit('.',1)[0] + '.xml', errors='replace')
+            file = myMedia.oStatus.fileName.encode('utf-8', 'replace').rsplit('.',1)[0] + '.xml'
             oXml = ElementTree.parse(YamjPath + file)
             genres = oXml.findall('.//genre')
             ignored = isGenreIgnored(genres)
         elif apiurl != "":
             #YAMJ3 Genre
             genres = []
-            genre = utilities.getgenres(myMedia.oStatus.fileName.encode('utf-8', 'replace'))#cnx = lib.connector.connect(**config)
+            genre = utilities.getgenres(myMedia.oStatus.fileName.encode('utf-8', 'replace'))
             x = 0
             while x != genre['count']:
                 genres.append(genre['results'][x]['name'])
@@ -577,17 +558,6 @@ def UpdateXMLFiles(pchtrakt):
                 else:
                     txt = name.replace(checkpath, '') + ' has NOT been modified as watched for ' + matchthis
                     pchtrakt.logger.info(' [Pchtrakt] ' + txt)
-            #elif pchtrakt.isTvShow:
-                #fileinfo = checkpath + lookfor + ".html"
-                #content = open(fileinfo,'rb+').read()
-                #replacedText = content.replace('unwatched', 'watched') 
-                #if replacedText is not content:
-                    #open(fileinfo, 'w').write(replacedText)
-                    #txt = name.replace(checkpath, '') + ' has been modified as watched for ' + matchthis
-                    #pchtrakt.logger.info(txt)
-                #else:
-                    #txt = name.replace(checkpath, '') + ' has NOT been modified as watched for ' + matchthis
-                    #pchtrakt.logger.info(txt)
     except Exception as e:
         pchtrakt.CreatedFile = 0
         Debug('[Pchtrakt] %s - Error accured during xml updating, Its being looked into' % str(e))

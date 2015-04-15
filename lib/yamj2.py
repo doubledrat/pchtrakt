@@ -5,17 +5,14 @@ import os
 import copy
 
 from pchtrakt.config import *
-from lib.utilities import Debug, trakt_apiv2
+from lib.utilities import Debug
+from lib.trakt import TraktAPI
 from xml.etree import ElementTree
 from urllib import unquote_plus
 
 from time import strftime
 
-
-
 class YAMJSyncMain:
-    
-
     def __init__(self):
         # Set variables
         self.name = YamjPath + 'CompleteMovies.xml'
@@ -107,7 +104,8 @@ class YAMJSyncMain:
         # Collection
         url = '/sync/collection/movies'
         #url = '/users/%s/collection/movies' % (TraktUsername)
-        movies = trakt_apiv2(url)
+        trakt_api = TraktAPI()
+        movies = trakt_api.traktRequest(url)
         
         for movie in movies:
             trakt_movie = {
@@ -135,7 +133,7 @@ class YAMJSyncMain:
         # Seen
         url = '/sync/watched/movies'
         #url = '/users/%s/watched/movies' % (TraktUsername)
-        seen_movies = trakt_apiv2(url)
+        seen_movies = trakt_api.traktRequest(url)
         
         # Add playcounts to trakt collection
         for seen in seen_movies:
@@ -245,10 +243,11 @@ class YAMJSyncMain:
             # Send request to add movies to trakt.tv
             url = '/sync/collection'
             params = {'movies': self.YAMJ_movies_to_trakt}
+            trakt_api = TraktAPI()
 
             try:
                 pchtrakt.logger.info(' [YAMJ] Adding movies to trakt.tv collection...')
-                response = trakt_apiv2(url, params, sync=True)
+                response = trakt_api.traktRequest(url, params, method='POST')
                 if response['added']['movies'] != 0:
                     if len(response['not_found']['movies']) !=0:
                         pchtrakt.logger.info(' [YAMJ] Successfully added %s out of %s to your collection' % (response['added']['movies'], response['added']['movies'] + response['existing']['movies'] + len(response['not_found']['movies'])))
@@ -307,9 +306,11 @@ class YAMJSyncMain:
             # Send request to update playcounts on trakt.tv
             url = '/sync/history'
             params = {'movies': self.YAMJ_movies_to_trakt}
+            trakt_api = TraktAPI()
+
             try:
                 pchtrakt.logger.info(' [YAMJ] Updating watched status for movies on trakt.tv...')
-                response = trakt_apiv2(url, params, sync=True)
+                response = trakt_api.traktRequest(url, params, method='POST')
                 pchtrakt.logger.info(' [YAMJ]     Marked %s as watched out of %s movies' % (response['added']['movies'], len(self.YAMJ_movies_to_trakt)))
                 if len(response['not_found']['movies']) != 0:
                     for skip in response['not_found']['movies']:
@@ -438,7 +439,8 @@ class YAMJSyncMain:
         #url = '/users/%s/collection/shows' % (TraktUsername)
         url = '/sync/collection/shows'
     
-        collection_shows = trakt_apiv2(url)
+        trakt_api = TraktAPI()
+        collection_shows = trakt_api.traktRequest(url)
         
         for show in collection_shows:
             trakt_show = {
@@ -468,7 +470,7 @@ class YAMJSyncMain:
         # Seen
         url = '/sync/watched/shows'
         #url = '/users/%s/watched/shows' % (TraktUsername)
-        seen_shows = trakt_apiv2(url)
+        seen_shows = trakt_api.traktRequest(url)
         show = ''
         for show in seen_shows:
             for season in show['seasons']:
@@ -665,13 +667,13 @@ class YAMJSyncMain:
     
                 # Send request to add TV shows to trakt.tv
                 url = '/sync/collection'
-                #data = {'shows': [{'title': 'Mad Men', 'year': 2007, 'ids': {'trakt': 4, 'slug': 'mad-men', 'tvdb': 80337, 'imdb': 'tt0804503', 'tmdb': 1104, 'tvrage': 16356}, 'seasons': [{'number': 1, 'episodes': [{'number': 1},{'number': 2}]}]}]}
-    
+                trakt_api = TraktAPI()
+
                 for show in self.YAMJ_shows_to_trakt:
                     try:
                         #params = {'shows': [show]}
                         pchtrakt.logger.info(' [YAMJ]     -->%s' % show['shows'][0]['title'])
-                        trakt = trakt_apiv2(url, show, sync=True)
+                        trakt = trakt_api.traktRequest(url, show, method='POST')
                         if trakt['added']['episodes'] > 0:
                             pchtrakt.logger.info(' [YAMJ]       Added %s' % trakt['added']['episodes'])
                         if trakt['updated']['episodes'] > 0:
@@ -767,11 +769,12 @@ class YAMJSyncMain:
     
                 # Send request to add TV shows to trakt.tv
                 url = '/sync/history'
+                trakt_api = TraktAPI()
     
                 for show in self.YAMJ_shows_to_trakt:
                     try:
                         pchtrakt.logger.info(' [YAMJ]     -->%s' % show['shows'][0]['title'])
-                        trakt = trakt_apiv2(url, show, sync=True)
+                        trakt = trakt_api.traktRequest(url, show, method='POST')
                         if trakt['added']['episodes'] != 0 and len(trakt['not_found']['episodes']) != 0:
                             pchtrakt.logger.info(' [YAMJ] Successfully marked  %s episodes watched out of %s' % (trakt['added']['episodes'], trakt['added']['episodes'] + trakt['not_found']['episodes']))
                         else:

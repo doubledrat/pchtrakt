@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+#
 # Authors: Jonathan Lauwers / Frederic Haumont
 # URL: http://github.com/pchtrakt/pchtrakt
 #
@@ -25,7 +26,6 @@ from os.path import realpath
 import math
 import glob
 import pchtrakt
-#import repr
 
 class EnumStatus:
     NOPLAY='noplay'
@@ -104,8 +104,6 @@ class PchRequestor:
         except ElementTree.ParseError, e:
             self.oPchStatus.error = e
             self.oPchStatus.status = EnumStatus.UNKNOWN
-        #if pchtrakt.lastPath != '':
-        #    Debug('[Pchtrakt] full path: ' + oPchStatus.fullPath)
         return self.oPchStatus
 
     def getStatus(self,ip,timeout=10):
@@ -116,17 +114,14 @@ class PchRequestor:
         except HTTPError, e:
             self.oPchStatus.error = e
             self.oPchStatus.status = EnumStatus.UNKNOWN
-            #Debug("Fail to contact server : " + unicode(e.reason))
         except URLError, e:
             self.oPchStatus.error = e
             self.oPchStatus.status = EnumStatus.UNKNOWN
-            #Debug("Fail to contact server : " + unicode(e.reason))
         except Exception as e:
             stopTrying()
             pchtrakt.logger.exception('This should never happend! Please contact me with the error if you read this')
             pchtrakt.logger.exception(pchtrakt.lastPath)
             pchtrakt.logger.exception(e.message)
-            #pass
         return self.oPchStatus
 
 class PchMusicRequestor:
@@ -154,8 +149,6 @@ class PchMusicRequestor:
         except ElementTree.ParseError, e:
             self.oPchStatus.error = e
             self.oPchStatus.status = EnumStatus.UNKNOWN
-        #if self.oPchStatus.artist == '':
-        #    EnumStatus.NOPLAY
         return self.oPchStatus
 
     def getStatus(self,ip,timeout=10.0):
@@ -166,15 +159,11 @@ class PchMusicRequestor:
         except HTTPError, e:
             self.oPchStatus.error = e
             self.oPchStatus.status = EnumStatus.UNKNOWN
-            #Debug("Fail to contact server : " + unicode(e.reason))
         except URLError, e:
             self.oPchStatus.error = e
             self.oPchStatus.status = EnumStatus.UNKNOWN
-            #Debug("Fail to contact server : " + unicode(e.reason))
         except Exception as e:
             stopTrying()
-            #Debug(u'::: {0} :::'.format(pchtrakt.lastPath))
-            #Debug(u'::: {0} :::'.format(e))
             pchtrakt.logger.exception('This should never happend! Please contact me with the error if you read this')
             pchtrakt.logger.exception(pchtrakt.lastPath)
             pchtrakt.logger.exception(e.message)

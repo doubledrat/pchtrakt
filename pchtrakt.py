@@ -40,7 +40,7 @@ from pchtrakt import mediaparser as mp
 from time import sleep, time
 from lib.tvdb_api import tvdb_api
 from lib.tvdb_api import tvdb_exceptions
-from lib.utilities import Debug, checkSettings
+from lib.utilities import checkSettings
 
 if SyncCheck >= 0:
     from lib.oversight import OversightSync
@@ -130,6 +130,7 @@ def checkUpdate(when):
     if hash == PchTraktVersion or hash == "":
         if when == "first":
             pchtrakt.logger.info(' [Pchtrakt] Starting Pchtrakt version = ' + PchTraktVersion[-4:]  + ' Millers Mods (Running latest ' + pchtrakt.chip + ' version)')
+            checkSettings()
     else:
         if AutoUpdate >= 0:
             if when == "first":
@@ -143,6 +144,7 @@ def checkUpdate(when):
             if when == "first":
                 pchtrakt.logger.info(' [Pchtrakt] Starting Pchtrakt version = ' + PchTraktVersion[-4:] + ' Millers Mods (' + pchtrakt.chip + ' version)')
                 pchtrakt.logger.info(' [Pchtrakt] A new version is online. For manual install, download from https://github.com/cptjhmiller/pchtrakt/archive/dvp.zip')
+                checkSettings()
 
 def daemonize():
     """
@@ -228,9 +230,7 @@ def doWork():
                                           EnumStatus.PAUSE]:
             pchtrakt.allowedPauseTime = TraktMaxPauseTime
             if myMedia.parsedInfo == None:
-                #Debug('[Pchtrakt] status: ' + myMedia.oStatus.status)
                 Debug('[Pchtrakt] full path: ' + myMedia.oStatus.fullPath)
-                #msg = ' [Pchtrakt] File: {0}'.format(myMedia.oStatus.fileName)
                 pchtrakt.logger.info(' [Pchtrakt] %s File %s' % (myMedia.oStatus.status, myMedia.oStatus.fileName))
                 myMedia.parsedInfo = pchtrakt.mediaparser.parse(myMedia.oStatus.fullPath)
                 pchtrakt.Ttime = myMedia.oStatus.totalTime
@@ -253,7 +253,7 @@ def doWork():
                 if myMedia.oStatus.status == EnumStatus.NOPLAY:
                     pchtrakt.logger.info(' [Pchtrakt] video/music file has stopped')
                     videoStopped(myMedia)
-                if pchtrakt.allowedPauseTime <= 0:# and not pchtrakt.watched:
+                if pchtrakt.allowedPauseTime <= 0:
                     pchtrakt.logger.info(' [Pchtrakt] It seems you paused ' \
                                          'the video for more than {0} minutes: ' \
                                          'I say to trakt you stopped watching ' \
@@ -268,6 +268,18 @@ def stopTrying():
         sleep(sleepTime)
     except Exception as e:
         pass
+
+def New_Pin():
+    msg = '[traktAPI] You need to autherize a new pin'
+    pchtrakt.logger.warning(msg)
+    config=ConfigParser.RawConfigParser()
+    config.read(r'pchtrakt.ini')
+    config.set('Trakt', 'api_token', 'None')
+    config.set('Trakt', 'refresh_token', 'None')
+    config.set('Trakt', 'api_pin', 'get at http://trakt.tv/pin/361')
+    with open(r'pchtrakt.ini', 'wb') as configfile:
+        config.write(configfile)
+    pchtrakt.stop = 1
 
 def startWait(msg=''):
     if msg != '':
@@ -284,7 +296,6 @@ def startWait(msg=''):
                 watchedFileCreation(myMedia)
             except BaseException as e:
                 pchtrakt.logger.error(e)
-    #videoStopped()
     Reset()
 
 def starttvdbWait():
@@ -300,8 +311,6 @@ def starttvdbWait():
                     except BaseException as e:
                         pchtrakt.logger.error(e)
             pchtrakt.StopTrying = 0
-            #videoStopped()
-            #Reset()
 
 def StartUP():
     if pchtrakt.online:
@@ -325,7 +334,7 @@ def StartUP():
                 if isinstance(myMedia.parsedInfo,mp.MediaParserResultTVShow):
                     pchtrakt.watched = showIsSeen(myMedia, pchtrakt.missed[xname]['Totallength'])
                 elif isinstance(myMedia.parsedInfo,mp.MediaParserResultMovie):
-                    pchtrakt.watched = movieIsSeen(myMedia, pchtrakt.missed[xname]['Totallength'])#movieIsEnding(myMedia)
+                    pchtrakt.watched = movieIsSeen(myMedia, pchtrakt.missed[xname]['Totallength'])
                 if not pchtrakt.watched:
                     pchtrakt.logger.info(u' [traktAPI]  %s was NOT marked as watched on trakt.tv' % xname.split('/')[::-1][0])
                     new_list[xname]={"Totaltime": int(pchtrakt.missed[xname]['Totaltime']), "Totallength": int(pchtrakt.missed[xname]['Totallength'])}
@@ -411,9 +420,7 @@ if __name__ == '__main__':
         except IOError, e:
              if hasattr(e, 'reason'):
                  if e.reason == 'Unauthorized':
-                    #stopTrying()
                     pchtrakt.logger.error('[traktAPI] Login or password incorrect')
-                    #sleep(sleepTime)
                     startWait()
                  else:
                     pchtrakt.logger.error('Reason: %s ' % (e.reason))
@@ -421,8 +428,6 @@ if __name__ == '__main__':
                  pchtrakt.logger.error('Error code: %s' % (e.code))
         except ValueError as e:
             pchtrakt.logger.error('[traktAPI] Problem with trakt.tv site  - {0}'.format(e))
-            #pchtrakt.stop = 1
-            #videoStopped()
         except AttributeError as e:
             if pchtrakt.online:
                 Debug('[Pchtrakt] ID not found will retry in 60 seconds  - {0}'.format(e))
@@ -432,37 +437,30 @@ if __name__ == '__main__':
                     myMedia.oStatus = pchtrakt.oPchRequestor.getStatus(ipPch, 10)
                     Debug('[Pchtrakt] ID not found will retry in 60 seconds')
                 videoStatusHandleMovie(myMedia)
-            #else:
-            #    Debug('[Pchtrakt] not on-line bla bla bla')
         except Exception as e:
             if hasattr(e, 'message') and e.message != '':  # error 401 or 503, possibly others
                 if e.message == "global name 'NotFoundError' is not defined":
                     msg = '[traktAPI] Unable to find match for file - {0}'.format(pchtrakt.lastName)
                     pchtrakt.logger.warning(msg)
                     startWait()
-                    #pass
+                elif e.message == "local variable 'TRAKT_REFRESH_TOKEN' referenced before assignment":
+                    New_Pin()
+                elif e.message.response.json()[u'error'] == u'invalid_grant':
+                    New_Pin()
             elif hasattr(e, 'details'):
                 if e.details == 'Invalid authentication token. Please check username/password supplied':
                     pchtrakt.logger.warning('[Last.fm] Please check your username and/or your password')
-                    #startWait()
-                    #passMaxScrobbleError
                 else:
                    stopTrying()
-                   #Debug(u'::: {0} :::'.format(pchtrakt.lastPath))
-                   #Debug(u'::: {0} :::'.format(e))
                    pchtrakt.logger.exception('This should never happend! Please contact me with the error if you read this')
                    pchtrakt.logger.exception(pchtrakt.lastPath)
                    pchtrakt.logger.exception(e.message)
                    startWait()
             else:
                 stopTrying()
-                #Debug(u'::: {0} :::'.format(pchtrakt.lastPath))
-                #Debug(u'::: {0} :::'.format(e))
                 pchtrakt.logger.exception('This should never happend! Please contact me with the error if you read this')
                 pchtrakt.logger.exception(pchtrakt.lastPath)
                 pchtrakt.logger.exception(e)
                 startWait()
-                #pass
 
-    pchtrakt.logger.info(' [Pchtrakt]  STOP')
-    #fix Bad Gateway error, where it stays in loop
+    pchtrakt.logger.info('   [Pchtrakt] STOPPED')

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+#
 # Authors: Jonathan Lauwers / Frederic Haumont
 # URL: http://github.com/pchtrakt/pchtrakt
 #
@@ -43,8 +44,6 @@ class MediaParserResultTVShow(MediaParserResult):
         self.air_by_date = air_by_date
         self.dirty = dirty
         self.id = ''
-        #np = parser.NameParser()
-        #parse_result = np.parse(self.file_name)
         if self.air_by_date:
             if self.name in pchtrakt.dictSerie:
                 self.id = pchtrakt.dictSerie[self.name]['TvDbId']
@@ -55,9 +54,7 @@ class MediaParserResultTVShow(MediaParserResult):
             url = ('http://thetvdb.com/api/GetEpisodeByAirDate.php?apikey=0629B785CE550C8D&seriesid={0}&airdate={1}'.format(quote_plus(self.id), self.air_by_date))
             Debug('[The TvDB] GET EPISODE USING: ' + url)
             oResponse = ElementTree.parse(urlopen(url,None,5))
-            #feed = RSSWrapper(tree.getroot())
             for movie in oResponse.findall('./'):
-                #Debug("movie", repr(movie.title), movie.link)
                 season_number = movie.find('SeasonNumber').text
                 episode_numbers = movie.find('EpisodeNumber').text
         self.season_number = season_number
@@ -86,7 +83,6 @@ class MediaParserResultTVShow(MediaParserResult):
                             if (re.match("tt\d{5,10}", self.id)):
                                 pchtrakt.logger.info(' [Pchtrakt] Using IMDB ID to find match')
                                 self.id = tvdb[self.id]['id']
-                                #self.id = int(self.id)
                             self.name = tvdb[int(self.id)]['seriesname']
                             pchtrakt.online = 1
                             if tvdb[self.name]['firstaired'] != None:
@@ -166,7 +162,7 @@ class MediaParserResultMovie(MediaParserResult):
             Debug('[IMDB api] ' + str(e))
 
     def __init__(self,fullpath,file_name,name,year,imdbid):
-        self.file_name = file_name#check if needed all below
+        self.file_name = file_name
         self.path = os.path.dirname(fullpath)
         self.name = name
         self.year = year
@@ -175,7 +171,6 @@ class MediaParserResultMovie(MediaParserResult):
             files = []
             for root, dirs, walk_files in os.walk(self.path):
                 files.extend([sp(os.path.join(root, file)) for file in walk_files]) #not sure if sp is needed
-            #self.x = getNfo(files)
             for file in getNfo(files):
                 self.id = getIDFromNFO('MOVIE', file)
                 if self.id != '':

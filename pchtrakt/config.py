@@ -27,7 +27,7 @@ import socket
 pchtrakt.online = 1
 pchtrakt.CreatedFile = 0
 pchtrakt.Ttime = 0
-pchtrakt.token = ''
+#pchtrakt.token = ''
 
 try:
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -85,8 +85,13 @@ use_debug = config.getboolean('PCHtrakt', 'use_debug')
 
 #Trakt
 TraktUsername = config.get('Trakt', 'login')
-TraktPwd = config.get('Trakt', 'password')
-TraktAPI = config.get('Trakt','api_key')
+TraktPIN = config.get('Trakt','api_pin')
+TRAKT_ACCESS_TOKEN = config.get('Trakt','api_token')
+if TRAKT_ACCESS_TOKEN == 'None':
+    TRAKT_ACCESS_TOKEN = None
+TRAKT_REFRESH_TOKEN = config.get('Trakt','refresh_token')
+if TRAKT_REFRESH_TOKEN == 'None':
+    TRAKT_REFRESH_TOKEN = None
 TraktScrobbleTvShow = config.getboolean('Trakt', 'enable_tvshow_scrobbling')
 TraktScrobbleMovie = config.getboolean('Trakt', 'enable_movie_scrobbling')
 TraktRefreshTime = config.get('Trakt', 'refresh_time')

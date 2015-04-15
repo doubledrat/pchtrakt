@@ -2,9 +2,6 @@ from os.path import isfile, getsize
 import ConfigParser
 import logging
 import logging.handlers
-#import os
-#nbr = 0
-#idOK = 0
 
 StopTrying = 0
 stop = 0
@@ -13,7 +10,6 @@ currentTime = 0
 watched = 0
 DAEMON = 0
 config_file = 'pchtrakt.ini'
-debug = False
 isTvShow = 0
 isMovie = 0
 allowedPauseTime = 15
@@ -23,7 +19,7 @@ def loadOldConfig():
     config.read(config_file)
 
 def newConfig():
-    if not isfile(config_file):
+    if not isfile(config_file) or not config.has_section('PCHtrakt'):
         config.add_section('PCHtrakt')
     if not config.has_option('PCHtrakt','pch_ip'):
         config.set('PCHtrakt', 'pch_ip', '127.0.0.1')
@@ -54,10 +50,12 @@ def newConfig():
         config.set('Trakt', 'enable_tvshow_scrobbling', True)
     if not config.has_option('Trakt','login'):
         config.set('Trakt', 'login', 'your_trakt_login')
-    if not config.has_option('Trakt','password'):
-        config.set('Trakt', 'password', 'your_password')
-    if not config.has_option('Trakt','api_key'):
-        config.set('Trakt', 'api_key', 'your_api_key')
+    if not config.has_option('Trakt','api_pin'):
+        config.set('Trakt', 'api_pin', 'get at http://trakt.tv/pin/361')
+    if not config.has_option('Trakt','api_token'):
+        config.set('Trakt', 'api_token', 'None')
+    if not config.has_option('Trakt','refresh_token'):
+        config.set('Trakt', 'refresh_token', 'None')
     if not config.has_option('Trakt','refresh_time'):
         config.set('Trakt', 'refresh_time', '15')
 

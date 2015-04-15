@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+#
 # Authors: Jonathan Lauwers / Frederic Haumont
 # URL: http://github.com/pchtrakt/pchtrakt
 #
@@ -88,7 +89,6 @@ class MovieParser():
                 if 'imdbid' in named_groups:
                     tmp_imdbid = match.group('imdbid')
 
-                #Debug(name + "=" + str(regex.search(file_name).groupdict()) + '       [' + file_name + ']')
                 return mediaparser.MediaParserResultMovie(fullpath,file_name,tmp_movie_title,tmp_year,tmp_imdbid)
                 break
             except:
@@ -111,7 +111,6 @@ class MovieParser():
             movie_name = movie_name.replace(i, j)
 
         # remove everything inside parenthesis
-        #movie_name = re.sub('[([{].*?[)\]}]', '', movie_name)
         # replace dots, underscores and dashes with spaces
         try:
             movie_name = normalize('NFKD', movie_name).encode('ascii', 'ignore').replace(' ', '-').lower()

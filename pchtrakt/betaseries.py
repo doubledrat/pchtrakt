@@ -29,13 +29,10 @@ def destroyToken(Token):
 def getSerieUrl(id,SerieName):
     if 'Betaseries' not in pchtrakt.dictSerie[SerieName].keys():
         searchurl = "http://api.betaseries.com/shows/display/%s.xml?key=%s" % (id,BETASERIE_API)
-        #dom = urlopen(searchurl)
         oXml = ElementTree.parse(urlopen(searchurl))
         CheckErrors = oXml.find("errors/error/content")
         if CheckErrors is None:
             myUrl = oXml.find( 'show/url').text
-            #myUrl = url.nodeValue
-            #myUrl = myJson['root']['shows'][myKey]['url']
             pchtrakt.dictSerie[SerieName]['Betaseries'] = myUrl
             with open('cache.json','w') as f:
                 json.dump(pchtrakt.dictSerie, f, separators=(',',':'), indent=4)
@@ -72,7 +69,7 @@ def scrobbleEpisode(SerieXml,Token,Saison,Episode):
             return False 
     else:
         pchtrakt.logger.info(' [BetaSAPI] %s' % oXml.find("errors/error/content").text)
-        return True#oXml.find("errors/error/content").text
+        return True
 
 def addShow(SerieXml,Token):
     url = getUrl('shows/add/{0}'.format(SerieXml)) + '&token={0}'.format(Token)
@@ -83,7 +80,7 @@ def addShow(SerieXml,Token):
         return True
     else:
         pchtrakt.logger.info(' [BetaSAPI] %s' % oXml.find("errors/error/content").text)
-        return True#oXml.find("errors/error/content").text
+        return True
 
 def isEpisodeWatched(SerieXml,Token,Saison,Episode):
     addShow(SerieXml,Token)
