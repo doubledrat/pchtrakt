@@ -2,6 +2,7 @@
 
 import re
 import os
+import os.path
 import copy
 
 from pchtrakt.config import *
@@ -23,7 +24,7 @@ class YAMJSyncMain:
         self.trakt_shows = []
 
     def YAMJSync(self):
-        if YAMJSyncCheck >= 0:
+        if YAMJSyncCheck >= 0 and os.path.exists(self.name):
             Debug('[Pchtrakt] Reading ' + self.name)
             self.tree = ElementTree.parse(self.name)
             Debug('[Pchtrakt] Finished')

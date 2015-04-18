@@ -4,6 +4,7 @@ from pchtrakt.config import *
 from lib.trakt import TraktAPI
 import re
 import os
+import os.path
 import copy
 
 
@@ -18,7 +19,7 @@ class OversightSyncMain:
         self.trakt_shows = []
 
     def OversightSync(self):
-        if SyncCheck >= 0:
+        if SyncCheck >= 0 and os.path.exists(self.OversightFile):
             if Oversightumc or Oversightumw:
                 get_Oversight_movies(self)
                 get_trakt_movies(self)
