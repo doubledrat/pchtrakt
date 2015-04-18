@@ -43,7 +43,7 @@ from lib.tvdb_api import tvdb_exceptions
 from lib.utilities import checkSettings
 
 if SyncCheck >= 0:
-    from lib.oversight import OversightSync
+    from lib.oversight import OversightSyncMain
 
 if YAMJSyncCheck >= 0:
     from lib.yamj2 import YAMJSyncMain
@@ -316,7 +316,7 @@ def StartUP():
     if pchtrakt.online:
         checkUpdate('first')
         if SyncCheck >= 0:
-            OversightSync()
+            OversightSyncMain().OversightSync()
         if YAMJSyncCheck >= 0:
             YAMJSyncMain().YAMJSync()
         if os.path.isfile('missed.scrobbles'):
@@ -445,8 +445,14 @@ if __name__ == '__main__':
                     startWait()
                 elif e.message == "local variable 'TRAKT_REFRESH_TOKEN' referenced before assignment":
                     New_Pin()
-                elif e.message.response.json()[u'error'] == u'invalid_grant':
-                    New_Pin()
+                elif hasattr(e.message, 'message'):
+                    if e.message.message == '401 Client Error: Unauthorized':
+                        New_Pin()
+                    elif e.message.message == '404 Client Error: Not Found':
+                        startWait()
+                elif hasattr(e.message, 'response'):
+                    if e.message.response.json()['error'] == 'invalid_grant':
+                        New_Pin()
             elif hasattr(e, 'details'):
                 if e.details == 'Invalid authentication token. Please check username/password supplied':
                     pchtrakt.logger.warning('[Last.fm] Please check your username and/or your password')

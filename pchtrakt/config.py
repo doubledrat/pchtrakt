@@ -84,7 +84,6 @@ parseNFO = config.getboolean('PCHtrakt', 'parse_nfo')
 use_debug = config.getboolean('PCHtrakt', 'use_debug')
 
 #Trakt
-TraktUsername = config.get('Trakt', 'login')
 TraktPIN = config.get('Trakt','api_pin')
 TRAKT_ACCESS_TOKEN = config.get('Trakt','api_token')
 if TRAKT_ACCESS_TOKEN == 'None':
@@ -155,4 +154,4 @@ Useredits = {}
 if Get != "":
     Useredits = dict(zip(*[iter(Get)]*2))
 del Get
-Useredits.update({'S H I E L D':'S.H.I.E.L.D','CSI':'CSI: Crime Scene Investigation','Megabuilders':'Mega Builders', 'Discovery ':'', 'BBC':'', 'HDgrp':'', 'CSI New York':'CSI: NY', '2bg':'2 Broke Girls', 'tbbt':'The Big Bang Theory'})
+Useredits.update({"Marvels":"Marvel's",'NCIS':'NCIS:','S H I E L D':'S.H.I.E.L.D','CSI':'CSI: Crime Scene Investigation','Megabuilders':'Mega Builders', 'Discovery ':'', 'BBC':'', 'HDgrp':'', 'CSI New York':'CSI: NY', '2bg':'2 Broke Girls', 'tbbt':'The Big Bang Theory'})

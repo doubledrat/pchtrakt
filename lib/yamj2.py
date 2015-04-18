@@ -28,15 +28,15 @@ class YAMJSyncMain:
             self.tree = ElementTree.parse(self.name)
             Debug('[Pchtrakt] Finished')
             if YAMJumc or YAMJumw:
-                self.get_YAMJ_movies()
-                self.get_trakt_movies()
+                get_YAMJ_movies(self)
+                get_trakt_movies(self)
                 if YAMJumc:
-                    self.YAMJ_movies_to_trakt()
+                    YAMJ_movies_to_trakt(self)
                 if YAMJumw:
-                    self.get_trakt_movies() #Need to re-get trakt films in case they were updated above
-                    self.YAMJ_movies_watched_to_trakt()
+                    get_trakt_movies(self) #Need to re-get trakt films in case they were updated above
+                    YAMJ_movies_watched_to_trakt(self)
                     if markYAMJ:
-                        self.trakt_movies_watched_to_YAMJ()
+                        trakt_movies_watched_to_YAMJ(self)
                 self.YAMJ_movies = None
                 self.YAMJ_movies_seen = None
                 self.YAMJ_movies_unseen = None
@@ -44,20 +44,20 @@ class YAMJSyncMain:
     
             if YAMJusc or YAMJusw:
                 self.YAMJ_shows = {}
-                self.get_YAMJ_shows()
-                self.get_trakt_shows()
+                get_YAMJ_shows(self)
+                get_trakt_shows(self)
                 if YAMJusc:
-                    self.YAMJ_shows_to_trakt()
+                    YAMJ_shows_to_trakt(self)
                 if YAMJusw:
-                    self.get_trakt_shows() #Need to re-get trakt shows in case they were updated above
-                    self.YAMJ_shows_watched_to_trakt()
+                    get_trakt_shows(self) #Need to re-get trakt shows in case they were updated above
+                    YAMJ_shows_watched_to_trakt(self)
                     if markYAMJ:
-                        self.trakt_shows_watched_to_YAMJ()
+                        trakt_shows_watched_to_YAMJ(self)
         #clear globals
         del self
 
     
-    def get_YAMJ_movies(self):
+def get_YAMJ_movies(self):
         pchtrakt.logger.info(' [YAMJ] Getting movies from YAMJ')
         for movie in self.tree.findall('movies'):
             if movie.get('isTV') == 'false':
@@ -98,11 +98,11 @@ class YAMJSyncMain:
                 else:
                     self.YAMJ_movies_unseen.append(YAMJ_movie)
         
-    def get_trakt_movies(self):
+def get_trakt_movies(self):
         pchtrakt.logger.info(' [YAMJ] Getting movies from trakt.tv')
     
         # Collection
-        url = '/sync/collection/movies'
+        url = 'sync/collection/movies'
         #url = '/users/%s/collection/movies' % (TraktUsername)
         trakt_api = TraktAPI()
         movies = trakt_api.traktRequest(url)
@@ -131,7 +131,7 @@ class YAMJSyncMain:
         #response = trakt_api('POST', url, params)
     
         # Seen
-        url = '/sync/watched/movies'
+        url = 'sync/watched/movies'
         #url = '/users/%s/watched/movies' % (TraktUsername)
         seen_movies = trakt_api.traktRequest(url)
         
@@ -160,7 +160,7 @@ class YAMJSyncMain:
     
         seen_movies = ''
         
-    def convert_YAMJ_movie_to_trakt(self, movie, watched_at = False):
+def convert_YAMJ_movie_to_trakt(movie, watched_at = False):
         ids = {}
         trakt_movie = {}
     
@@ -187,7 +187,7 @@ class YAMJSyncMain:
         trakt_movie = test
         return trakt_movie
         
-    def YAMJ_movies_to_trakt(self):
+def YAMJ_movies_to_trakt(self):
         pchtrakt.logger.info(' [YAMJ] Checking for YAMJ movies that are not in trakt.tv collection')
         self.YAMJ_movies_to_trakt = []
     
@@ -201,7 +201,7 @@ class YAMJSyncMain:
                 if 'imdbnumber' in movie:
                     if movie['imdbnumber'].startswith('tt'):
                         if self.trakt_movies:
-                            if self.search(imdb_ids, movie['imdbnumber']) == False:
+                            if search(self, imdb_ids, movie['imdbnumber']) == False:
                                 self.YAMJ_movies_to_trakt.append(movie)
                                 #trakt_movie = convert_YAMJ_movie_to_trakt(movie)# do we need these below?
                                 #if not 'plays' in trakt_movie[0]:trakt_movie['movies']
@@ -215,7 +215,7 @@ class YAMJSyncMain:
                             ##trakt_movies.append(trakt_movie)
                     else:
                         if self.trakt_movies:
-                            if self.searchtv(tmdb_ids, movie['imdbnumber']) == False:#if not movie['imdbnumber'] in tmdb_ids:
+                            if searchtv(self, tmdb_ids, movie['imdbnumber']) == False:#if not movie['imdbnumber'] in tmdb_ids:
                                 self.YAMJ_movies_to_trakt.append(movie)
                                 #trakt_movie = convert_YAMJ_movie_to_trakt(movie)
                                 #if not 'plays' in trakt_movie[0]:
@@ -238,10 +238,10 @@ class YAMJSyncMain:
             pchtrakt.logger.info(' [YAMJ] Checking for %s movies will be added to trakt.tv collection' % len(self.YAMJ_movies_to_trakt))
             for i in range(len(self.YAMJ_movies_to_trakt)):
                 #convert YAMJ movie into something trakt will understand
-                self.YAMJ_movies_to_trakt[i] = self.convert_YAMJ_movie_to_trakt(self.YAMJ_movies_to_trakt[i])
+                self.YAMJ_movies_to_trakt[i] = convert_YAMJ_movie_to_trakt(self.YAMJ_movies_to_trakt[i])
     
             # Send request to add movies to trakt.tv
-            url = '/sync/collection'
+            url = 'sync/collection'
             params = {'movies': self.YAMJ_movies_to_trakt}
             trakt_api = TraktAPI()
 
@@ -265,7 +265,7 @@ class YAMJSyncMain:
         else:
             pchtrakt.logger.info(' [YAMJ] trakt.tv movie collection is up to date')
         
-    def YAMJ_movies_watched_to_trakt(self):
+def YAMJ_movies_watched_to_trakt(self):
         pchtrakt.logger.info(' [YAMJ] Comparing YAMJ watched movies against trakt.tv')
         self.YAMJ_movies_to_trakt = []
     
@@ -290,21 +290,22 @@ class YAMJSyncMain:
                                                 break
     
                                     if x_loop_must_break: break
-                                    self.YAMJ_movies_to_trakt.append(self.convert_YAMJ_movie_to_trakt(movie, watched_at = True))
+                                    self.YAMJ_movies_to_trakt.append(convert_YAMJ_movie_to_trakt(movie, watched_at = True))
     
                         elif 'tmdb' in self.trakt_movies[i]:
                             if movie['imdbnumber'] == self.trakt_movies[i]['tmdb']:
                                 if self.trakt_movies[i]['plays'] < movie['playcount']:
-                                    self.YAMJ_movies_to_trakt.append(self.convert_YAMJ_movie_to_trakt(movie, watched_at = True))
+                                    self.YAMJ_movies_to_trakt.append(convert_YAMJ_movie_to_trakt(movie, watched_at = True))
     
                         elif movie['title'] == self.trakt_movies[i]['movies'][0]['title']:
                             if self.trakt_movies[i]['plays'] < movie['playcount']:
-                                self.YAMJ_movies_to_trakt.append(self.convert_YAMJ_movie_to_trakt(movie, watched_at = True))
+                                self.YAMJ_movies_to_trakt.append(convert_YAMJ_movie_to_trakt(movie, watched_at = True))
     
         if self.YAMJ_movies_to_trakt:
             pchtrakt.logger.info(' [YAMJ] %s movies playcount will be updated on trakt.tv' % len(self.YAMJ_movies_to_trakt))
+
             # Send request to update playcounts on trakt.tv
-            url = '/sync/history'
+            url = 'sync/history'
             params = {'movies': self.YAMJ_movies_to_trakt}
             trakt_api = TraktAPI()
 
@@ -321,7 +322,7 @@ class YAMJSyncMain:
         else:
             pchtrakt.logger.info(' [YAMJ] trakt.tv movie playcount is up to date')
         
-    def trakt_movies_watched_to_YAMJ(self):
+def trakt_movies_watched_to_YAMJ(self):
         pchtrakt.logger.info(' [YAMJ] Comparing trakt.tv watched movies against YAMJ')
         self.trakt_movies_seen = []
     
@@ -360,12 +361,12 @@ class YAMJSyncMain:
     
         if self.trakt_movies_seen:
             pchtrakt.logger.info(' [YAMJ] %s movie watched files will be created' % len(self.trakt_movies_seen))
-            self.WatchedYAMJ(self.trakt_movies_seen)
+            WatchedYAMJ(self, self.trakt_movies_seen)
         else:
             pchtrakt.logger.info(' [YAMJ] No watched files ned to be created')
         self.trakt_movies_seen = []
         
-    def get_YAMJ_shows(self):
+def get_YAMJ_shows(self):
         pchtrakt.logger.info(' [YAMJ] Getting TV shows from YAMJ2')
         for movie in self.tree.findall('movies'):
             try:
@@ -432,12 +433,12 @@ class YAMJSyncMain:
             except:
                 continue
 
-    def get_trakt_shows(self):
+def get_trakt_shows(self):
         pchtrakt.logger.info(' [YAMJ] Getting TV shows from trakt')
 
         # Collection
         #url = '/users/%s/collection/shows' % (TraktUsername)
-        url = '/sync/collection/shows'
+        url = 'sync/collection/shows'
     
         trakt_api = TraktAPI()
         collection_shows = trakt_api.traktRequest(url)
@@ -465,13 +466,14 @@ class YAMJSyncMain:
             #response = trakt_api('post', url, trakt_show)
             self.trakt_shows.append(trakt_show)
     
-        collection_shows = ''
+        collection_shows = None
     
         # Seen
-        url = '/sync/watched/shows'
+        url = 'sync/watched/shows'
         #url = '/users/%s/watched/shows' % (TraktUsername)
         seen_shows = trakt_api.traktRequest(url)
         show = ''
+
         for show in seen_shows:
             for season in show['seasons']:
                 for episode in season['episodes']:
@@ -509,7 +511,7 @@ class YAMJSyncMain:
         seen_shows = ''
         show = ''
         
-    def convert_YAMJ_show_to_trakt(self, show):
+def convert_YAMJ_show_to_trakt(show):
         ids = {}
 
         trakt_show = {'shows': []}
@@ -550,19 +552,19 @@ class YAMJSyncMain:
     
         return trakt_show
         
-    def searchtv(self, values, searchFor):
+def searchtv(self, values, searchFor):
         for k in values:
             if int(searchFor) == k:
                 return True
         return False
         
-    def search(self, values, searchFor):
+def search(self, values, searchFor):
         for k in values:
             if searchFor == k:
                 return True
         return False
         
-    def YAMJ_shows_to_trakt(self):
+def YAMJ_shows_to_trakt(self):
         pchtrakt.logger.info(' [YAMJ] Checking for YAMJ episodes that are not in trakt.tv collection')
         self.YAMJ_shows_to_trakt = []
     
@@ -595,7 +597,7 @@ class YAMJSyncMain:
             for show in x_shows:
                 if 'imdbnumber' in show:
                     if show['imdbnumber'].startswith('tt'):
-                        if self.search(imdb_ids, show['imdbnumber']) == False:#if not show['imdbnumber'] in imdb_ids:
+                        if search(self, imdb_ids, show['imdbnumber']) == False:
                             self.YAMJ_shows_to_trakt.append(show)
     
                             #trakt_show = convert_YAMJ_show_to_trakt(show)
@@ -626,7 +628,7 @@ class YAMJSyncMain:
                                 self.YAMJ_shows_to_trakt.append(YAMJ_show)
     
                     else:
-                        if self.searchtv(tvdb_ids, show['imdbnumber']) == False:# if not show['imdbnumber'] in tvdb_ids:
+                        if searchtv(self, tvdb_ids, show['imdbnumber']) == False:
                             self.YAMJ_shows_to_trakt.append(show)
     
                             #trakt_show = convert_YAMJ_show_to_trakt(show)
@@ -663,16 +665,16 @@ class YAMJSyncMain:
     
                 for i in range(len(self.YAMJ_shows_to_trakt)):
                     #convert YAMJ show into something trakt will understand
-                    self.YAMJ_shows_to_trakt[i] = self.convert_YAMJ_show_to_trakt(self.YAMJ_shows_to_trakt[i])
+                    self.YAMJ_shows_to_trakt[i] = convert_YAMJ_show_to_trakt(self.YAMJ_shows_to_trakt[i])
     
                 # Send request to add TV shows to trakt.tv
-                url = '/sync/collection'
+                url = 'sync/collection'
                 trakt_api = TraktAPI()
 
                 for show in self.YAMJ_shows_to_trakt:
                     try:
                         #params = {'shows': [show]}
-                        pchtrakt.logger.info(' [YAMJ]     -->%s' % show['shows'][0]['title'])
+                        pchtrakt.logger.info(' [YAMJ]     -->%s' % show['shows'][0]['title'].encode('utf-8'))
                         trakt = trakt_api.traktRequest(url, show, method='POST')
                         if trakt['added']['episodes'] > 0:
                             pchtrakt.logger.info(' [YAMJ]       Added %s' % trakt['added']['episodes'])
@@ -688,7 +690,7 @@ class YAMJSyncMain:
             else:
                 pchtrakt.logger.info(' [YAMJ] trakt.tv TV show collection is up to date')
         
-    def YAMJ_shows_watched_to_trakt(self):
+def YAMJ_shows_watched_to_trakt(self):
         pchtrakt.logger.info(' [YAMJ] Comparing YAMJ watched TV shows against trakt.tv')
         self.YAMJ_shows_to_trakt = []
     
@@ -707,7 +709,7 @@ class YAMJSyncMain:
             for show in self.YAMJ_shows.values():
                 if 'imdbnumber' in show:
                     if show['imdbnumber'].startswith('tt'):
-                        if self.search(imdb_ids, show['imdbnumber']):#if show['imdbnumber'] in imdb_ids.keys():
+                        if search(self, imdb_ids, show['imdbnumber']):
                             trakt_show = self.trakt_shows[imdb_ids.get(int(show['imdbnumber']))]
     
                             trakt_show_watched = {
@@ -734,7 +736,7 @@ class YAMJSyncMain:
                                 self.YAMJ_shows_to_trakt.append(trakt_show_watched)
     
                     else:
-                        if self.searchtv(tvdb_ids, show['imdbnumber']):#if show['imdbnumber'] in tvdb_ids.keys():
+                        if searchtv(self, tvdb_ids, show['imdbnumber']):
                             trakt_show = self.trakt_shows[tvdb_ids.get(int(show['imdbnumber']))]
     
                             trakt_show_watched = {
@@ -765,28 +767,28 @@ class YAMJSyncMain:
     
                 for i in range(len(self.YAMJ_shows_to_trakt)):
                     #convert YAMJ show into something trakt will understand
-                    self.YAMJ_shows_to_trakt[i] = self.convert_YAMJ_show_to_trakt(self.YAMJ_shows_to_trakt[i])
+                    self.YAMJ_shows_to_trakt[i] = convert_YAMJ_show_to_trakt(self.YAMJ_shows_to_trakt[i])
     
                 # Send request to add TV shows to trakt.tv
-                url = '/sync/history'
+                url = 'sync/history'
                 trakt_api = TraktAPI()
     
                 for show in self.YAMJ_shows_to_trakt:
                     try:
-                        pchtrakt.logger.info(' [YAMJ]     -->%s' % show['shows'][0]['title'])
+                        pchtrakt.logger.info(' [YAMJ]     -->%s' % show['shows'][0]['title'].encode('utf-8'))
                         trakt = trakt_api.traktRequest(url, show, method='POST')
                         if trakt['added']['episodes'] != 0 and len(trakt['not_found']['episodes']) != 0:
                             pchtrakt.logger.info(' [YAMJ] Successfully marked  %s episodes watched out of %s' % (trakt['added']['episodes'], trakt['added']['episodes'] + trakt['not_found']['episodes']))
                         else:
                             pchtrakt.logger.info(' [YAMJ] Successfully marked  %s episodes watched out of %s' % (trakt['added']['episodes'], trakt['added']['episodes']))
                     except Exception, e:
-                        pchtrakt.logger.info(' [YAMJ] Failed to mark %s\'s episodes as watched in trakt.tv collection' % show['shows'][0]['title'])
+                        pchtrakt.logger.info(' [YAMJ] Failed to mark %s\'s episodes as watched in trakt.tv collection' % show['shows'][0]['title'].encode('utf-8'))
                         pchtrakt.logger.info(e)
     
             else:
                 pchtrakt.logger.info(' [YAMJ] trakt.tv TV show watched status is up to date')
         
-    def trakt_shows_watched_to_YAMJ(self):
+def trakt_shows_watched_to_YAMJ(self):
         pchtrakt.logger.info(' [YAMJ] Comparing trakt.tv watched TV shows against YAMJ')
         self.trakt_shows_seen = []
 
@@ -805,7 +807,7 @@ class YAMJSyncMain:
             for show in self.YAMJ_shows.values():
                 if 'imdbnumber' in show:
                     if show['imdbnumber'].startswith('tt'):
-                        if self.search(imdb_ids.keys(), show['imdbnumber']):
+                        if search(self, imdb_ids.keys(), show['imdbnumber']):
                             trakt_show = self.trakt_shows[imdb_ids[int(show['imdbnumber'])]]
     
                             YAMJ_show = {'title': show['title'], 'episodes': []}
@@ -826,7 +828,7 @@ class YAMJSyncMain:
                                 self.trakt_shows_seen.append(YAMJ_show)
     
                     else:
-                        if self.search(tvdb_ids.keys(), int(show['imdbnumber'])):
+                        if search(self, tvdb_ids.keys(), int(show['imdbnumber'])):
                             trakt_show = self.trakt_shows[tvdb_ids[int(show['imdbnumber'])]]
     
                             YAMJ_show = {'title': show['title'], 'episodes': []}
@@ -848,11 +850,11 @@ class YAMJSyncMain:
     
             if self.trakt_shows_seen:
                 pchtrakt.logger.info(' [YAMJ] %s TV shows episodes watched status will be updated in YAMJ' % len(self.trakt_shows_seen))
-                self.WatchedYAMJtv(self.trakt_shows_seen)
+                WatchedYAMJtv(self, self.trakt_shows_seen)
             else:
                 pchtrakt.logger.info(' [YAMJ] Watched TV shows on YAMJ are up to date')
         
-    def WatchedYAMJ(self, watched):
+def WatchedYAMJ(self, watched):
         pchtrakt.logger.info(' [YAMJ] Start to create watched files')
         if YamjWatched == True:
             for x in watched:
@@ -883,7 +885,7 @@ class YAMJSyncMain:
                             continue
                 Debug('[Pchtrakt] {0} already present'.format(path))
         
-    def WatchedYAMJtv(self, watched):
+def WatchedYAMJtv(self, watched):
             pchtrakt.logger.info(' [YAMJ] Start to create watched files')
             if YamjWatched == True:
                 for x in watched:

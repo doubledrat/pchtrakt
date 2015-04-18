@@ -48,8 +48,6 @@ def newConfig():
         config.set('Trakt', 'enable_movie_scrobbling', True)
     if not config.has_option('Trakt','enable_tvshow_scrobbling'):
         config.set('Trakt', 'enable_tvshow_scrobbling', True)
-    if not config.has_option('Trakt','login'):
-        config.set('Trakt', 'login', 'your_trakt_login')
     if not config.has_option('Trakt','api_pin'):
         config.set('Trakt', 'api_pin', 'get at http://trakt.tv/pin/361')
     if not config.has_option('Trakt','api_token'):
