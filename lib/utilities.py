@@ -125,9 +125,8 @@ def Debug(myMsg):
             pchtrakt.logger.debug(myMsg)
 
 def checkSettings(daemon=False):
-    if TraktUsername != 'your_trakt_login':
-        data = getTokenviaPin()
-        return data
+    data = getTokenviaPin()
+    return data
 
 def xcp(s):
     # SQL string quote escaper
