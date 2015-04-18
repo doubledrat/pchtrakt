@@ -130,7 +130,8 @@ def checkUpdate(when):
     if hash == PchTraktVersion or hash == "":
         if when == "first":
             pchtrakt.logger.info(' [Pchtrakt] Starting Pchtrakt version = ' + PchTraktVersion[-4:]  + ' Millers Mods (Running latest ' + pchtrakt.chip + ' version)')
-            checkSettings()
+            if TraktScrobbleTvShow or TraktScrobbleMovie:
+                checkSettings()
     else:
         if AutoUpdate >= 0:
             if when == "first":
@@ -144,7 +145,8 @@ def checkUpdate(when):
             if when == "first":
                 pchtrakt.logger.info(' [Pchtrakt] Starting Pchtrakt version = ' + PchTraktVersion[-4:] + ' Millers Mods (' + pchtrakt.chip + ' version)')
                 pchtrakt.logger.info(' [Pchtrakt] A new version is online. For manual install, download from https://github.com/cptjhmiller/pchtrakt/archive/dvp.zip')
-                checkSettings()
+                if TraktScrobbleTvShow or TraktScrobbleMovie:
+                   checkSettings()
 
 def daemonize():
     """
