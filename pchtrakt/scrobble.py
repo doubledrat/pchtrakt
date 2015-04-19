@@ -70,26 +70,20 @@ def showStarted(myMedia):
         if str(myMedia.parsedInfo.season_number) == "None":
             myMedia.parsedInfo.season_number = "1"
         response = utilities.watchingEpisodeOnTrakt(myMedia.parsedInfo.id,
-                                                        myMedia.parsedInfo.name,
-                                                        myMedia.parsedInfo.year,
                                                         str(myMedia.parsedInfo.season_number),
                                                         str(myMedia.parsedInfo.episode_numbers[myMedia.idxEpisode]),
-                                                        str(myMedia.oStatus.totalTime),
                                                         str(percent))
-        if response:
-            msg = ' [traktAPI] Tv Show: %s' % (response)
+        if response and ('action' in response and response['action'] == 'start'):
+            msg = ' [traktAPI] Started watching %s Season %d Episode %d' % (response['show']['title'], response['episode']['season'], response['episode']['number'])
         else:
             msg = ' [traktAPI] No response from Trakt.tv'
         pchtrakt.logger.info(msg)
 
 def movieStarted(myMedia):
     response = utilities.watchingMovieOnTrakt(myMedia.parsedInfo.id,
-												myMedia.parsedInfo.name,
-												myMedia.parsedInfo.year,
-												str(myMedia.oStatus.totalTime),
 												str(myMedia.oStatus.percent))
-    if response:
-        msg = ' [traktAPI] Movie: %s' % (response)
+    if response and ('action' in response and response['action'] == 'start'):
+        msg = ' [traktAPI] Started watching %s' % (response['movie']['title'])
     else:
         msg = ' [traktAPI] No response from Trakt.tv'
     pchtrakt.logger.info(msg)
@@ -167,44 +161,48 @@ def showIsEnding(myMedia):
             msg += 'not found '
             pchtrakt.logger.info(msg)
             result = 1
-    if TraktScrobbleTvShow:
-        Debug("[traktAPI] Tv Show is ending")
-        result = 0
-        if str(myMedia.parsedInfo.season_number) == "None":
-            myMedia.parsedInfo.season_number = "1"
-        try:
-            Debug('NAME: ' + myMedia.parsedInfo.name + ' Season: ' + str(myMedia.parsedInfo.season_number) + ' Episode: ' + str(myMedia.parsedInfo.episode_numbers[myMedia.idxEpisode]))
-        except Exception as e:
-            print e
-        response = utilities.scrobbleEpisodeOnTrakt(myMedia.parsedInfo.id,
-                                                    myMedia.parsedInfo.name,
-                                                    myMedia.parsedInfo.year,
-													str(myMedia.parsedInfo.season_number),
-                                                    str(myMedia.parsedInfo.episode_numbers[myMedia.idxEpisode]),
-                                                    str(myMedia.oStatus.totalTime),
-                                                    str(myMedia.oStatus.percent))
-        if response:
-            msg = ' [traktAPI] Tv Show is ending: - %s ' %(response)
-            pchtrakt.logger.info(msg)
-            result = 1
+    #if TraktScrobbleTvShow:
+    #    Debug("[traktAPI] Tv Show is ending")
+    #    result = 0
+    #    if str(myMedia.parsedInfo.season_number) == "None":
+    #        myMedia.parsedInfo.season_number = "1"
+    #    try:
+    #        Debug('NAME: ' + myMedia.parsedInfo.name + ' Season: ' + str(myMedia.parsedInfo.season_number) + ' Episode: ' + str(myMedia.parsedInfo.episode_numbers[myMedia.idxEpisode]))
+    #    except Exception as e:
+    #        print e
+    #    response = utilities.scrobbleEpisodeOnTrakt(myMedia.parsedInfo.id,
+    #                                                myMedia.parsedInfo.name,
+    #                                                myMedia.parsedInfo.year,
+	#                                                str(myMedia.parsedInfo.season_number),
+    #                                                str(myMedia.parsedInfo.episode_numbers[myMedia.idxEpisode]),
+    #                                                str(myMedia.oStatus.totalTime),
+    #                                                str(myMedia.oStatus.percent))
+    #    if response:
+    #        msg = ' [traktAPI] Tv Show is ending: - %s ' %(response)
+    #        pchtrakt.logger.info(msg)
+    #        result = 1
+    #else:
+    #    result = 1
+    if BetaSeriesScrobbleTvShow:
+        return result
     else:
-        result = 1
-    return result
-
-def movieIsEnding(myMedia):
-    Debug("[traktAPI] Movie is ending")
-    response = utilities.scrobbleMovieOnTrakt(myMedia.parsedInfo.id,
-                                               myMedia.parsedInfo.name,
-                                               myMedia.parsedInfo.year,
-                                               str(myMedia.oStatus.totalTime),
-                                               str(myMedia.oStatus.percent))
-    if response:
-        if 'message' in response:
-            if response['message'] != 'fake scrobble':
-                msg = ' [traktAPI] Movie is ending: %s' %(response)
-                pchtrakt.logger.info(msg)
         return 1
-    return 0
+
+def movieIsEnding(myMedia):#Delete
+    #Debug("[traktAPI] Movie is ending")
+    #response = utilities.scrobbleMovieOnTrakt(myMedia.parsedInfo.id,
+    #                                           myMedia.parsedInfo.name,
+    #                                           myMedia.parsedInfo.year,
+    #                                           str(myMedia.oStatus.totalTime),
+    #                                           str(myMedia.oStatus.percent))
+    #if response:
+    #    if 'message' in response:
+    #        if response['message'] != 'fake scrobble':
+    #            msg = ' [traktAPI] Movie is ending: %s' %(response)
+    #            pchtrakt.logger.info(msg)
+    #    return 1
+    #return 0
+    return 1
 
 def movieIsSeen(myMedia, SeenTime):
     response = utilities.setMoviesSeenOnTrakt(myMedia.parsedInfo.id,
@@ -245,9 +243,9 @@ def videoStatusHandleMovie(myMedia):
                 pchtrakt.watched = movieIsEnding(myMedia)
                 if pchtrakt.watched:
                     pchtrakt.StopTrying = 0
-            elif myMedia.oStatus.currentTime > pchtrakt.currentTime + int(TraktRefreshTime)*60:
-                pchtrakt.currentTime = myMedia.oStatus.currentTime
-                movieStillRunning(myMedia)
+            #elif myMedia.oStatus.currentTime > pchtrakt.currentTime + int(TraktRefreshTime)*60:
+            #    pchtrakt.currentTime = myMedia.oStatus.currentTime
+            #    movieStillRunning(myMedia)
         elif myMedia.oStatus.percent < 10 and myMedia.oStatus.status != 'noplay' and TraktScrobbleMovie:
             pchtrakt.logger.info(' [Pchtrakt] It seems you came back at the begining of the video... so I say to trakt it\'s playing')
             pchtrakt.watched = 0
@@ -281,9 +279,9 @@ def videoStatusHandleTVSeries(myMedia):
         if not pchtrakt.watched and (TraktScrobbleTvShow or BetaSeriesScrobbleTvShow):
             if myMedia.oStatus.percent > watched_percent:
                 pchtrakt.watched = showIsEnding(myMedia)
-            elif myMedia.oStatus.currentTime > pchtrakt.currentTime + int(TraktRefreshTime)*60:
-                pchtrakt.currentTime = myMedia.oStatus.currentTime
-                showStillRunning(myMedia)
+            #elif myMedia.oStatus.currentTime > pchtrakt.currentTime + int(TraktRefreshTime)*60:
+            #    pchtrakt.currentTime = myMedia.oStatus.currentTime
+            #    showStillRunning(myMedia)
             elif doubleEpisode and myMedia.oStatus.percent > (myMedia.idxEpisode+1) * watched_percent/len(myMedia.parsedInfo.episode_numbers) and myMedia.idxEpisode+1 < len(myMedia.parsedInfo.episode_numbers):
                 showIsEnding(myMedia)
                 myMedia.idxEpisode += 1

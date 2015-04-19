@@ -179,13 +179,13 @@ class MediaParserResultMovie(MediaParserResult):
             retries = 0
             while self.id == None:
                 self.id = self.imdbapi1()
-                if (self.id != None or self.id != ''):
+                if (self.id != None and self.id != ''):
                     break
-                self.id = self.imdbapi2()
-                if (self.id != None or self.id != ''):
-                    break
+                #self.id = self.imdbapi2()
+                #if (self.id != None and self.id != ''):
+                #    break
                 self.id = self.imdbapi3()
-                if (self.id != None or self.id != ''):
+                if (self.id != None and self.id != ''):
                     break
                 if retries >= 1:
                     raise MovieResultNotFound(file_name)
