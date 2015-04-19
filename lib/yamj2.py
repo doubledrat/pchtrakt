@@ -877,14 +877,15 @@ def WatchedYAMJ(self, watched):
                 path = '{0}.watched'.format(path)
                 if not isfile(path):
                     try:
-                        f = open(path, 'w+')
+                        f = open(path, 'w')
                         f.close()
                         msg = ' [Pchtrakt] I have created the file {0}'.format(path)
                         pchtrakt.logger.info(msg)
-                    except BaseException as e:
+                    except Exception, e:
                             pchtrakt.logger.info(u" [Pchtrakt] Error writing file: %s" % str(e))
                             continue
-                Debug('[Pchtrakt] {0} already present'.format(path))
+                else:
+                    Debug('[Pchtrakt] {0} already present'.format(path))
         
 def WatchedYAMJtv(self, watched):
             pchtrakt.logger.info(' [YAMJ] Start to create watched files')
@@ -909,11 +910,12 @@ def WatchedYAMJtv(self, watched):
                         path = '{0}.watched'.format(path)
                         if not isfile(path):
                             try:
-                                f = open(path, 'w+')
+                                f = open(path, 'w')
                                 f.close()
                                 msg = ' [Pchtrakt] I have created the file {0}'.format(path)
                                 pchtrakt.logger.info(msg)
-                            except BaseException as e:
+                            except Exception, e:
                                 pchtrakt.logger.info(u" [Pchtrakt] Error writing file: %s" % str(e))
                                 continue
-                        Debug('[Pchtrakt] {0} already present'.format(path))
+                        else:
+                            Debug('[Pchtrakt] {0} already present'.format(path))
