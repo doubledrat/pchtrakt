@@ -69,8 +69,9 @@ class PchRequestor:
                         self.oPchStatus.totalChapter = int(oXml.find("response/totalchapter").text)
                     if oXml.find("response/mediatype")!= None:
                         self.mediaType = oXml.find("response/mediatype").text
-                        if (self.oPchStatus.fullPath == "/iso"):#Change path if iso file
-                            self.oPchStatus.fullPath = realpath(str(glob.glob("/isolink/*.[Ii][Ss][Oo]")).strip('[\'\']'))
+                        if (self.oPchStatus.fullPath[0:4] == "/iso"):#Change path if iso file
+                            for i in [e for e in glob.glob('/isolink/*.[Ii][Ss][Oo]') if not 'EXTRA' in e and not 'DISC*' in e and not 'PART*' in e]:
+                                self.oPchStatus.fullPath = realpath(str(i).strip('[\'\']'))
                         if(self.mediaType == "BluRay"): # Blu-ray Disc are not handle like .mkv or .avi files
                             self.oPchStatus.fileName = self.oPchStatus.fullPath.split('/')[::-1][1]# add a / on last position when ISO
                             if oPchStatus.totalTime!=0:
