@@ -11,18 +11,17 @@ class TraktAPI():
         self.V2_API_KEY='a18b7486b102e402e5a627fa3b56b5d54697ec49c05ab9375c85891a48766030'
         self.TRAKT_API_SECRET='b51096526453c72b7dffe868733abda66276d83544bbd5ba9e6093dffc0cab30'
         try:
-            if pchtrakt.config.TRAKT_ACCESS_TOKEN == None:
-                config=ConfigParser.RawConfigParser()
-                config.read(r'pchtrakt.ini')
-                self.TRAKT_ACCESS_TOKEN = config.get('Trakt','api_token')
-                if self.TRAKT_ACCESS_TOKEN == 'None':
-                    self.TRAKT_ACCESS_TOKEN = None
-                self.TRAKT_REFRESH_TOKEN = config.get('Trakt','refresh_token')
-                if self.TRAKT_REFRESH_TOKEN == 'None':
-                    self.TRAKT_REFRESH_TOKEN = None
-            else:
-                self.TRAKT_ACCESS_TOKEN = pchtrakt.config.TRAKT_ACCESS_TOKEN
-                self.TRAKT_REFRESH_TOKEN = pchtrakt.config.TRAKT_REFRESH_TOKEN
+            config=ConfigParser.RawConfigParser()
+            config.read(r'pchtrakt.ini')
+            self.TRAKT_ACCESS_TOKEN = config.get('Trakt','api_token')
+            self.TRAKT_REFRESH_TOKEN = config.get('Trakt','refresh_token')
+            if self.TRAKT_ACCESS_TOKEN == 'None':
+                self.TRAKT_ACCESS_TOKEN = None
+            if self.TRAKT_REFRESH_TOKEN == 'None':
+                self.TRAKT_REFRESH_TOKEN = None
+            #else:
+            #    self.TRAKT_ACCESS_TOKEN = pchtrakt.config.TRAKT_ACCESS_TOKEN
+            #    self.TRAKT_REFRESH_TOKEN = pchtrakt.config.TRAKT_REFRESH_TOKEN
         except:
             self.TRAKT_ACCESS_TOKEN = None
             self.TRAKT_REFRESH_TOKEN = None
@@ -132,7 +131,7 @@ class TraktAPI():
                 return self.traktRequest(path, data, headers, method)
             elif code == 401:
                 #logger.log(u'Unauthorized. Please check your Trakt settings', logger.WARNING)
-                if self.TRAKT_ACCESS_TOKEN == None:
+                if self.TRAKT_ACCESS_TOKEN == None and self.TRAKT_REFRESH_TOKEN == None:
                     if resp.content != '':
                         #resp=resp.json()
                         if resp.json()[u'error'] == u'invalid_grant':
