@@ -602,8 +602,8 @@ def YAMJ_shows_to_trakt(self):
                             self.YAMJ_shows_to_trakt.append(show)
     
                             #trakt_show = convert_YAMJ_show_to_trakt(show)
-                            for episode in trakt_show['episodes']:
-                                episode['plays'] = 0
+                            #for episode in trakt_show['episodes']:
+                            #    episode['plays'] = 0
     
                             #trakt_shows.append(trakt_show)
     
