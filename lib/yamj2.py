@@ -250,13 +250,13 @@ def YAMJ_movies_to_trakt(self):
                 pchtrakt.logger.info(' [YAMJ] Adding movies to trakt.tv collection...')
                 response = trakt_api.traktRequest(url, params, method='POST')
                 if response['added']['movies'] != 0:
-                    if len(response['not_found']['movies']) !=0:
-                        pchtrakt.logger.info(' [YAMJ] Successfully added %s out of %s to your collection' % (response['added']['movies'], response['added']['movies'] + response['existing']['movies'] + len(response['not_found']['movies'])))
-                        pchtrakt.logger.info(' [YAMJ] Failed to add the following %s titles to your collection' % len(response['not_found']['movies']))
-                        for failed in response['not_found']['movies']:
-                            pchtrakt.logger.info(' [YAMJ] Failed to add %s' % failed['movies'][0]['title'].encode('utf-8', 'replace'))
-                    else:
-                        pchtrakt.logger.info(' [YAMJ] Successfully added %s out of %s to your collection' % (response['added']['movies'], response['added']['movies'] + response['existing']['movies']))
+                    pchtrakt.logger.info(' [YAMJ] Successfully added %s out of %s to your collection' % (response['added']['movies'], response['added']['movies'] + response['existing']['movies'] + len(response['not_found']['movies'])))
+                if len(response['not_found']['movies']) !=0:
+                    pchtrakt.logger.info(' [YAMJ] Failed to add the following %s titles to your collection' % len(response['not_found']['movies']))
+                    for failed in response['not_found']['movies']:
+                        pchtrakt.logger.info(' [YAMJ] Failed to add %s' % failed['title'].encode('utf-8', 'replace'))
+                #else:
+                #    pchtrakt.logger.info(' [YAMJ] Successfully added %s out of %s to your collection' % (response['added']['movies'], response['added']['movies'] + response['existing']['movies']))
                 if response['existing']['movies'] != 0:
                     pchtrakt.logger.info(' [YAMJ] %s titles were found in your collection already' % response['existing']['movies'])
             except Exception, e:
