@@ -24,7 +24,7 @@ from os.path import isfile
 #from os import listdir
 from commands import getoutput
 import socket
-pchtrakt.online = 1
+pchtrakt.online = 0
 pchtrakt.CreatedFile = 0
 pchtrakt.Ttime = 0
 #pchtrakt.token = ''
